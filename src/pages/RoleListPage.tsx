@@ -4,7 +4,8 @@
  * 右侧：Tab（关联用户 + 菜单权限树）
  */
 import React, { useState, useEffect, useMemo } from 'react';
-import { roleStore, useRoleState, type RoleDetail } from '../stores/roleStore';
+import { roleStore, useRoleState, orgTree, type RoleDetail } from '../stores/roleStore';
+import { UserTransferModal } from '../components/UserTransferModal';
 
 // ==================== 菜单树 ====================
 
@@ -265,33 +266,22 @@ export const RoleListPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 弹窗：添加用户 */}
+      {/* 穿梭框：添加用户 */}
       {addUserModal && selectedRole && (
-        <div className="modal-overlay" onClick={() => setAddUserModal(false)}>
-          <div className="modal-container" style={{ width: '380px' }} onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>添加用户到「{selectedRole.label}」</h3>
-              <button className="modal-close" onClick={() => setAddUserModal(false)}>×</button>
-            </div>
-            <div className="modal-body">
-              {unassignedUsers.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>所有用户已关联</div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {unassignedUsers.map(u => (
-                    <button key={u.id}
-                      onClick={() => { roleStore.addUserToRole(selectedRole.id, u.id); setAddUserModal(false); }}
-                      style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px', background: '#f5f7fa', border: '1px solid var(--border)', borderRadius: 'var(--radius)', cursor: 'pointer', textAlign: 'left' }}>
-                      <span style={{ fontWeight: 500 }}>{u.realName}</span>
-                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>@{u.username}</span>
-                      <span style={{ marginLeft: 'auto', fontSize: '11px', color: 'var(--text-muted)' }}>{u.department}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <UserTransferModal
+          title={`添加用户到「${selectedRole.label}」`}
+          orgTree={orgTree}
+          allUsers={users.map(u => ({
+            id: u.id, username: u.username, realName: u.realName,
+            department: u.department, departmentId: (u as any).departmentId || 0,
+          }))}
+          excludedUserIds={selectedRole.userIds}
+          onConfirm={(userIds) => {
+            userIds.forEach(id => roleStore.addUserToRole(selectedRole.id, id));
+            setAddUserModal(false);
+          }}
+          onCancel={() => setAddUserModal(false)}
+        />
       )}
 
       {/* 弹窗：编辑角色 */}

@@ -19,7 +19,34 @@ interface UserInfo {
   username: string;
   realName: string;
   department: string;
+  departmentId: number;
 }
+
+// ==================== 组织架构数据 ====================
+
+export interface OrgTreeNode {
+  id: number;
+  name: string;
+  type: string;
+  children?: OrgTreeNode[];
+}
+
+export const orgTree: OrgTreeNode[] = [
+  { id: 1, name: '华信集团', type: 'group', children: [
+    { id: 11, name: '华信科技', type: 'company', children: [
+      { id: 111, name: '研发中心', type: 'department' },
+      { id: 112, name: '运营部', type: 'department' },
+    ]},
+    { id: 12, name: '华信金融', type: 'company', children: [
+      { id: 121, name: '风控部', type: 'department' },
+    ]},
+  ]},
+  { id: 2, name: '鼎盛集团', type: 'group', children: [
+    { id: 21, name: '鼎盛地产', type: 'company', children: [
+      { id: 211, name: '工程部', type: 'department' },
+    ]},
+  ]},
+];
 
 export interface RoleState {
   roles: RoleDetail[];
@@ -43,6 +70,20 @@ const initialRoles: RoleDetail[] = [
 ];
 
 const initialUsers: UserInfo[] = [
+  { id: 1, username: 'admin', realName: '张三', department: '技术中心', departmentId: 111 },
+  { id: 2, username: 'admin02', realName: '李四', department: '技术中心', departmentId: 111 },
+  { id: 3, username: 'manager01', realName: '王五', department: '产品部', departmentId: 112 },
+  { id: 4, username: 'manager02', realName: '赵六', department: '运营部', departmentId: 112 },
+  { id: 5, username: 'editor01', realName: '孙七', department: '技术中心', departmentId: 111 },
+  { id: 6, username: 'editor02', realName: '周八', department: '市场部', departmentId: 112 },
+  { id: 7, username: 'editor03', realName: '吴九', department: '产品部', departmentId: 112 },
+  { id: 8, username: 'viewer01', realName: '郑十', department: '财务部', departmentId: 1 },
+  { id: 9, username: 'viewer02', realName: '钱十一', department: '人力资源部', departmentId: 1 },
+  { id: 10, username: 'viewer03', realName: '陈十二', department: '市场部', departmentId: 112 },
+  { id: 11, username: 'viewer04', realName: '林十三', department: '运营部', departmentId: 112 },
+];
+
+const _oldUsers: UserInfo[] = [
   { id: 1, username: 'admin', realName: '张三', department: '技术中心' },
   { id: 2, username: 'admin02', realName: '李四', department: '技术中心' },
   { id: 3, username: 'manager01', realName: '王五', department: '产品部' },
