@@ -32,7 +32,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
 
   const navItems = [
     { icon: '👥', label: '用户管理', path: '/users' },
-    { icon: '🛡', label: '角色管理', path: '/roles' },
     { icon: '🔑', label: '权限管理', path: '/permissions' },
     { icon: '🔗', label: '权限关联', path: '/permissions/relation' },
     { icon: '🏢', label: '组织管理', path: '/departments' },

@@ -1,7 +1,7 @@
 /**
- * 角色管理页 - PC 端专版（左右分栏主子表）
+ * 权限管理页 - PC 端专版（左右分栏主子表）
  * 左侧：角色列表表格
- * 右侧：Tab（关联用户 + 菜单权限树）
+ * 右侧：Tab（菜单权限树 + 关联用户）
  */
 import React, { useState, useEffect, useMemo } from 'react';
 import { roleStore, useRoleState, orgTree, type RoleDetail } from '../stores/roleStore';
@@ -18,7 +18,6 @@ const systemMenuTree: MenuTreeNode[] = [
   { id: 2, title: '系统管理', path: '/system', icon: '⚙️', children: [
     { id: 21, title: '菜单管理', path: '/menus', icon: '📋' },
     { id: 22, title: '权限管理', path: '/permissions', icon: '🔑' },
-    { id: 23, title: '角色管理', path: '/roles', icon: '🛡' },
     { id: 24, title: '组织管理', path: '/departments', icon: '🏢' },
     { id: 25, title: '用户管理', path: '/users', icon: '👥' },
   ]},
@@ -93,10 +92,10 @@ const MenuCheckTree: React.FC<{
 
 // ==================== 主组件 ====================
 
-export const RoleListPage: React.FC = () => {
+export const PermissionsPage: React.FC = () => {
   const { roles, users, loaded } = useRoleState();
   const [selectedRoleId, setSelectedRoleId] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<'users' | 'perms'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'perms'>('perms');
   const [editModal, setEditModal] = useState<{ visible: boolean; role: RoleDetail | null }>({ visible: false, role: null });
   const [form, setForm] = useState({ name: '', label: '', description: '' });
   const [dialog, setDialog] = useState({ visible: false, id: 0 });
@@ -143,7 +142,7 @@ export const RoleListPage: React.FC = () => {
 
   return (
     <div>
-      <div className="page-header"><h2>角色管理</h2><p>共 {roles.length} 个角色 · 左侧选择查看详情</p></div>
+      <div className="page-header"><h2>权限管理</h2><p>共 {roles.length} 个角色 · 左侧选择角色配置菜单权限</p></div>
 
       <div style={{ display: 'flex', gap: '16px', minHeight: '500px' }}>
         {/* ===== 左侧：操作栏 + 角色列表 ===== */}
@@ -196,7 +195,7 @@ export const RoleListPage: React.FC = () => {
                   borderLeft: selectedRoleId === role.id ? '3px solid var(--primary)' : '3px solid transparent',
                 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '16px' }}>🛡</span>
+                  <span style={{ fontSize: '16px' }}>🔑</span>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: '13px', fontWeight: selectedRoleId === role.id ? 600 : 400 }}>{role.label}</div>
                     <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
@@ -218,15 +217,15 @@ export const RoleListPage: React.FC = () => {
             <div className="table-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
               <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
                 <div style={{ fontSize: '48px', marginBottom: '12px' }}>👈</div>
-                <p>请从左侧选择一个角色查看详情</p>
-                <p style={{ fontSize: '12px', marginTop: '8px' }}>可查看关联用户和菜单权限</p>
+                <p>请从左侧选择一个角色配置权限</p>
+                <p style={{ fontSize: '12px', marginTop: '8px' }}>可查看菜单权限和关联用户</p>
               </div>
             </div>
           ) : (
             <div className="table-wrapper">
               {/* 角色信息 */}
               <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ fontSize: '28px' }}>🛡</span>
+                <span style={{ fontSize: '28px' }}>🔑</span>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '18px', fontWeight: 700 }}>{selectedRole.label}</div>
                   <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{selectedRole.description}</div>
@@ -235,7 +234,7 @@ export const RoleListPage: React.FC = () => {
 
               {/* Tab 栏 */}
               <div style={{ display: 'flex', borderBottom: '1px solid var(--border-light)' }}>
-                {([['users', `关联用户 (${selectedRole.userIds.length})`], ['perms', `菜单权限 (${selectedRole.permissions.length})`]] as [typeof activeTab, string][]).map(([key, label]) => (
+                {([['perms', `菜单权限 (${selectedRole.permissions.length})`], ['users', `关联用户 (${selectedRole.userIds.length})`]] as [typeof activeTab, string][]).map(([key, label]) => (
                   <button key={key} onClick={() => setActiveTab(key)}
                     style={{
                       padding: '12px 24px', background: 'transparent', border: 'none',
@@ -248,7 +247,17 @@ export const RoleListPage: React.FC = () => {
                 ))}
               </div>
 
-              {/* Tab1: 关联用户 */}
+              {/* Tab1: 菜单权限树 */}
+              {activeTab === 'perms' && (
+                <div style={{ padding: '16px' }}>
+                  <MenuCheckTree tree={systemMenuTree} checkedPaths={permissionDraft} onCheck={togglePermission} />
+                  <button onClick={savePermissions} className="btn btn-primary" style={{ width: '100%', height: '38px', marginTop: '16px' }}>
+                    保存菜单权限
+                  </button>
+                </div>
+              )}
+
+              {/* Tab2: 关联用户 */}
               {activeTab === 'users' && (
                 <div style={{ padding: '16px' }}>
                   <div style={{ marginBottom: '12px', textAlign: 'right' }}>
@@ -271,17 +280,6 @@ export const RoleListPage: React.FC = () => {
                       </tbody>
                     </table>
                   )}
-                </div>
-              )}
-
-              {/* Tab2: 菜单权限树 */}
-              {activeTab === 'perms' && (
-                <div style={{ padding: '16px' }}>
-                  {permissionModulesStub}
-                  <MenuCheckTree tree={systemMenuTree} checkedPaths={permissionDraft} onCheck={togglePermission} />
-                  <button onClick={savePermissions} className="btn btn-primary" style={{ width: '100%', height: '38px', marginTop: '16px' }}>
-                    保存菜单权限
-                  </button>
                 </div>
               )}
             </div>
@@ -353,6 +351,3 @@ export const RoleListPage: React.FC = () => {
     </div>
   );
 };
-
-// 防止未使用变量警告
-const permissionModulesStub = null;

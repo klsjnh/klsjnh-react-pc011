@@ -10,9 +10,8 @@ import { menuStore } from './stores/menuStore';
 // 懒加载页面
 const DashboardPage = lazy(() => import('./pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
 const UserListPage = lazy(() => import('./pages/UserListPage').then(m => ({ default: m.UserListPage })));
-const RoleListPage = lazy(() => import('./pages/RoleListPage').then(m => ({ default: m.RoleListPage })));
 const MenuListPage = lazy(() => import('./pages/MenuListPage').then(m => ({ default: m.MenuListPage })));
-const PermissionPage = lazy(() => import('./pages/management-pages').then(m => ({ default: m.PermissionPage })));
+const PermissionPage = lazy(() => import('./pages/PermissionsPage').then(m => ({ default: m.PermissionsPage })));
 const DepartmentPage = lazy(() => import('./pages/management-pages').then(m => ({ default: m.DepartmentPage })));
 const AuditPage = lazy(() => import('./pages/management-pages').then(m => ({ default: m.AuditPage })));
 const SettingsPage = lazy(() => import('./pages/management-pages').then(m => ({ default: m.SettingsPage })));
@@ -116,7 +115,6 @@ export const App: React.FC = () => {
     const pageMap: Record<string, React.FC<any>> = {
       '/dashboard': DashboardPage,
       '/users': UserListPage,
-      '/roles': RoleListPage,
       '/menus': MenuListPage,
       '/permissions': PermissionPage,
       '/departments': DepartmentPage,

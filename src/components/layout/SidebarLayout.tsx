@@ -25,10 +25,9 @@ const navMenus: NavItem[] = [
     icon: '⚙️',
     children: [
       { path: '/menus', label: '菜单管理', icon: '📋' },
-      { path: '/permissions', label: '权限管理', icon: '🔑' },
-      { path: '/roles', label: '角色管理', icon: '🛡' },
       { path: '/departments', label: '组织管理', icon: '🏢' },
       { path: '/users', label: '用户管理', icon: '👥' },
+      { path: '/permissions', label: '权限管理', icon: '🔑' },
     ],
   },
   { path: '/business', label: '业务中心', icon: '💼' },
