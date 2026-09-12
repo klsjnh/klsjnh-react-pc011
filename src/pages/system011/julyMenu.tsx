@@ -3,9 +3,10 @@
  * 左侧：菜单树，支持右键菜单（新建子菜单/编辑/删除）与拖拽调整层级
  * 右侧：当前菜单的编辑表单（右上角保存），点击树节点切换
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { menuStore, useMenuState, type MenuConfig } from '../../stores/menuStore';
 import { ConfirmDialog } from '../../components';
+import { uiStore, useUiState } from '../../stores/uiStore';
 
 interface MenuListPageProps {
   onNavigate?: (path: string) => void;
@@ -23,8 +24,17 @@ const labelStyle: React.CSSProperties = {
 
 export const julyMenu: React.FC<MenuListPageProps> = () => {
   const { menus, loaded } = useMenuState();
-  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const ui = useUiState();
+  const expandedIds = useMemo(() => new Set(ui.menuTreeExpandedIds ?? []), [ui.menuTreeExpandedIds]);
+  const selectedId = ui.menuTreeSelectedId;
+  // 展开/选中状态写入 uiStore（localStorage 持久化），保持原 setState 调用形态
+  const setExpandedIds = (
+    value: Set<number> | ((prev: Set<number>) => Set<number>)
+  ) => {
+    const next = typeof value === 'function' ? value(new Set(ui.menuTreeExpandedIds ?? [])) : value;
+    uiStore.setMenuTreeExpandedIds(Array.from(next));
+  };
+  const setSelectedId = (id: number | null) => uiStore.setMenuTreeSelectedId(id);
 
   // 拖拽
   const [dragId, setDragId] = useState<number | null>(null);
@@ -39,11 +49,12 @@ export const julyMenu: React.FC<MenuListPageProps> = () => {
   const [form, setForm] = useState({ title: '', path: '', icon: '📄', type: 'page' as MenuConfig['type'], parentId: 0, visible: true });
   const [dialog, setDialog] = useState({ visible: false, id: 0 });
 
+  // 默认仅展开第一个顶级节点；用户操作后的展开状态由 uiStore 持久化
   useEffect(() => {
-    if (loaded && menus.length > 0) {
-      setExpandedIds(prev => (prev.size > 0 ? prev : new Set(menus.map(m => m.id))));
+    if (loaded && menus.length > 0 && ui.menuTreeExpandedIds === null) {
+      uiStore.setMenuTreeExpandedIds([menus[0].id]);
     }
-  }, [loaded, menus]);
+  }, [loaded, menus, ui.menuTreeExpandedIds]);
 
   // ==================== 树操作 ====================
 

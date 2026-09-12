@@ -3,6 +3,8 @@
  */
 import React, { useState } from 'react';
 import { useCurrentUser, authStore } from '@/stores/authStore';
+import { useUnreadCount } from '@/stores/notificationStore';
+import { uiStore, useUiState } from '@/stores/uiStore';
 
 interface SidebarLayoutProps {
   children: React.ReactNode;
@@ -52,13 +54,16 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
   currentPath,
   onNavigate,
 }) => {
-  const [collapsed, setCollapsed] = useState(false);
+  const ui = useUiState();
+  const collapsed = ui.sidebarCollapsed;
+  const setCollapsed = (v: boolean) => uiStore.setSidebarCollapsed(v);
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set(['/system', '/monitor']));
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [pwdModal, setPwdModal] = useState(false);
   const [pwdForm, setPwdForm] = useState({ oldPwd: '', newPwd: '', confirmPwd: '' });
   const [pwdError, setPwdError] = useState('');
   const user = useCurrentUser();
+  const unread = useUnreadCount();
 
   const toggleExpand = (path: string) => {
     setExpandedMenus((prev) => {
@@ -129,6 +134,30 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
           <span className="header-title">企业管理系统</span>
         </div>
         <div className="header-right">
+          {/* 消息通知铃铛（点击跳转，红点显示未读数） */}
+          <div
+            onClick={() => onNavigate('/notifications')}
+            title="消息通知"
+            style={{
+              position: 'relative', cursor: 'pointer', fontSize: '18px',
+              lineHeight: 1, padding: '4px', userSelect: 'none',
+            }}
+          >
+            🔔
+            {unread > 0 && (
+              <span style={{
+                position: 'absolute', top: '-6px', right: '-9px',
+                background: '#f5222d', color: '#fff',
+                fontSize: '10px', minWidth: '16px', height: '16px',
+                borderRadius: '8px', padding: '0 4px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: 600, boxSizing: 'border-box',
+              }}>
+                {unread > 99 ? '99+' : unread}
+              </span>
+            )}
+          </div>
+
           <div style={{ position: 'relative' }}>
             <div
               className="header-user"

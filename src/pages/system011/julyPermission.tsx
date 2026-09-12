@@ -60,7 +60,7 @@ const MenuCheckTree: React.FC<{
   tree: MenuTreeNode[]; checkedPaths: Set<string>;
   onCheck: (path: string, checked: boolean) => void; depth?: number;
 }> = ({ tree, checkedPaths, onCheck, depth = 0 }) => {
-  const [expanded, setExpanded] = useState<Set<number>>(new Set(tree.map(n => n.id)));
+  const [expanded, setExpanded] = useState<Set<number>>(new Set());
   return (
     <div style={{ paddingLeft: depth > 0 ? `${depth * 20}px` : 0 }}>
       {tree.map(node => {
@@ -250,10 +250,10 @@ export const julyPermission: React.FC = () => {
               {/* Tab1: 菜单权限树 */}
               {activeTab === 'perms' && (
                 <div style={{ padding: '16px' }}>
+                  <div style={{ marginBottom: '12px', textAlign: 'right' }}>
+                    <button onClick={savePermissions} className="btn btn-primary btn-sm">保存</button>
+                  </div>
                   <MenuCheckTree tree={systemMenuTree} checkedPaths={permissionDraft} onCheck={togglePermission} />
-                  <button onClick={savePermissions} className="btn btn-primary" style={{ width: '100%', height: '38px', marginTop: '16px' }}>
-                    保存菜单权限
-                  </button>
                 </div>
               )}
 
