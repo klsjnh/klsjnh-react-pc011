@@ -146,12 +146,43 @@ export const RoleListPage: React.FC = () => {
       <div className="page-header"><h2>角色管理</h2><p>共 {roles.length} 个角色 · 左侧选择查看详情</p></div>
 
       <div style={{ display: 'flex', gap: '16px', minHeight: '500px' }}>
-        {/* ===== 左侧：角色列表 ===== */}
+        {/* ===== 左侧：操作栏 + 角色列表 ===== */}
         <div style={{ width: '300px', flexShrink: 0 }}>
-          <div style={{ marginBottom: '10px', textAlign: 'right' }}>
-            <button className="btn btn-primary btn-sm"
-              onClick={() => { setForm({ name: '', label: '', description: '' }); setEditModal({ visible: true, role: null }); }}>
-              + 新建角色
+          {/* 操作按钮栏（在列表上方左侧） */}
+          <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => { setForm({ name: '', label: '', description: '' }); setEditModal({ visible: true, role: null }); }}
+            >
+              + 新建
+            </button>
+            <button
+              className="btn btn-default btn-sm"
+              disabled={!selectedRole}
+              style={{
+                opacity: selectedRole ? 1 : 0.4,
+                cursor: selectedRole ? 'pointer' : 'not-allowed',
+              }}
+              onClick={() => {
+                if (!selectedRole) return;
+                setForm({ name: selectedRole.name, label: selectedRole.label, description: selectedRole.description });
+                setEditModal({ visible: true, role: selectedRole });
+              }}
+            >
+              ✏️ 编辑
+            </button>
+            <button
+              className="btn btn-default btn-sm"
+              disabled={!selectedRole}
+              style={{
+                opacity: selectedRole ? 1 : 0.4,
+                cursor: selectedRole ? 'pointer' : 'not-allowed',
+                color: selectedRole ? 'var(--danger)' : 'var(--text-muted)',
+                borderColor: selectedRole ? 'var(--danger)' : 'var(--border)',
+              }}
+              onClick={() => { if (selectedRole) handleDelete(selectedRole); }}
+            >
+              🗑 删除
             </button>
           </div>
           <div className="table-wrapper" style={{ maxHeight: '600px', overflowY: 'auto' }}>
@@ -200,14 +231,6 @@ export const RoleListPage: React.FC = () => {
                   <div style={{ fontSize: '18px', fontWeight: 700 }}>{selectedRole.label}</div>
                   <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{selectedRole.description}</div>
                 </div>
-                <button className="btn btn-default btn-sm"
-                  onClick={() => { setForm({ name: selectedRole.name, label: selectedRole.label, description: selectedRole.description }); setEditModal({ visible: true, role: selectedRole }); }}>
-                  ✏️ 编辑
-                </button>
-                <button className="btn btn-default btn-sm" style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }}
-                  onClick={() => handleDelete(selectedRole)}>
-                  删除
-                </button>
               </div>
 
               {/* Tab 栏 */}
