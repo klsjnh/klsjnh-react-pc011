@@ -1,12 +1,8 @@
 /**
- * 消息通知页 - 移动端（完整版：分类筛选+详情+删除+全部已读）
+ * 消息通知页 - PC 端（分类筛选 + 详情弹窗 + 删除 + 全部已读）
  */
 import React, { useState } from 'react';
-import { PageHeader, SearchBar, ConfirmDialog } from '../components';
-
-interface NotificationsPageProps {
-  onBack?: () => void;
-}
+import { ConfirmDialog } from '../components';
 
 type FilterType = 'all' | 'system' | 'user' | 'order';
 
@@ -19,7 +15,7 @@ interface Notification {
   type: 'system' | 'user' | 'order';
 }
 
-export const NotificationsPage: React.FC<NotificationsPageProps> = ({ onBack }) => {
+export const NotificationsPage: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([
     { id: 1, title: '系统更新通知', content: '系统将于今晚 22:00-22:30 进行维护升级，升级期间可能无法正常访问。升级内容：优化系统性能、修复已知问题、新增数据导出功能。请提前做好相关准备。', time: '2026-09-12 09:30:00', read: false, type: 'system' },
     { id: 2, title: '新用户注册审核', content: '用户「张三」已完成注册申请，请前往用户管理页面进行审核。注册时间：2026-09-12 09:25:00，注册邮箱：zhangsan@example.com。', time: '2026-09-12 09:25:00', read: false, type: 'user' },
@@ -47,145 +43,80 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({ onBack }) 
     setSelectedNotif(null);
   };
 
-  const filtered = notifications.filter(n => {
-    if (filter !== 'all' && n.type !== filter) return false;
-    return true;
-  });
-
+  const filtered = notifications.filter(n => filter === 'all' || n.type === filter);
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const typeIcon: Record<string, string> = { system: '🔔', user: '👤', order: '📦' };
   const typeLabel: Record<string, string> = { system: '系统', user: '用户', order: '订单' };
-  const filterOptions = [
-    { label: '全部', value: 'all' },
-    { label: '系统', value: 'system' },
-    { label: '用户', value: 'user' },
-    { label: '订单', value: 'order' },
-  ];
 
   return (
-    <div className="page">
-      <PageHeader
-        title="消息通知"
-        subtitle={`${unreadCount} 条未读`}
-        onBack={onBack}
-        right={
-          unreadCount > 0 ? (
-            <button
-              onClick={markAllRead}
-              style={{
-                height: '32px', padding: '0 12px',
-                background: 'var(--bg-card)', color: 'var(--primary)',
-                border: '1px solid var(--primary)', borderRadius: 'var(--radius)',
-                fontSize: '12px', cursor: 'pointer',
-              }}
-            >
-              全部已读
-            </button>
-          ) : undefined
-        }
-      />
+    <div>
+      <div className="page-header">
+        <h2>消息通知</h2>
+        <p>{unreadCount} 条未读</p>
+      </div>
 
-      {/* 分类筛选 */}
-      <SearchBar
-        value=""
-        onChange={() => {}}
-        placeholder="搜索通知..."
-        filterValue={filter}
-        onFilterChange={(v) => setFilter(v as FilterType)}
-        filterOptions={filterOptions}
-      />
+      <div className="page-toolbar">
+        <div className="toolbar-left">
+          <select className="form-select" value={filter} onChange={(e) => setFilter(e.target.value as FilterType)}>
+            <option value="all">全部类型</option>
+            <option value="system">系统</option>
+            <option value="user">用户</option>
+            <option value="order">订单</option>
+          </select>
+        </div>
+        <div className="toolbar-right">
+          {unreadCount > 0 && (
+            <button className="btn btn-default" onClick={markAllRead}>全部已读</button>
+          )}
+        </div>
+      </div>
 
-      {/* 通知列表 */}
-      {filtered.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-icon">📭</div>
-          <div className="empty-state-text">暂无通知</div>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {filtered.map((notif) => (
-            <div
-              key={notif.id}
-              onClick={() => { setSelectedNotif(notif); markAsRead(notif.id); }}
-              style={{
-                background: 'var(--bg-card)',
-                borderRadius: 'var(--radius)',
-                padding: '14px',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-                cursor: 'pointer',
-                borderLeft: notif.read ? '3px solid transparent' : '3px solid var(--primary)',
-                transition: 'all 0.2s',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                <span style={{ fontSize: '16px' }}>{typeIcon[notif.type]}</span>
-                <span style={{ flex: 1, fontSize: '14px', fontWeight: notif.read ? 400 : 600 }}>{notif.title}</span>
-                {!notif.read && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--primary)' }} />}
-              </div>
-              <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', paddingLeft: '24px' }}>
-                {notif.content}
-              </div>
-              <div style={{ display: 'flex', gap: '8px', fontSize: '11px', color: 'var(--text-muted)', paddingLeft: '24px' }}>
-                <span style={{ padding: '1px 6px', borderRadius: '4px', background: '#f5f5f5' }}>{typeLabel[notif.type]}</span>
-                <span>{notif.time}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="table-wrapper">
+        <table className="data-table">
+          <thead><tr><th style={{ width: '40px' }}></th><th>类型</th><th>标题</th><th>内容</th><th>时间</th><th style={{ width: '110px' }}>操作</th></tr></thead>
+          <tbody>
+            {filtered.length === 0 ? (
+              <tr><td colSpan={6} style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>📭 暂无通知</td></tr>
+            ) : filtered.map(notif => (
+              <tr key={notif.id} style={{ cursor: 'pointer' }} onClick={() => { setSelectedNotif(notif); markAsRead(notif.id); }}>
+                <td>{!notif.read && <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: 'var(--primary)' }} />}</td>
+                <td>{typeIcon[notif.type]} {typeLabel[notif.type]}</td>
+                <td style={{ fontWeight: notif.read ? 400 : 600 }}>{notif.title}</td>
+                <td style={{ color: 'var(--text-muted)', maxWidth: '420px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{notif.content}</td>
+                <td style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{notif.time}</td>
+                <td onClick={(e) => e.stopPropagation()}>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    <button className="btn-link" onClick={() => { setSelectedNotif(notif); markAsRead(notif.id); }}>查看</button>
+                    <button className="btn-link danger" onClick={() => deleteNotif(notif.id)}>删除</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {/* 通知详情弹窗 */}
       {selectedNotif && (
-        <div style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,0.45)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 1000,
-        }} onClick={() => setSelectedNotif(null)}>
-          <div style={{
-            width: 'calc(100vw - 48px)',
-            maxWidth: '340px',
-            background: '#fff',
-            borderRadius: '12px',
-            padding: '20px',
-            maxHeight: '70vh',
-            overflowY: 'auto',
-          }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-              <span style={{ fontSize: '20px' }}>{typeIcon[selectedNotif.type]}</span>
-              <span style={{ fontSize: '16px', fontWeight: 600, flex: 1 }}>{selectedNotif.title}</span>
+        <div className="modal-overlay" onClick={() => setSelectedNotif(null)}>
+          <div className="modal-container" style={{ width: '560px' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{typeIcon[selectedNotif.type]} {selectedNotif.title}</h3>
+              <button className="modal-close" onClick={() => setSelectedNotif(null)}>×</button>
             </div>
-            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.8, marginBottom: '16px', padding: '12px', background: '#f5f7fa', borderRadius: '8px' }}>
-              {selectedNotif.content}
+            <div className="modal-body">
+              <div style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.8, marginBottom: '14px', padding: '12px', background: '#f5f7fa', borderRadius: '8px' }}>
+                {selectedNotif.content}
+              </div>
+              <div style={{ display: 'flex', gap: '8px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                <span className="status-badge" style={{ background: '#f0f5ff', color: '#597ef7' }}>{typeLabel[selectedNotif.type]}</span>
+                <span>{selectedNotif.time}</span>
+              </div>
             </div>
-            <div style={{ display: 'flex', gap: '8px', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px' }}>
-              <span style={{ padding: '2px 8px', borderRadius: '4px', background: '#f0f5ff', color: '#597ef7' }}>{typeLabel[selectedNotif.type]}</span>
-              <span>{selectedNotif.time}</span>
-            </div>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                onClick={() => deleteNotif(selectedNotif.id)}
-                style={{
-                  flex: 1, height: '36px',
-                  background: '#fff', color: 'var(--danger)',
-                  border: '1px solid var(--danger)', borderRadius: 'var(--radius)',
-                  fontSize: '14px', cursor: 'pointer',
-                }}
-              >
-                删除
-              </button>
-              <button
-                onClick={() => setSelectedNotif(null)}
-                style={{
-                  flex: 1, height: '36px',
-                  background: 'var(--primary)', color: '#fff',
-                  border: 'none', borderRadius: 'var(--radius)',
-                  fontSize: '14px', cursor: 'pointer',
-                }}
-              >
-                关闭
-              </button>
+            <div className="modal-footer">
+              <button className="btn btn-default" onClick={() => { deleteNotif(selectedNotif.id); }}>删除</button>
+              <button className="btn btn-primary" onClick={() => setSelectedNotif(null)}>关闭</button>
             </div>
           </div>
         </div>

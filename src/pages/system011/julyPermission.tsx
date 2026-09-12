@@ -4,8 +4,8 @@
  * 右侧：Tab（菜单权限树 + 关联用户）
  */
 import React, { useState, useEffect, useMemo } from 'react';
-import { roleStore, useRoleState, orgTree, type RoleDetail } from '../stores/roleStore';
-import { UserTransferModal } from '../components/UserTransferModal';
+import { roleStore, useRoleState, orgTree, type RoleDetail } from '../../stores/roleStore';
+import { UserTransferModal } from '../../components/UserTransferModal';
 
 // ==================== 菜单树 ====================
 
@@ -16,10 +16,10 @@ interface MenuTreeNode {
 const systemMenuTree: MenuTreeNode[] = [
   { id: 1, title: '仪表盘', path: '/dashboard', icon: '📊' },
   { id: 2, title: '系统管理', path: '/system', icon: '⚙️', children: [
-    { id: 21, title: '菜单管理', path: '/menus', icon: '📋' },
-    { id: 22, title: '权限管理', path: '/permissions', icon: '🔑' },
-    { id: 24, title: '组织管理', path: '/departments', icon: '🏢' },
-    { id: 25, title: '用户管理', path: '/users', icon: '👥' },
+    { id: 21, title: '菜单管理', path: '/menu', icon: '📋' },
+    { id: 22, title: '权限管理', path: '/permission', icon: '🔑' },
+    { id: 24, title: '组织管理', path: '/organization', icon: '🏢' },
+    { id: 25, title: '用户管理', path: '/user', icon: '👥' },
   ]},
   { id: 3, title: '业务中心', path: '/business', icon: '💼', children: [
     { id: 31, title: '配置管理', path: '/business/config', icon: '⚙️' },
@@ -92,7 +92,7 @@ const MenuCheckTree: React.FC<{
 
 // ==================== 主组件 ====================
 
-export const PermissionsPage: React.FC = () => {
+export const julyPermission: React.FC = () => {
   const { roles, users, loaded } = useRoleState();
   const [selectedRoleId, setSelectedRoleId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'users' | 'perms'>('perms');

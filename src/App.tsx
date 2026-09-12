@@ -9,10 +9,11 @@ import { menuStore } from './stores/menuStore';
 
 // 懒加载页面
 const DashboardPage = lazy(() => import('./pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
-const UserListPage = lazy(() => import('./pages/UserListPage').then(m => ({ default: m.UserListPage })));
-const MenuListPage = lazy(() => import('./pages/MenuListPage').then(m => ({ default: m.MenuListPage })));
-const PermissionPage = lazy(() => import('./pages/PermissionsPage').then(m => ({ default: m.PermissionsPage })));
-const DepartmentPage = lazy(() => import('./pages/management-pages').then(m => ({ default: m.DepartmentPage })));
+// 系统管理模块（pages/system011/）
+const julyUser = lazy(() => import('./pages/system011/julyUser').then(m => ({ default: m.julyUser })));
+const julyMenu = lazy(() => import('./pages/system011/julyMenu').then(m => ({ default: m.julyMenu })));
+const julyPermission = lazy(() => import('./pages/system011/julyPermission').then(m => ({ default: m.julyPermission })));
+const julyOrganization = lazy(() => import('./pages/system011/julyOrganization').then(m => ({ default: m.julyOrganization })));
 const AuditPage = lazy(() => import('./pages/management-pages').then(m => ({ default: m.AuditPage })));
 const SettingsPage = lazy(() => import('./pages/management-pages').then(m => ({ default: m.SettingsPage })));
 
@@ -86,7 +87,6 @@ export const App: React.FC = () => {
         servicelog: '服务日志',
       };
       const title = titleMap[action] || '业务功能';
-      const backTo = () => handleNavigate('/business');
 
       const realPages: Record<string, React.FC<any>> = {
         config: ConfigPage, scheduler: SchedulerPage, dict: DictPage,
@@ -98,16 +98,16 @@ export const App: React.FC = () => {
         servicelog: ServiceLogPage,
       };
       const RealPage = realPages[action];
-      if (RealPage) return <RealPage onBack={backTo} />;
-      return <BusinessPlaceholderPage title={title} path={currentPath} onBack={backTo} />;
+      if (RealPage) return <RealPage />;
+      return <BusinessPlaceholderPage title={title} path={currentPath} />;
     }
 
     const pageMap: Record<string, React.FC<any>> = {
       '/dashboard': DashboardPage,
-      '/users': UserListPage,
-      '/menus': MenuListPage,
-      '/permissions': PermissionPage,
-      '/departments': DepartmentPage,
+      '/user': julyUser,
+      '/menu': julyMenu,
+      '/permission': julyPermission,
+      '/organization': julyOrganization,
       '/audit': AuditPage,
       '/settings': SettingsPage,
       '/business': BusinessPage,

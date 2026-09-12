@@ -3,9 +3,9 @@
  * 新增/编辑：弹窗表单；组织：组织选择弹窗；角色：角色多选弹窗
  */
 import React, { useState, useEffect } from 'react';
-import { roleStore, useRoleState, orgTree } from '../stores/roleStore';
-import { OrgPickerModal } from '../components/OrgPickerModal';
-import { RolePickerModal } from '../components/RolePickerModal';
+import { roleStore, useRoleState, orgTree } from '../../stores/roleStore';
+import { OrgPickerModal } from '../../components/OrgPickerModal';
+import { RolePickerModal } from '../../components/RolePickerModal';
 
 interface User {
   id: number;
@@ -37,7 +37,7 @@ const initialUsers: User[] = Array.from({ length: 20 }, (_, i) => ({
   createdAt: `2026-0${(i % 9) + 1}-15`,
 }));
 
-export const UserListPage: React.FC<UserListPageProps> = () => {
+export const julyUser: React.FC<UserListPageProps> = () => {
   const { roles } = useRoleState();
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [keyword, setKeyword] = useState('');

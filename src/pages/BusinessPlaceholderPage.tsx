@@ -1,13 +1,11 @@
 /**
- * 业务功能占位页 - 移动端（用于尚未实现的具体功能）
+ * 业务功能占位页 - PC 端（用于尚未实现的具体功能）
  */
 import React from 'react';
-import { PageHeader } from '../components';
 
 interface BusinessPlaceholderPageProps {
   title: string;
   path?: string;
-  onBack?: () => void;
 }
 
 /** 业务名称 → 描述信息映射 */
@@ -33,53 +31,42 @@ const businessInfo: Record<string, { desc: string; icon: string; features: strin
   '/business/servicelog': { icon: '🔄', desc: '服务运行日志', features: ['启动日志', '运行日志', '错误日志'] },
 };
 
-export const BusinessPlaceholderPage: React.FC<BusinessPlaceholderPageProps> = ({ title, path, onBack }) => {
+export const BusinessPlaceholderPage: React.FC<BusinessPlaceholderPageProps> = ({ title, path }) => {
   const info = businessInfo[path || ''] || { desc: '业务功能开发中', icon: '🚧', features: [] };
 
   return (
-    <div className="page">
-      <PageHeader title={title} subtitle={info.desc} onBack={onBack} />
-
-      {/* 功能图标 */}
-      <div style={{ textAlign: 'center', padding: '32px 0 16px' }}>
-        <div style={{ fontSize: '48px', marginBottom: '8px' }}>{info.icon}</div>
-        <div style={{ fontSize: '18px', fontWeight: 700 }}>{title}</div>
-        <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>{info.desc}</div>
+    <div>
+      <div className="page-header">
+        <h2>{title}</h2>
+        <p>{info.desc}</p>
       </div>
 
-      {/* 功能特性 */}
-      {info.features.length > 0 && (
-        <div style={{
-          background: 'var(--bg-card)',
-          borderRadius: 'var(--radius)',
-          padding: '16px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-          marginBottom: '12px',
-        }}>
-          <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '12px' }}>规划功能</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div className="table-wrapper" style={{ padding: '48px 24px', textAlign: 'center' }}>
+        <div style={{ fontSize: '56px', marginBottom: '12px' }}>{info.icon}</div>
+        <div style={{ fontSize: '18px', fontWeight: 700 }}>{title}</div>
+        <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '6px' }}>{info.desc}</div>
+
+        {info.features.length > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap', marginTop: '20px' }}>
             {info.features.map((feature) => (
-              <div key={feature} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ color: 'var(--primary)' }}>✓</span>
-                <span style={{ fontSize: '13px' }}>{feature}</span>
-              </div>
+              <span key={feature} className="status-badge" style={{ background: '#f0f5ff', color: '#597ef7', fontSize: '12px', padding: '4px 12px' }}>
+                ✓ {feature}
+              </span>
             ))}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* 开发状态 */}
-      <div style={{
-        background: '#fffbe6',
-        border: '1px solid #ffe58f',
-        borderRadius: 'var(--radius)',
-        padding: '14px',
-        display: 'flex', alignItems: 'center', gap: '10px',
-      }}>
-        <span style={{ fontSize: '20px' }}>🚧</span>
-        <div>
-          <div style={{ fontSize: '13px', fontWeight: 600 }}>开发计划中</div>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>该模块正在规划与开发阶段，敬请期待</div>
+        <div style={{
+          margin: '24px auto 0', maxWidth: '420px',
+          background: '#fffbe6', border: '1px solid #ffe58f',
+          borderRadius: 'var(--radius)', padding: '14px',
+          display: 'flex', alignItems: 'center', gap: '10px', textAlign: 'left',
+        }}>
+          <span style={{ fontSize: '20px' }}>🚧</span>
+          <div>
+            <div style={{ fontSize: '13px', fontWeight: 600 }}>开发计划中</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>该模块正在规划与开发阶段，敬请期待</div>
+          </div>
         </div>
       </div>
     </div>

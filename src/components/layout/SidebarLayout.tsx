@@ -24,10 +24,10 @@ const navMenus: NavItem[] = [
     label: '系统管理',
     icon: '⚙️',
     children: [
-      { path: '/menus', label: '菜单管理', icon: '📋' },
-      { path: '/departments', label: '组织管理', icon: '🏢' },
-      { path: '/users', label: '用户管理', icon: '👥' },
-      { path: '/permissions', label: '权限管理', icon: '🔑' },
+      { path: '/menu', label: '菜单管理', icon: '📋' },
+      { path: '/organization', label: '组织管理', icon: '🏢' },
+      { path: '/user', label: '用户管理', icon: '👥' },
+      { path: '/permission', label: '权限管理', icon: '🔑' },
     ],
   },
   { path: '/business', label: '业务中心', icon: '💼' },
@@ -54,6 +54,10 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
 }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set(['/system', '/monitor']));
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [pwdModal, setPwdModal] = useState(false);
+  const [pwdForm, setPwdForm] = useState({ oldPwd: '', newPwd: '', confirmPwd: '' });
+  const [pwdError, setPwdError] = useState('');
   const user = useCurrentUser();
 
   const toggleExpand = (path: string) => {
@@ -69,6 +73,22 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
     if (window.confirm('确定要退出登录吗？')) {
       authStore.logout();
     }
+  };
+
+  const handleSavePwd = () => {
+    if (!pwdForm.oldPwd || !pwdForm.newPwd || !pwdForm.confirmPwd) { setPwdError('请填写完整'); return; }
+    if (pwdForm.newPwd.length < 6) { setPwdError('新密码至少 6 位'); return; }
+    if (pwdForm.newPwd !== pwdForm.confirmPwd) { setPwdError('两次输入的新密码不一致'); return; }
+    setPwdModal(false);
+    setPwdForm({ oldPwd: '', newPwd: '', confirmPwd: '' });
+    setPwdError('');
+    window.alert('密码修改成功');
+  };
+
+  const menuItemStyle: React.CSSProperties = {
+    display: 'block', width: '100%', textAlign: 'left', padding: '9px 14px',
+    background: 'none', border: 'none', fontSize: '13px', cursor: 'pointer',
+    color: 'var(--text-primary)', borderRadius: '4px',
   };
 
   const renderNavItem = (item: NavItem, depth = 0) => {
@@ -109,15 +129,46 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
           <span className="header-title">企业管理系统</span>
         </div>
         <div className="header-right">
-          <span className="header-user">
-            <img
-              className="header-avatar"
-              src={user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'}
-              alt=""
-            />
-            <span className="header-username">{user?.realName || '未登录'}</span>
-          </span>
-          <button className="header-logout" onClick={handleLogout}>退出</button>
+          <div style={{ position: 'relative' }}>
+            <div
+              className="header-user"
+              onClick={() => setUserMenuOpen(o => !o)}
+              style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <img
+                className="header-avatar"
+                src={user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'}
+                alt=""
+              />
+              <span className="header-username">{user?.realName || '未登录'}</span>
+              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>▾</span>
+            </div>
+
+            {/* 用户下拉菜单 */}
+            {userMenuOpen && (
+              <>
+                <div style={{ position: 'fixed', inset: 0, zIndex: 1300 }} onClick={() => setUserMenuOpen(false)} />
+                <div style={{
+                  position: 'absolute', right: 0, top: 'calc(100% + 8px)', zIndex: 1301,
+                  background: '#fff', border: '1px solid var(--border)', borderRadius: '8px',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.15)', minWidth: '150px', padding: '4px',
+                }}>
+                  <button style={menuItemStyle}
+                    onClick={() => { onNavigate('/profile'); setUserMenuOpen(false); }}>
+                    👤 个人信息
+                  </button>
+                  <button style={menuItemStyle}
+                    onClick={() => { setPwdForm({ oldPwd: '', newPwd: '', confirmPwd: '' }); setPwdError(''); setPwdModal(true); setUserMenuOpen(false); }}>
+                    🔑 修改密码
+                  </button>
+                  <div style={{ height: '1px', background: 'var(--border-light)', margin: '4px 0' }} />
+                  <button style={{ ...menuItemStyle, color: 'var(--danger)' }} onClick={handleLogout}>
+                    🚪 退出登录
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </header>
 
@@ -155,6 +206,38 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
           {children}
         </main>
       </div>
+
+      {/* 修改密码弹窗 */}
+      {pwdModal && (
+        <div className="modal-overlay" onClick={() => setPwdModal(false)}>
+          <div className="modal-container" style={{ width: '400px' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>修改密码</h3>
+              <button className="modal-close" onClick={() => setPwdModal(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {([['oldPwd', '原密码'], ['newPwd', '新密码（至少 6 位）'], ['confirmPwd', '确认新密码']] as const).map(([key, label]) => (
+                  <div key={key}>
+                    <div style={{ fontSize: '13px', marginBottom: '4px' }}>{label}</div>
+                    <input
+                      type="password"
+                      style={{ width: '100%', height: '38px', padding: '0 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: '14px', outline: 'none' }}
+                      value={pwdForm[key]}
+                      onChange={e => setPwdForm(f => ({ ...f, [key]: e.target.value }))}
+                    />
+                  </div>
+                ))}
+                {pwdError && <div style={{ fontSize: '12px', color: 'var(--danger)' }}>{pwdError}</div>}
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-default" onClick={() => setPwdModal(false)}>取消</button>
+              <button className="btn btn-primary" onClick={handleSavePwd}>保存</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
