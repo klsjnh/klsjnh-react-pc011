@@ -45,7 +45,6 @@ const HelpPage = lazy(() => import('./pages/HelpPage').then(m => ({ default: m.H
 const AboutPage = lazy(() => import('./pages/AboutPage').then(m => ({ default: m.AboutPage })));
 const ProfilePage = lazy(() => import('./pages/ProfilePage').then(m => ({ default: m.ProfilePage })));
 const BusinessPlaceholderPage = lazy(() => import('./pages/BusinessPlaceholderPage').then(m => ({ default: m.BusinessPlaceholderPage })));
-const UserFormPage = lazy(() => import('./pages/UserFormPage').then(m => ({ default: m.UserFormPage })));
 
 export const App: React.FC = () => {
   const isAuthenticated = useIsAuthenticated();
@@ -74,15 +73,6 @@ export const App: React.FC = () => {
   }
 
   const renderPage = () => {
-    // 新建用户
-    if (currentPath === '/user/create') {
-      return <UserFormPage onBack={() => handleNavigate('/users')} onSaved={() => handleNavigate('/users')} />;
-    }
-    // 编辑用户
-    if (currentPath.match(/^\/user\/edit\/\d+$/)) {
-      const id = Number(currentPath.split('/')[3]);
-      return <UserFormPage userId={id} onBack={() => handleNavigate(`/user/${id}`)} onSaved={() => handleNavigate(`/user/${id}`)} />;
-    }
     // 业务子路由（已实现 → 真实页面，未实现 → 占位页）
     if (currentPath.startsWith('/business/')) {
       const action = currentPath.split('/')[2] || '';

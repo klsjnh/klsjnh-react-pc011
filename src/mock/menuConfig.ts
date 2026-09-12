@@ -20,9 +20,9 @@ const initialMenuConfig: MenuConfig[] = [
     id: 1, parentId: 0, name: 'SystemRoot', path: '/system', icon: '⚙️', title: '系统管理', type: 'page', sort: 1, visible: true,
     children: [
       { id: 101, parentId: 1, name: 'Menus', path: '/menus', icon: '📋', title: '菜单管理', type: 'page', sort: 1, visible: true },
-      { id: 102, parentId: 1, name: 'Permissions', path: '/permissions', icon: '🔑', title: '权限管理', type: 'page', sort: 2, visible: true },
-      { id: 104, parentId: 1, name: 'Departments', path: '/departments', icon: '🏢', title: '组织管理', type: 'page', sort: 3, visible: true },
-      { id: 105, parentId: 1, name: 'Users', path: '/users', icon: '👥', title: '用户管理', type: 'page', sort: 4, visible: true },
+      { id: 104, parentId: 1, name: 'Departments', path: '/departments', icon: '🏢', title: '组织管理', type: 'page', sort: 2, visible: true },
+      { id: 105, parentId: 1, name: 'Users', path: '/users', icon: '👥', title: '用户管理', type: 'page', sort: 3, visible: true },
+      { id: 102, parentId: 1, name: 'Permissions', path: '/permissions', icon: '🔑', title: '权限管理', type: 'page', sort: 4, visible: true },
     ],
   },
   {
