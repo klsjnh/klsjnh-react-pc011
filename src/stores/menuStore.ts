@@ -4,6 +4,8 @@
  */
 import { useSyncExternalStore, useMemo } from 'react';
 import { mockApi, type MenuConfig } from '../mock/menuConfig';
+import { isMockMode } from '../config/appConfig';
+import { api, fireApi } from '../api/request';
 
 // ==================== 类型 ====================
 
@@ -47,7 +49,9 @@ export const menuStore = {
     if (state.loading || state.loaded) return;
     state = { ...state, loading: true };
     try {
-      const res = await mockApi.getMenuConfig();
+      const res = isMockMode()
+        ? await mockApi.getMenuConfig()
+        : { code: 0, data: await api.post<MenuConfig[]>('/menu/selectListByPage', {}) };
       if (res.code === 0) {
         state = { menus: res.data, loaded: true, loading: false };
       }
@@ -55,6 +59,12 @@ export const menuStore = {
       state.loading = false;
       emitChange();
     }
+  },
+
+  /** 清空缓存重新加载（切换数据模式后调用） */
+  reload: async () => {
+    state = { menus: [], loaded: false, loading: false };
+    await menuStore.load();
   },
 
   /** 获取 TabBar 项（/tabbar 的子节点，visible） */
@@ -85,6 +95,7 @@ export const menuStore = {
         });
       state = { ...state, menus: addToParent(state.menus) };
     }
+    if (!isMockMode()) fireApi('/menu/insert', newMenu);
     emitChange();
   },
 
@@ -97,6 +108,7 @@ export const menuStore = {
         return item;
       });
     state = { ...state, menus: updateRecursive(state.menus) };
+    if (!isMockMode()) fireApi('/menu/update', { id, ...data });
     emitChange();
   },
 
@@ -108,6 +120,7 @@ export const menuStore = {
         children: item.children ? deleteRecursive(item.children) : undefined,
       }));
     state = { ...state, menus: deleteRecursive(state.menus) };
+    if (!isMockMode()) fireApi('/menu/logicDelete', { id });
     emitChange();
   },
 
@@ -142,6 +155,7 @@ export const menuStore = {
           const parent = find(rest);
           return (parent?.children?.length || 0) + 1;
         })();
+    if (!isMockMode()) fireApi('/menu/move', { id, parentId: newParentId });
     const moved: MenuConfig = { ...node, parentId: newParentId, sort: targetSort };
     if (newParentId === 0) {
       state = { ...state, menus: [...rest, moved] };
@@ -159,6 +173,18 @@ export const menuStore = {
 
   /** 切换可见性 */
   toggleVisible: (id: number) => {
+    const findNode = (items: MenuConfig[]): MenuConfig | null => {
+      for (const item of items) {
+        if (item.id === id) return item;
+        if (item.children) {
+          const found = findNode(item.children);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    const node = findNode(state.menus);
+    const nextVisible = node ? !node.visible : undefined;
     const toggleRecursive = (items: MenuConfig[]): MenuConfig[] =>
       items.map((item) => {
         if (item.id === id) return { ...item, visible: !item.visible };
@@ -166,6 +192,7 @@ export const menuStore = {
         return item;
       });
     state = { ...state, menus: toggleRecursive(state.menus) };
+    if (!isMockMode() && nextVisible !== undefined) fireApi('/menu/update', { id, visible: nextVisible });
     emitChange();
   },
 };

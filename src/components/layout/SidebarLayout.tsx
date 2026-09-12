@@ -5,6 +5,10 @@ import React, { useState } from 'react';
 import { useCurrentUser, authStore } from '@/stores/authStore';
 import { useUnreadCount } from '@/stores/notificationStore';
 import { uiStore, useUiState } from '@/stores/uiStore';
+import { appConfigStore, useAppConfig, type DataMode } from '@/config/appConfig';
+import { menuStore } from '@/stores/menuStore';
+import { roleStore } from '@/stores/roleStore';
+import { notificationStore } from '@/stores/notificationStore';
 
 interface SidebarLayoutProps {
   children: React.ReactNode;
@@ -64,6 +68,9 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
   const [pwdError, setPwdError] = useState('');
   const user = useCurrentUser();
   const unread = useUnreadCount();
+  const appCfg = useAppConfig();
+  const [modeOpen, setModeOpen] = useState(false);
+  const [apiBaseInput, setApiBaseInput] = useState(appCfg.apiBaseUrl);
 
   const toggleExpand = (path: string) => {
     setExpandedMenus((prev) => {
@@ -88,6 +95,13 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
     setPwdForm({ oldPwd: '', newPwd: '', confirmPwd: '' });
     setPwdError('');
     window.alert('密码修改成功');
+  };
+
+  /** 切换数据模式（mock/api）后重新加载各 store 数据 */
+  const handleSwitchMode = async (mode: DataMode) => {
+    appConfigStore.setDataMode(mode);
+    setModeOpen(false);
+    await Promise.all([menuStore.reload(), roleStore.reload(), notificationStore.reload()]);
   };
 
   const menuItemStyle: React.CSSProperties = {
@@ -134,6 +148,72 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
           <span className="header-title">企业管理系统</span>
         </div>
         <div className="header-right">
+          {/* 数据模式切换（mock / api） */}
+          <div style={{ position: 'relative' }}>
+            <div
+              onClick={() => { setApiBaseInput(appCfg.apiBaseUrl); setModeOpen(o => !o); }}
+              title="数据模式：点击切换 Mock / API"
+              style={{
+                cursor: 'pointer', fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px',
+                padding: '3px 10px', borderRadius: '10px', userSelect: 'none',
+                color: appCfg.dataMode === 'mock' ? '#52c41a' : '#1890ff',
+                background: appCfg.dataMode === 'mock' ? '#f6ffed' : '#e6f7ff',
+                border: '1px solid ' + (appCfg.dataMode === 'mock' ? '#b7eb8f' : '#91caff'),
+              }}
+            >
+              {appCfg.dataMode === 'mock' ? 'MOCK' : 'API'}
+            </div>
+
+            {modeOpen && (
+              <>
+                <div style={{ position: 'fixed', inset: 0, zIndex: 1300 }} onClick={() => setModeOpen(false)} />
+                <div style={{
+                  position: 'absolute', right: 0, top: 'calc(100% + 8px)', zIndex: 1301,
+                  background: '#fff', border: '1px solid var(--border)', borderRadius: '8px',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.15)', width: '270px', padding: '14px',
+                }}>
+                  <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}>数据模式</div>
+                  {([['mock', 'Mock 模式', '本地内置数据'], ['api', 'API 模式', '请求真实后端']] as const).map(([value, label, desc]) => (
+                    <button key={value}
+                      onClick={() => handleSwitchMode(value)}
+                      style={{
+                        display: 'flex', width: '100%', alignItems: 'center', gap: '8px',
+                        padding: '8px 10px', marginBottom: '6px', cursor: 'pointer', textAlign: 'left',
+                        background: appCfg.dataMode === value ? '#e6f7ff' : '#fafafa',
+                        border: '1px solid ' + (appCfg.dataMode === value ? 'var(--primary)' : 'var(--border)'),
+                        borderRadius: '6px', fontSize: '13px',
+                      }}
+                    >
+                      <span style={{ fontWeight: 600 }}>{label}</span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{desc}</span>
+                      {appCfg.dataMode === value && <span style={{ marginLeft: 'auto', color: 'var(--primary)', fontWeight: 700 }}>✓</span>}
+                    </button>
+                  ))}
+
+                  <div style={{ fontSize: '13px', fontWeight: 600, margin: '12px 0 6px' }}>API 地址</div>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <input
+                      value={apiBaseInput}
+                      onChange={(e) => setApiBaseInput(e.target.value)}
+                      placeholder="http://localhost:18765/api/v1"
+                      style={{ flex: 1, height: '30px', padding: '0 8px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '12px', outline: 'none' }}
+                    />
+                    <button className="btn btn-primary btn-sm" onClick={() => appConfigStore.setApiBaseUrl(apiBaseInput.trim())}>保存</button>
+                  </div>
+
+                  {appCfg.lastApiError && (
+                    <div style={{ marginTop: '10px', fontSize: '11px', color: 'var(--danger)', wordBreak: 'break-all' }}>
+                      最近错误：{appCfg.lastApiError}
+                    </div>
+                  )}
+                  <div style={{ marginTop: '10px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                    切换模式后自动重新加载数据；也可用环境变量 VITE_DATA_MODE / VITE_API_BASE_URL 设置默认值
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
           {/* 消息通知铃铛（点击跳转，红点显示未读数） */}
           <div
             onClick={() => onNavigate('/notifications')}

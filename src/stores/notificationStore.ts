@@ -2,6 +2,8 @@
  * 通知状态管理（顶栏红点未读数 + 消息通知页共用）
  */
 import { useSyncExternalStore } from 'react';
+import { isMockMode } from '../config/appConfig';
+import { api, fireApi } from '../api/request';
 
 export interface NotificationItem {
   id: number;
@@ -43,24 +45,45 @@ export const notificationStore = {
   getSnapshot,
   subscribe,
 
-  /** 初始化 */
-  load: () => { if (!state.loaded) { state = { ...state, loaded: true }; emit(); } },
+  /** 初始化（api 模式从后端拉取，失败时回退本地 mock） */
+  load: async () => {
+    if (state.loaded) return;
+    if (!isMockMode()) {
+      try {
+        const data = await api.post<NotificationItem[]>('/notification/selectListByPage', {});
+        state = { notifications: data, loaded: true };
+        emit();
+        return;
+      } catch { /* 请求失败保留初始 mock 数据 */ }
+    }
+    state = { ...state, loaded: true };
+    emit();
+  },
+
+  /** 重载（切换数据模式后调用） */
+  reload: async () => {
+    state = { notifications: JSON.parse(JSON.stringify(initialNotifications)), loaded: false };
+    await notificationStore.load();
+  },
 
   /** 标记单条已读 */
   markAsRead: (id: number) => {
     state.notifications = state.notifications.map(n => n.id === id ? { ...n, read: true } : n);
+    if (!isMockMode()) fireApi('/notification/read', { id });
     emit();
   },
 
   /** 全部已读 */
   markAllRead: () => {
     state.notifications = state.notifications.map(n => ({ ...n, read: true }));
+    if (!isMockMode()) fireApi('/notification/readAll');
     emit();
   },
 
   /** 删除通知 */
   remove: (id: number) => {
     state.notifications = state.notifications.filter(n => n.id !== id);
+    if (!isMockMode()) fireApi('/notification/logicDelete', { id });
     emit();
   },
 };

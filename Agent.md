@@ -8,8 +8,18 @@
 ## 011.项目速览
 
 - **一句话**：企业级管理系统 —— PC 前端 + Java 17 DDD 后端
-- **技术栈**：React 18 + TypeScript + Vite（前端）/ Java 17 + Spring Boot 3.4 + MyBatis-Plus（后端）
+- **技术栈**：React 18 + TypeScript + Vite（前端，本仓库 pc-admin）/ Java 17 + Spring Boot 3.4 + MyBatis-Plus（后端）
 - **沟通机制**：统一响应信封 + POST + JSON body + camelCase
+
+### 011.文档地图（前端仓库）
+
+- 项目总览（启动 / 目录 / 路由 / 架构 / Mock-API 双模式）→ [`README.md`](README.md)
+- 文档体系与编号约定（编号序列 / 归档规则）→ [`docs/011.agreements.md`](docs/011.agreements.md)
+- 项目信息（背景 / 前后端模块对应关系）→ [`docs/013.project-info.md`](docs/013.project-info.md)
+- 前端编码标准（页面统一写法 / store 模式 / 命名规范）→ [`docs/015.coding-standards.md`](docs/015.coding-standards.md)
+- 接口契约（信封六键 / 状态码 / 前端请求行为）→ [`docs/016.api-contract.md`](docs/016.api-contract.md)
+- docs 索引与工作日志 → [`docs/README.md`](docs/README.md)、`docs/{YYYY-MM-DD}.md`
+- 后端框架仓库（权威契约源 / 业务设计 018 菜单 · 019 用户 · 022 角色）→ `klsjnh-java17-framework011` 的 `Agent.md` 与 `docs/`
 
 ## 015.铁律
 

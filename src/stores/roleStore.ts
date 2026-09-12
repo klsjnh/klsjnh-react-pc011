@@ -3,6 +3,8 @@
  */
 import { useSyncExternalStore, useMemo } from 'react';
 import { allPermissionKeys } from '../mock/permissionData';
+import { isMockMode } from '../config/appConfig';
+import { api, fireApi } from '../api/request';
 
 export interface RoleDetail {
   id: number;
@@ -115,8 +117,26 @@ export const roleStore = {
   getSnapshot,
   subscribe,
 
-  /** 初始化 */
-  load: () => { if (!state.loaded) { state = { ...state, loaded: true }; emit(); } },
+  /** 初始化（api 模式从后端拉取，失败时回退本地 mock） */
+  load: async () => {
+    if (state.loaded) return;
+    if (!isMockMode()) {
+      try {
+        const data = await api.post<{ roles: RoleDetail[]; users: UserInfo[] }>('/role/selectListByPage', {});
+        state = { roles: data.roles, users: data.users, loaded: true };
+        emit();
+        return;
+      } catch { /* 请求失败保留初始 mock 数据 */ }
+    }
+    state = { ...state, loaded: true };
+    emit();
+  },
+
+  /** 重载（切换数据模式后调用） */
+  reload: async () => {
+    state = { roles: JSON.parse(JSON.stringify(initialRoles)), users: [...initialUsers], loaded: false };
+    await roleStore.load();
+  },
 
   /** 角色列表 */
   getRoles: () => state.roles,
@@ -142,24 +162,28 @@ export const roleStore = {
   addRole: (data: Omit<RoleDetail, 'id' | 'userIds'>) => {
     const maxId = Math.max(0, ...state.roles.map(r => r.id));
     state.roles.push({ ...data, id: maxId + 1, userIds: [] });
+    if (!isMockMode()) fireApi('/role/insert', { ...data });
     emit();
   },
 
   /** 更新角色 */
   updateRole: (id: number, data: Partial<RoleDetail>) => {
     state.roles = state.roles.map(r => r.id === id ? { ...r, ...data } : r);
+    if (!isMockMode()) fireApi('/role/update', { id, ...data });
     emit();
   },
 
   /** 删除角色 */
   removeRole: (id: number) => {
     state.roles = state.roles.filter(r => r.id !== id);
+    if (!isMockMode()) fireApi('/role/logicDelete', { id });
     emit();
   },
 
   /** 分配权限 */
   assignPermissions: (roleId: number, keys: string[]) => {
     state.roles = state.roles.map(r => r.id === roleId ? { ...r, permissions: keys } : r);
+    if (!isMockMode()) fireApi('/role/updatePermission', { id: roleId, permissions: keys });
     emit();
   },
 
@@ -170,6 +194,7 @@ export const roleStore = {
       if (r.userIds.includes(userId)) return r;
       return { ...r, userIds: [...r.userIds, userId] };
     });
+    if (!isMockMode()) fireApi('/roleUser/insert', { roleId, userId });
     emit();
   },
 
@@ -179,6 +204,7 @@ export const roleStore = {
       if (r.id !== roleId) return r;
       return { ...r, userIds: r.userIds.filter(id => id !== userId) };
     });
+    if (!isMockMode()) fireApi('/roleUser/logicDelete', { roleId, userId });
     emit();
   },
 };
