@@ -111,6 +111,52 @@ export const menuStore = {
     emitChange();
   },
 
+  /** 移动菜单到新的父级（parentId=0 表示顶级；不能移动到自己或自己的子孙下） */
+  move: (id: number, newParentId: number): boolean => {
+    const find = (items: MenuConfig[]): MenuConfig | null => {
+      for (const item of items) {
+        if (item.id === id) return item;
+        if (item.children) {
+          const found = find(item.children);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    const node = find(state.menus);
+    if (!node || id === newParentId) return false;
+    if (newParentId !== 0) {
+      const inSubtree = (n: MenuConfig): boolean =>
+        n.id === newParentId || (n.children || []).some(inSubtree);
+      if (inSubtree(node)) return false;
+    }
+    const removeId = (items: MenuConfig[]): MenuConfig[] =>
+      items.filter((item) => item.id !== id).map((item) => ({
+        ...item,
+        children: item.children ? removeId(item.children) : undefined,
+      }));
+    const rest = removeId(state.menus);
+    const targetSort = newParentId === 0
+      ? rest.length + 1
+      : (() => {
+          const parent = find(rest);
+          return (parent?.children?.length || 0) + 1;
+        })();
+    const moved: MenuConfig = { ...node, parentId: newParentId, sort: targetSort };
+    if (newParentId === 0) {
+      state = { ...state, menus: [...rest, moved] };
+    } else {
+      const addUnder = (items: MenuConfig[]): MenuConfig[] =>
+        items.map((item) => {
+          if (item.id === newParentId) return { ...item, children: [...(item.children || []), moved] };
+          return item.children ? { ...item, children: addUnder(item.children) } : item;
+        });
+      state = { ...state, menus: addUnder(rest) };
+    }
+    emitChange();
+    return true;
+  },
+
   /** 切换可见性 */
   toggleVisible: (id: number) => {
     const toggleRecursive = (items: MenuConfig[]): MenuConfig[] =>

@@ -1,341 +1,436 @@
 /**
- * 菜单管理页 - 移动端（CRUD 实时驱动导航）
- * 增删改菜单 → menuStore 更新 → TabBar / 系统宫格实时变化
+ * 菜单管理页 - PC 端（左树右编辑+子表）
+ * 左侧：菜单树，支持右键菜单（新建子菜单/编辑/删除）与拖拽调整层级
+ * 右侧：上方为当前菜单的编辑表单（右上角保存），下方为其子菜单表格；点击树节点或表格行即切换
  */
-import React, { useState, useEffect, useMemo } from 'react';
-import { PageHeader, ConfirmDialog } from '../components';
+import React, { useState, useEffect } from 'react';
 import { menuStore, useMenuState, type MenuConfig } from '../stores/menuStore';
+import { ConfirmDialog } from '../components';
 
 interface MenuListPageProps {
   onNavigate?: (path: string) => void;
 }
 
-export const MenuListPage: React.FC<MenuListPageProps> = ({ onNavigate }) => {
+const inputStyle: React.CSSProperties = {
+  width: '100%', height: '38px', padding: '0 12px',
+  border: '1px solid var(--border)', borderRadius: 'var(--radius)',
+  fontSize: '14px', outline: 'none', background: '#fff',
+};
+
+export const MenuListPage: React.FC<MenuListPageProps> = () => {
   const { menus, loaded } = useMenuState();
-  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set([1, 2, 3]));
-  const [dialog, setDialog] = useState<{ visible: boolean; title: string; content: string; onConfirm: () => void }>({
-    visible: false, title: '', content: '', onConfirm: () => {},
-  });
-  const [editModal, setEditModal] = useState<{ visible: boolean; menu: MenuConfig | null }>({
-    visible: false, menu: null,
-  });
-  const [form, setForm] = useState({ title: '', path: '', icon: '', visible: true });
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+  const [selectedId, setSelectedId] = useState<number | null>(null);
 
-  // 创建菜单
-  const [createModal, setCreateModal] = useState(false);
-  const [createForm, setCreateForm] = useState({ title: '', path: '', icon: '📄', parentId: 0, type: 'page' as 'tab' | 'page' });
+  // 拖拽
+  const [dragId, setDragId] = useState<number | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | null>(null);
+  const [dragOverRoot, setDragOverRoot] = useState(false);
 
-  /** 创建菜单 */
-  const handleCreate = () => {
-    if (!createForm.title.trim() || !createForm.path.trim()) return;
-    const parent = menus.find(m => m.id === createForm.parentId);
-    menuStore.add({
-      parentId: createForm.parentId,
-      name: createForm.path.split('/').pop() || 'NewPage',
-      path: createForm.path,
-      icon: createForm.icon,
-      title: createForm.title,
-      type: createForm.type,
-      sort: (parent?.children?.length || 0) + 1,
-      visible: true,
-    });
-    setCreateModal(false);
-    setCreateForm({ title: '', path: '', icon: '📄', parentId: 0, type: 'page' });
-  };
+  // 右键菜单
+  const [ctx, setCtx] = useState<{ x: number; y: number; menu: MenuConfig } | null>(null);
 
-  // 展开所有顶级节点
+  // 新建弹窗（树上右键/左上按钮触发）
+  const [createModal, setCreateModal] = useState<{ visible: boolean; parentId: number }>({ visible: false, parentId: 0 });
+  const [form, setForm] = useState({ title: '', path: '', icon: '📄', type: 'page' as MenuConfig['type'], parentId: 0, visible: true });
+  const [dialog, setDialog] = useState({ visible: false, id: 0 });
+
   useEffect(() => {
     if (loaded && menus.length > 0) {
-      setExpandedIds(new Set(menus.map((m) => m.id)));
+      setExpandedIds(prev => (prev.size > 0 ? prev : new Set(menus.map(m => m.id))));
     }
   }, [loaded, menus]);
 
+  // ==================== 树操作 ====================
+
+  const findNode = (items: MenuConfig[], id: number): MenuConfig | null => {
+    for (const item of items) {
+      if (item.id === id) return item;
+      if (item.children) {
+        const found = findNode(item.children, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  /** node 子树中是否包含 id（用于禁止拖到自己的子孙下） */
+  const containsId = (node: MenuConfig, id: number): boolean =>
+    node.id === id || (node.children || []).some(c => containsId(c, id));
+
+  /** 从根到 id 的路径 */
+  const findPath = (items: MenuConfig[], id: number, trail: number[]): number[] | null => {
+    for (const item of items) {
+      const next = [...trail, item.id];
+      if (item.id === id) return next;
+      if (item.children) {
+        const found = findPath(item.children, id, next);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
   const toggleExpand = (id: number) => {
-    setExpandedIds((prev) => {
+    setExpandedIds(prev => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
   };
 
-  /** 打开编辑弹窗 */
-  const openEdit = (menu: MenuConfig) => {
-    setForm({ title: menu.title, path: menu.path, icon: menu.icon, visible: menu.visible });
-    setEditModal({ visible: true, menu });
+  const selectedNode = selectedId != null ? findNode(menus, selectedId) : null;
+  const childItems = (selectedNode?.children || []).slice().sort((a, b) => a.sort - b.sort);
+
+  // 选中节点变化时，把节点数据同步到编辑表单
+  useEffect(() => {
+    if (selectedNode) {
+      setForm({
+        title: selectedNode.title, path: selectedNode.path, icon: selectedNode.icon,
+        type: selectedNode.type, parentId: selectedNode.parentId, visible: selectedNode.visible,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId, menus]);
+
+  /** 点击树节点或表格行：选中并展开其祖先，右侧切换为该菜单的编辑 */
+  const selectNode = (menu: MenuConfig) => {
+    setSelectedId(menu.id);
+    const path = findPath(menus, menu.id, []);
+    if (path && path.length > 1) {
+      setExpandedIds(prev => {
+        const next = new Set(prev);
+        path.slice(0, -1).forEach(id => next.add(id));
+        return next;
+      });
+    }
   };
 
-  /** 保存编辑 */
-  const handleSaveEdit = () => {
-    if (!editModal.menu || !form.title.trim()) return;
-    menuStore.update(editModal.menu.id, {
-      title: form.title,
+  /** 上级菜单下拉选项（excludeNode 及其子孙会被置灰） */
+  const buildParentOptions = (excludeNode: MenuConfig | null) => {
+    const options: { id: number; label: string; disabled: boolean }[] = [];
+    const walk = (items: MenuConfig[], depth: number) => {
+      items.forEach(m => {
+        const disabled = excludeNode != null && containsId(excludeNode, m.id);
+        options.push({ id: m.id, label: `${'　'.repeat(depth)}${m.icon} ${m.title}`, disabled });
+        if (m.children) walk(m.children, depth + 1);
+      });
+    };
+    walk(menus, 0);
+    return options;
+  };
+
+  // ==================== 增删改 ====================
+
+  const openCreate = (parentId: number) => {
+    setForm({ title: '', path: '', icon: '📄', type: 'page', parentId, visible: true });
+    setCreateModal({ visible: true, parentId });
+  };
+
+  const handleSaveCreate = () => {
+    if (!form.title.trim() || !form.path.trim()) return;
+    const parent = form.parentId === 0 ? null : findNode(menus, form.parentId);
+    menuStore.add({
+      parentId: form.parentId,
+      name: form.path.split('/').pop() || 'NewPage',
       path: form.path,
       icon: form.icon,
-      visible: form.visible,
+      title: form.title,
+      type: form.type,
+      sort: (parent?.children?.length || 0) + 1,
+      visible: true,
     });
-    setEditModal({ visible: false, menu: null });
+    if (form.parentId !== 0) setExpandedIds(prev => new Set(prev).add(form.parentId));
+    setCreateModal({ visible: false, parentId: 0 });
   };
 
-  /** 删除菜单 */
+  const handleSaveEdit = () => {
+    if (!selectedNode || !form.title.trim() || !form.path.trim()) return;
+    menuStore.update(selectedNode.id, { title: form.title, path: form.path, icon: form.icon, type: form.type, visible: form.visible });
+    if (form.parentId !== selectedNode.parentId) menuStore.move(selectedNode.id, form.parentId);
+  };
+
   const handleDelete = (menu: MenuConfig) => {
     if (menu.children && menu.children.length > 0) {
       alert('该菜单下存在子菜单，无法删除');
       return;
     }
-    setDialog({
-      visible: true,
-      title: '删除菜单',
-      content: `确定删除「${menu.title}」吗？删除后导航将实时更新。`,
-      onConfirm: () => {
-        menuStore.remove(menu.id);
-        setDialog(d => ({ ...d, visible: false }));
-      },
-    });
+    setDialog({ visible: true, id: menu.id });
   };
 
-  /** 切换可见性 */
-  const handleToggleVisible = (menu: MenuConfig) => {
-    menuStore.toggleVisible(menu.id);
-  };
-
-  /** 添加子菜单 */
-  const handleAddChild = (parent: MenuConfig) => {
-    const title = prompt('请输入菜单标题:');
-    if (!title?.trim()) return;
-    const path = prompt('请输入路由路径（如 /business/newpage）:');
-    if (!path?.trim()) return;
-    menuStore.add({
-      parentId: parent.id,
-      name: path.split('/').pop() || 'NewPage',
-      path: path,
-      icon: '📄',
-      title: title,
-      type: 'page',
-      sort: (parent.children?.length || 0) + 1,
-      visible: true,
-    });
-  };
+  // ==================== 渲染 ====================
 
   const typeLabels: Record<string, string> = { tab: '导航', page: '页面' };
   const typeColors: Record<string, string> = { tab: '#1890ff', page: '#52c41a' };
 
-  const renderMenuItem = (menu: MenuConfig, depth = 0): React.ReactNode => {
+  const renderTreeNode = (menu: MenuConfig, depth = 0): React.ReactNode => {
     const hasChildren = menu.children && menu.children.length > 0;
     const isExpanded = expandedIds.has(menu.id);
-    const canEdit = menu.visible && menu.path !== '/tabbar'; // 分组节点不可编辑
+    const isSelected = selectedId === menu.id;
+    const dragNode = dragId != null ? findNode(menus, dragId) : null;
+    const canDrop = dragNode != null && dragId !== menu.id && !containsId(dragNode, menu.id);
 
     return (
       <React.Fragment key={menu.id}>
         <div
+          draggable
+          onDragStart={(e) => { setDragId(menu.id); e.dataTransfer.effectAllowed = 'move'; }}
+          onDragEnd={() => { setDragId(null); setDragOverId(null); }}
+          onDragOver={(e) => {
+            if (!canDrop) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            setDragOverId(menu.id);
+          }}
+          onDragLeave={() => setDragOverId(prev => (prev === menu.id ? null : prev))}
+          onDrop={(e) => {
+            e.preventDefault();
+            if (canDrop && dragId != null) {
+              menuStore.move(dragId, menu.id);
+              setExpandedIds(prev => new Set(prev).add(menu.id));
+            }
+            setDragOverId(null);
+          }}
+          onClick={() => selectNode(menu)}
+          onContextMenu={(e) => { e.preventDefault(); setCtx({ x: e.clientX, y: e.clientY, menu }); }}
           style={{
-            display: 'flex', alignItems: 'center', gap: '8px',
-            padding: '10px 14px', paddingLeft: `${14 + depth * 16}px`,
-            background: depth === 0 ? '#fafafa' : 'var(--bg-card)',
+            display: 'flex', alignItems: 'center', gap: '6px',
+            padding: '7px 10px', paddingLeft: `${10 + depth * 16}px`,
+            cursor: 'pointer', fontSize: '13px',
             borderBottom: '1px solid var(--border-light)',
+            background: isSelected ? '#e6f7ff' : dragOverId === menu.id ? '#fffbe6' : 'transparent',
+            borderLeft: isSelected ? '3px solid var(--primary)' : '3px solid transparent',
+            opacity: dragId === menu.id ? 0.5 : 1,
           }}
         >
           {hasChildren ? (
-            <button onClick={() => toggleExpand(menu.id)} style={{ background: 'none', border: 'none', fontSize: '10px', cursor: 'pointer', padding: '0 4px', transform: isExpanded ? 'rotate(90deg)' : 'rotate(0)', transition: 'transform 0.2s' }}>▶</button>
-          ) : (
-            <span style={{ width: '18px' }} />
-          )}
-          <span style={{ fontSize: '16px' }}>{menu.icon || '📄'}</span>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '13px', fontWeight: depth === 0 ? 600 : 400 }}>
-              {menu.title}
-              {!menu.visible && <span style={{ fontSize: '10px', color: 'var(--text-muted)', marginLeft: '4px' }}>(隐藏)</span>}
-            </div>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{menu.path}</div>
-          </div>
-          <span style={{
-            fontSize: '10px', padding: '1px 6px', borderRadius: '4px',
-            background: typeColors[menu.type] + '20', color: typeColors[menu.type] || 'var(--text-muted)',
-          }}>
-            {typeLabels[menu.type] || menu.type}
+            <button onClick={(e) => { e.stopPropagation(); toggleExpand(menu.id); }}
+              style={{ background: 'none', border: 'none', fontSize: '10px', cursor: 'pointer', padding: '0 2px', transform: isExpanded ? 'rotate(90deg)' : 'rotate(0)' }}>▶</button>
+          ) : <span style={{ width: '14px' }} />}
+          <span>{menu.icon || '📄'}</span>
+          <span style={{ flex: 1, fontWeight: depth === 0 ? 600 : 400 }}>
+            {menu.title}
+            {!menu.visible && <span style={{ fontSize: '10px', color: 'var(--text-muted)', marginLeft: '4px' }}>(隐藏)</span>}
           </span>
+          {hasChildren && <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{menu.children!.length}</span>}
         </div>
-
-        {/* 操作按钮 */}
-        {canEdit && (
-          <div style={{
-            display: 'flex', gap: '6px', padding: '6px 14px',
-            paddingLeft: `${14 + depth * 16 + 24}px`,
-            background: depth === 0 ? '#fafafa' : 'var(--bg-card)',
-            borderBottom: '1px solid var(--border-light)',
-          }}>
-            <button onClick={() => openEdit(menu)} style={{ height: '26px', fontSize: '11px', padding: '0 10px', background: '#f0f5ff', color: '#597ef7', border: '1px solid #d6e4ff', borderRadius: 'var(--radius)', cursor: 'pointer' }}>编辑</button>
-            <button onClick={() => handleToggleVisible(menu)} style={{ height: '26px', fontSize: '11px', padding: '0 10px', background: menu.visible ? '#fff7e6' : '#f6ffed', color: menu.visible ? '#faad14' : '#52c41a', border: '1px solid var(--border)', borderRadius: 'var(--radius)', cursor: 'pointer' }}>
-              {menu.visible ? '隐藏' : '显示'}
-            </button>
-            <button onClick={() => handleDelete(menu)} style={{ height: '26px', fontSize: '11px', padding: '0 10px', background: '#fff', color: 'var(--danger)', border: '1px solid var(--danger)', borderRadius: 'var(--radius)', cursor: 'pointer' }}>删除</button>
-          </div>
-        )}
-
-        {/* 添加子菜单按钮 */}
-        {hasChildren && isExpanded && (
-          <div style={{
-            display: 'flex', justifyContent: 'flex-end', padding: '6px 14px',
-            background: depth === 0 ? '#fafafa' : 'var(--bg-card)',
-            borderBottom: '1px solid var(--border-light)',
-          }}>
-            <button
-              onClick={() => handleAddChild(menu)}
-              style={{
-                height: '26px', fontSize: '11px', padding: '0 12px',
-                background: '#f6ffed', color: '#52c41a',
-                border: '1px solid #b7eb8f', borderRadius: 'var(--radius)',
-                cursor: 'pointer',
-              }}
-            >
-              + 添加子菜单
-            </button>
-          </div>
-        )}
-
-        {/* 子菜单 */}
-        {hasChildren && isExpanded && menu.children!.map(child => renderMenuItem(child, depth + 1))}
+        {hasChildren && isExpanded && menu.children!.map(child => renderTreeNode(child, depth + 1))}
       </React.Fragment>
     );
   };
 
+  const ctxItemStyle: React.CSSProperties = {
+    display: 'block', width: '100%', textAlign: 'left', padding: '7px 12px',
+    background: 'none', border: 'none', fontSize: '13px', cursor: 'pointer',
+    color: 'var(--text-primary)', borderRadius: '4px',
+  };
+
   return (
-    <div className="page">
-      <PageHeader
-        title="菜单管理"
-        subtitle="增删改菜单 → 导航实时更新"
-        onBack={() => onNavigate?.('/system')}
-        right={
-          <button
-            onClick={() => setCreateModal(true)}
+    <div>
+      <div className="page-header">
+        <h2>菜单管理</h2>
+        <p>左树右表 · 点击树节点或表格行编辑该菜单 · 右键新建 · 拖拽调整层级</p>
+      </div>
+
+      <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+        {/* ===== 左侧：菜单树 ===== */}
+        <div style={{ width: '300px', flexShrink: 0 }}>
+          <div className="table-wrapper" style={{ padding: '10px 12px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '13px', fontWeight: 600 }}>菜单结构</span>
+            <button className="btn-link" onClick={() => openCreate(0)}>+ 新建顶级菜单</button>
+          </div>
+          <div className="table-wrapper" style={{ padding: 0, maxHeight: '520px', overflowY: 'auto' }}>
+            {menus.map(menu => renderTreeNode(menu))}
+          </div>
+          {/* 拖拽为顶级的放置区 */}
+          <div
+            onDragOver={(e) => { if (dragId != null) { e.preventDefault(); setDragOverRoot(true); } }}
+            onDragLeave={() => setDragOverRoot(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              if (dragId != null) menuStore.move(dragId, 0);
+              setDragOverRoot(false);
+              setDragId(null);
+            }}
             style={{
-              height: '32px', padding: '0 14px',
-              background: 'var(--primary)', color: '#fff',
-              border: 'none', borderRadius: 'var(--radius)',
-              fontSize: '13px', cursor: 'pointer',
+              marginTop: '8px', padding: '10px', textAlign: 'center', fontSize: '12px',
+              color: 'var(--text-muted)',
+              border: dragOverRoot ? '2px dashed var(--primary)' : '2px dashed var(--border)',
+              borderRadius: 'var(--radius)', background: dragOverRoot ? '#fffbe6' : 'transparent',
             }}
           >
-            + 新建菜单
-          </button>
-        }
-      />
-
-      {/* 菜单树 */}
-      <div style={{ borderRadius: 'var(--radius)', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', marginBottom: '12px' }}>
-        {menus.map(menu => renderMenuItem(menu))}
-      </div>
-
-      {/* 说明 */}
-      <div style={{
-        background: '#f5f7fa',
-        borderRadius: 'var(--radius)',
-        padding: '14px',
-        fontSize: '12px',
-        color: 'var(--text-muted)',
-        lineHeight: 1.8,
-      }}>
-        <div style={{ fontWeight: 600, marginBottom: '4px' }}>💡 动态菜单</div>
-        此处增删改菜单会实时影响：<br />
-        • 底部 TabBar 导航（type=tab）<br />
-        • 系统/业务页宫格（type=page）<br />
-        • 隐藏的菜单不出现在导航中
-      </div>
-
-      {/* 编辑弹窗 */}
-      {editModal.visible && (
-        <div style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,0.45)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 1000,
-        }} onClick={() => setEditModal({ visible: false, menu: null })}>
-          <div style={{
-            width: 'calc(100vw - 48px)', maxWidth: '340px',
-            background: '#fff', borderRadius: '12px', padding: '20px',
-          }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ fontSize: '16px', fontWeight: 600, marginBottom: '14px' }}>编辑菜单</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 500, marginBottom: '4px' }}>标题</div>
-                <input style={{ width: '100%', height: '38px', padding: '0 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: '14px', outline: 'none' }} value={form.title} onChange={(e) => setForm(f => ({ ...f, title: e.target.value }))} />
-              </div>
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 500, marginBottom: '4px' }}>路径</div>
-                <input style={{ width: '100%', height: '38px', padding: '0 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: '14px', outline: 'none' }} value={form.path} onChange={(e) => setForm(f => ({ ...f, path: e.target.value }))} />
-              </div>
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 500, marginBottom: '4px' }}>图标（emoji）</div>
-                <input style={{ width: '100%', height: '38px', padding: '0 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: '14px', outline: 'none' }} value={form.icon} onChange={(e) => setForm(f => ({ ...f, icon: e.target.value }))} />
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '13px' }}>显示</span>
-                <input type="checkbox" checked={form.visible} onChange={(e) => setForm(f => ({ ...f, visible: e.target.checked }))} />
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
-              <button onClick={() => setEditModal({ visible: false, menu: null })} style={{ flex: 1, height: '36px', background: '#fff', color: 'var(--text-secondary)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: '14px', cursor: 'pointer' }}>取消</button>
-              <button onClick={handleSaveEdit} style={{ flex: 1, height: '36px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 'var(--radius)', fontSize: '14px', cursor: 'pointer' }}>保存</button>
-            </div>
+            拖拽到此处设为顶级菜单
           </div>
         </div>
+
+        {/* ===== 右侧：编辑表单 + 子菜单表格 ===== */}
+        <div style={{ flex: 1 }}>
+          {selectedNode && (
+            <>
+              {/* 编辑表单（右上角保存） */}
+              <div className="page-toolbar">
+                <div className="toolbar-left">
+                  <span style={{ fontSize: '14px', fontWeight: 600 }}>{selectedNode.icon} 编辑菜单 - {selectedNode.title}</span>
+                </div>
+                <div className="toolbar-right">
+                  <button className="btn btn-primary" onClick={handleSaveEdit}
+                    disabled={!form.title.trim() || !form.path.trim()}
+                    style={{ opacity: form.title.trim() && form.path.trim() ? 1 : 0.5 }}>
+                    保存
+                  </button>
+                </div>
+              </div>
+              <div className="table-wrapper" style={{ padding: '20px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxWidth: '560px' }}>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '13px', marginBottom: '4px' }}>菜单标题 <span style={{ color: 'var(--danger)' }}>*</span></div>
+                      <input style={inputStyle} value={form.title} onChange={(e) => setForm(f => ({ ...f, title: e.target.value }))} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '13px', marginBottom: '4px' }}>图标（emoji）</div>
+                      <input style={inputStyle} value={form.icon} onChange={(e) => setForm(f => ({ ...f, icon: e.target.value }))} />
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <div style={{ flex: 2 }}>
+                      <div style={{ fontSize: '13px', marginBottom: '4px' }}>路由路径 <span style={{ color: 'var(--danger)' }}>*</span></div>
+                      <input style={inputStyle} value={form.path} onChange={(e) => setForm(f => ({ ...f, path: e.target.value }))} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '13px', marginBottom: '4px' }}>类型</div>
+                      <select style={inputStyle} value={form.type} onChange={(e) => setForm(f => ({ ...f, type: e.target.value as MenuConfig['type'] }))}>
+                        <option value="page">页面</option>
+                        <option value="tab">导航</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '13px', marginBottom: '4px' }}>上级菜单</div>
+                      <select style={inputStyle} value={form.parentId} onChange={(e) => setForm(f => ({ ...f, parentId: Number(e.target.value) }))}>
+                        <option value={0}>（顶级菜单）</option>
+                        {buildParentOptions(selectedNode).map(o => <option key={o.id} value={o.id} disabled={o.disabled}>{o.label}</option>)}
+                      </select>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '10px' }}>
+                      <input id="menu-visible" type="checkbox" checked={form.visible} onChange={(e) => setForm(f => ({ ...f, visible: e.target.checked }))} />
+                      <label htmlFor="menu-visible" style={{ fontSize: '13px', cursor: 'pointer' }}>在导航中显示</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* 子菜单表格（未选中时显示全部顶级菜单） */}
+          <div className="page-toolbar">
+            <div className="toolbar-left">
+              <span style={{ fontSize: '14px', fontWeight: 600 }}>
+                {selectedNode ? `${selectedNode.icon} ${selectedNode.title} 的子菜单` : '顶级菜单'}
+              </span>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>（{childItems.length} 项 · 点击行编辑该菜单）</span>
+            </div>
+          </div>
+          <div className="table-wrapper">
+            <table className="data-table">
+              <thead>
+                <tr><th>菜单标题</th><th>路由路径</th><th>类型</th><th>排序</th><th>可见</th><th style={{ width: '120px' }}>操作</th></tr>
+              </thead>
+              <tbody>
+                {childItems.length === 0 ? (
+                  <tr><td colSpan={6} style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>
+                    {selectedNode ? '该节点下暂无子菜单' : '暂无顶级菜单，可在左侧点击「+ 新建顶级菜单」'}
+                  </td></tr>
+                ) : (
+                  childItems.map(menu => (
+                    <tr key={menu.id} style={{ cursor: 'pointer', background: selectedId === menu.id ? '#f0f7ff' : undefined }} onClick={() => selectNode(menu)}>
+                      <td><span style={{ marginRight: '6px' }}>{menu.icon}</span>{menu.title}</td>
+                      <td><code style={{ fontSize: '12px' }}>{menu.path}</code></td>
+                      <td>
+                        <span className="status-badge" style={{ background: (typeColors[menu.type] || '#999') + '20', color: typeColors[menu.type] || 'var(--text-muted)' }}>
+                          {typeLabels[menu.type] || menu.type}
+                        </span>
+                      </td>
+                      <td>{menu.sort}</td>
+                      <td>
+                        <span className={`status-badge ${menu.visible ? 'status-active' : 'status-inactive'}`}>{menu.visible ? '显示' : '隐藏'}</span>
+                      </td>
+                      <td onClick={(e) => e.stopPropagation()}>
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <button className="btn-link" onClick={() => selectNode(menu)}>编辑</button>
+                          <button className="btn-link" onClick={() => menuStore.toggleVisible(menu.id)}>{menu.visible ? '隐藏' : '显示'}</button>
+                          <button className="btn-link danger" onClick={() => handleDelete(menu)}>删除</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* 右键菜单 */}
+      {ctx && (
+        <>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 1200 }} onClick={() => setCtx(null)} onContextMenu={(e) => { e.preventDefault(); setCtx(null); }} />
+          <div style={{
+            position: 'fixed', left: ctx.x, top: ctx.y, zIndex: 1201,
+            background: '#fff', border: '1px solid var(--border)', borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)', padding: '4px', minWidth: '140px',
+          }}>
+            <button style={ctxItemStyle} onClick={() => { openCreate(ctx.menu.id); setCtx(null); }}>➕ 新建子菜单</button>
+            <button style={ctxItemStyle} onClick={() => { selectNode(ctx.menu); setCtx(null); }}>✏️ 编辑</button>
+            <button style={{ ...ctxItemStyle, color: 'var(--danger)' }} onClick={() => { handleDelete(ctx.menu); setCtx(null); }}>🗑 删除</button>
+          </div>
+        </>
       )}
 
-      {/* 创建菜单弹窗 */}
-      {createModal && (
-        <div style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,0.45)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 1000,
-        }} onClick={() => setCreateModal(false)}>
-          <div style={{
-            width: 'calc(100vw - 48px)', maxWidth: '340px',
-            background: '#fff', borderRadius: '12px', padding: '20px',
-          }} onClick={(e) => e.stopPropagation()}>
+      {/* 新建菜单弹窗 */}
+      {createModal.visible && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}
+          onClick={() => setCreateModal({ visible: false, parentId: 0 })}>
+          <div style={{ width: '420px', background: '#fff', borderRadius: '12px', padding: '20px' }} onClick={e => e.stopPropagation()}>
             <div style={{ fontSize: '16px', fontWeight: 600, marginBottom: '14px' }}>新建菜单</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
-                <div style={{ fontSize: '13px', fontWeight: 500, marginBottom: '4px' }}>上级菜单</div>
-                <select
-                  style={{ width: '100%', height: '38px', padding: '0 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: '14px', outline: 'none', background: '#fff' }}
-                  value={createForm.parentId}
-                  onChange={(e) => setCreateForm(f => ({ ...f, parentId: Number(e.target.value) }))}
-                >
-                  {menus.map(m => (
-                    <option key={m.id} value={m.id}>{m.title}</option>
-                  ))}
+                <div style={{ fontSize: '13px', marginBottom: '4px' }}>上级菜单</div>
+                <select style={inputStyle} value={form.parentId} onChange={(e) => setForm(f => ({ ...f, parentId: Number(e.target.value) }))}>
+                  <option value={0}>（顶级菜单）</option>
+                  {buildParentOptions(null).map(o => <option key={o.id} value={o.id}>{o.label}</option>)}
                 </select>
               </div>
               <div>
-                <div style={{ fontSize: '13px', fontWeight: 500, marginBottom: '4px' }}>菜单标题 <span style={{ color: 'var(--danger)' }}>*</span></div>
-                <input
-                  style={{ width: '100%', height: '38px', padding: '0 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: '14px', outline: 'none' }}
-                  placeholder="请输入菜单标题"
-                  value={createForm.title}
-                  onChange={(e) => setCreateForm(f => ({ ...f, title: e.target.value }))}
-                />
+                <div style={{ fontSize: '13px', marginBottom: '4px' }}>菜单标题 <span style={{ color: 'var(--danger)' }}>*</span></div>
+                <input style={inputStyle} placeholder="请输入菜单标题" value={form.title} onChange={(e) => setForm(f => ({ ...f, title: e.target.value }))} />
               </div>
               <div>
-                <div style={{ fontSize: '13px', fontWeight: 500, marginBottom: '4px' }}>路由路径 <span style={{ color: 'var(--danger)' }}>*</span></div>
-                <input
-                  style={{ width: '100%', height: '38px', padding: '0 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: '14px', outline: 'none' }}
-                  placeholder="如 /business/newpage"
-                  value={createForm.path}
-                  onChange={(e) => setCreateForm(f => ({ ...f, path: e.target.value }))}
-                />
+                <div style={{ fontSize: '13px', marginBottom: '4px' }}>路由路径 <span style={{ color: 'var(--danger)' }}>*</span></div>
+                <input style={inputStyle} placeholder="如 /business/newpage" value={form.path} onChange={(e) => setForm(f => ({ ...f, path: e.target.value }))} />
               </div>
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 500, marginBottom: '4px' }}>图标（emoji）</div>
-                <input
-                  style={{ width: '100%', height: '38px', padding: '0 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: '14px', outline: 'none' }}
-                  value={createForm.icon}
-                  onChange={(e) => setCreateForm(f => ({ ...f, icon: e.target.value }))}
-                />
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '13px', marginBottom: '4px' }}>图标（emoji）</div>
+                  <input style={inputStyle} value={form.icon} onChange={(e) => setForm(f => ({ ...f, icon: e.target.value }))} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '13px', marginBottom: '4px' }}>类型</div>
+                  <select style={inputStyle} value={form.type} onChange={(e) => setForm(f => ({ ...f, type: e.target.value as MenuConfig['type'] }))}>
+                    <option value="page">页面</option>
+                    <option value="tab">导航</option>
+                  </select>
+                </div>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
-              <button onClick={() => setCreateModal(false)} style={{ flex: 1, height: '38px', background: '#fff', color: 'var(--text-secondary)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: '14px', cursor: 'pointer' }}>取消</button>
-              <button onClick={handleCreate} disabled={!createForm.title.trim() || !createForm.path.trim()} style={{ flex: 1, height: '38px', background: createForm.title.trim() && createForm.path.trim() ? 'var(--primary)' : '#d9d9d9', color: '#fff', border: 'none', borderRadius: 'var(--radius)', fontSize: '14px', cursor: createForm.title.trim() && createForm.path.trim() ? 'pointer' : 'not-allowed' }}>创建</button>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '16px' }}>
+              <button className="btn btn-default" onClick={() => setCreateModal({ visible: false, parentId: 0 })}>取消</button>
+              <button className="btn btn-primary" onClick={handleSaveCreate}
+                disabled={!form.title.trim() || !form.path.trim()}
+                style={{ opacity: form.title.trim() && form.path.trim() ? 1 : 0.5 }}>
+                保存
+              </button>
             </div>
           </div>
         </div>
@@ -343,11 +438,15 @@ export const MenuListPage: React.FC<MenuListPageProps> = ({ onNavigate }) => {
 
       <ConfirmDialog
         visible={dialog.visible}
-        title={dialog.title}
-        content={dialog.content}
-        onConfirm={dialog.onConfirm}
-        onCancel={() => setDialog(d => ({ ...d, visible: false }))}
+        title="删除菜单"
+        content="确定删除这个菜单吗？删除后导航将实时更新。"
         danger
+        onConfirm={() => {
+          menuStore.remove(dialog.id);
+          if (selectedId === dialog.id) setSelectedId(null);
+          setDialog({ visible: false, id: 0 });
+        }}
+        onCancel={() => setDialog({ visible: false, id: 0 })}
       />
     </div>
   );

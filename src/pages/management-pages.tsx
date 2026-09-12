@@ -277,7 +277,7 @@ export const PermissionPage: React.FC = () => {
 // ==================== 组织管理 ====================
 
 export const DepartmentPage: React.FC = () => {
-  const [departments, setDepartments] = useState([
+  const [departments, setDepartments] = useState<DeptNode[]>([
     { id: 1, name: '华信集团', code: 'HX', leader: '王董事长', count: 580, children: [
       { id: 11, name: '华信科技', code: 'HX-TECH', leader: '张总', count: 280, children: [
         { id: 111, name: '研发中心', code: 'RD', leader: '李总监', count: 120 },
@@ -290,26 +290,78 @@ export const DepartmentPage: React.FC = () => {
     ]},
   ]);
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set([1, 11]));
-  const [modal, setModal] = useState<{ visible: boolean; parent: any }>({ visible: false, parent: null });
+  const [modal, setModal] = useState<{ visible: boolean; mode: 'create' | 'edit'; node: DeptNode | null }>({ visible: false, mode: 'create', node: null });
   const [form, setForm] = useState({ name: '', code: '', leader: '' });
+  const [parentChoice, setParentChoice] = useState<number>(0);
   const [dialog, setDialog] = useState({ visible: false, id: 0 });
 
   interface DeptNode { id: number; name: string; code: string; leader: string; count: number; children?: any[] }
 
-  const handleCreate = () => {
-    if (!form.name.trim()) return;
-    const newDept: DeptNode = { id: Date.now(), name: form.name, code: form.code || 'NEW', leader: form.leader || '待定', count: 0 };
-    if (modal.parent) {
-      const addToParent = (items: DeptNode[]): DeptNode[] =>
-        items.map(item => {
-          if (item.id === modal.parent.id) return { ...item, children: [...(item.children || []), newDept] };
-          return item.children ? { ...item, children: addToParent(item.children) } : item;
-        });
-      setDepartments(addToParent(departments) as typeof departments);
-    } else {
-      setDepartments(prev => [...prev, { ...newDept, children: [] }]);
+  const containsId = (node: DeptNode, id: number): boolean =>
+    node.id === id || (node.children || []).some(c => containsId(c, id));
+  const findParentId = (items: DeptNode[], id: number, parentId: number = 0): number => {
+    for (const item of items) {
+      if (item.id === id) return parentId;
+      if (item.children) {
+        const found = findParentId(item.children, id, item.id);
+        if (found !== -1) return found;
+      }
     }
-    setModal({ visible: false, parent: null });
+    return -1;
+  };
+  const updateById = (items: DeptNode[], id: number, data: Partial<DeptNode>): DeptNode[] =>
+    items.map(item => item.id === id
+      ? { ...item, ...data }
+      : { ...item, children: item.children ? updateById(item.children, id, data) : item.children });
+  const detachById = (items: DeptNode[], id: number): DeptNode[] =>
+    items.filter(item => item.id !== id).map(item => ({ ...item, children: item.children ? detachById(item.children, id) : item.children }));
+  const appendUnder = (items: DeptNode[], parentId: number, node: DeptNode): DeptNode[] =>
+    items.map(item => {
+      if (item.id === parentId) return { ...item, children: [...(item.children || []), node] };
+      return item.children ? { ...item, children: appendUnder(item.children, parentId, node) } : item;
+    });
+
+  // 上级组织下拉选项（编辑时排除自己及下级）
+  const parentOptions: { id: number; label: string; disabled: boolean }[] = [];
+  const flattenOrgs = (items: DeptNode[], depth: number) => {
+    items.forEach(item => {
+      const disabled = modal.mode === 'edit' && modal.node != null && containsId(modal.node, item.id);
+      parentOptions.push({ id: item.id, label: `${'　'.repeat(depth)}${item.name}`, disabled });
+      if (item.children?.length) flattenOrgs(item.children, depth + 1);
+    });
+  };
+  flattenOrgs(departments, 0);
+
+  const openCreate = (parent: DeptNode | null) => {
+    setForm({ name: '', code: '', leader: '' });
+    setParentChoice(parent ? parent.id : 0);
+    setModal({ visible: true, mode: 'create', node: null });
+  };
+
+  const openEdit = (dept: DeptNode) => {
+    setForm({ name: dept.name, code: dept.code, leader: dept.leader });
+    setParentChoice(findParentId(departments, dept.id));
+    setModal({ visible: true, mode: 'edit', node: dept });
+  };
+
+  const handleSave = () => {
+    if (!form.name.trim()) return;
+    if (modal.mode === 'create') {
+      const newDept: DeptNode = { id: Date.now(), name: form.name, code: form.code || 'NEW', leader: form.leader || '待定', count: 0, children: [] };
+      setDepartments(prev => parentChoice === 0 ? [...prev, newDept] : appendUnder(prev, parentChoice, newDept));
+    } else if (modal.node) {
+      const node = modal.node;
+      const oldParentId = findParentId(departments, node.id);
+      if (parentChoice === oldParentId) {
+        setDepartments(prev => updateById(prev, node.id, { name: form.name, code: form.code, leader: form.leader }));
+      } else {
+        // 更新字段并移动到新的上级（含顶级）
+        const rest = detachById(departments, node.id);
+        const moved: DeptNode = { ...node, name: form.name, code: form.code, leader: form.leader };
+        setDepartments(parentChoice === 0 ? [...rest, moved] : appendUnder(rest, parentChoice, moved));
+      }
+    }
+    setModal({ visible: false, mode: 'create', node: null });
   };
 
   const handleDelete = (id: number) => {
@@ -336,11 +388,11 @@ export const DepartmentPage: React.FC = () => {
           <td>{dept.leader}</td>
           <td>{dept.count} 人</td>
           <td>
-            <div style={{ display: 'flex', gap: '4px' }}>
-              <button className="btn-link" onClick={() => { setForm({ name: dept.name, code: dept.code, leader: dept.leader }); setModal({ visible: true, parent: dept }); }}>编辑</button>
-              <button className="btn-link" onClick={() => { setForm({ name: '', code: '', leader: '' }); setModal({ visible: true, parent: dept }); }}>+ 子部门</button>
-              <button className="btn-link danger" onClick={() => setDialog({ visible: true, id: dept.id })}>删除</button>
-            </div>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <button className="btn-link" onClick={() => openEdit(dept)}>编辑</button>
+                  <button className="btn-link" onClick={() => openCreate(dept)}>+ 子部门</button>
+                  <button className="btn-link danger" onClick={() => setDialog({ visible: true, id: dept.id })}>删除</button>
+                </div>
           </td>
         </tr>
         {dept.children && expandedIds.has(dept.id) && renderDept(dept.children, depth + 1)}
@@ -352,7 +404,7 @@ export const DepartmentPage: React.FC = () => {
       <div className="page-header"><h2>组织管理</h2><p>集团 → 分公司 → 部门</p></div>
       <div className="page-toolbar">
         <div className="toolbar-right">
-          <button className="btn btn-primary" onClick={() => { setForm({ name: '', code: '', leader: '' }); setModal({ visible: true, parent: null }); }}>+ 新建集团</button>
+          <button className="btn btn-primary" onClick={() => openCreate(null)}>+ 新建集团</button>
         </div>
       </div>
       <div className="table-wrapper">
@@ -362,8 +414,14 @@ export const DepartmentPage: React.FC = () => {
         </table>
       </div>
       {modal.visible && (
-        <Modal title={modal.parent ? `添加子部门 - ${modal.parent.name}` : '新建集团'} onClose={() => setModal({ visible: false, parent: null })} onSave={handleCreate}>
+        <Modal title={modal.mode === 'edit' ? '编辑组织' : parentChoice === 0 ? '新建集团' : '新建子部门'} onClose={() => setModal({ visible: false, mode: 'create', node: null })} onSave={handleSave}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div><div style={{ fontSize: '13px', marginBottom: '4px' }}>上级组织</div>
+              <select style={{ ...inputStyle, background: '#fff' }} value={parentChoice} onChange={e => setParentChoice(Number(e.target.value))}>
+                <option value={0}>（顶级组织）</option>
+                {parentOptions.map(o => <option key={o.id} value={o.id} disabled={o.disabled}>{o.label}</option>)}
+              </select>
+            </div>
             <div><div style={{ fontSize: '13px', marginBottom: '4px' }}>名称 *</div>
               <input style={inputStyle} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} /></div>
             <div><div style={{ fontSize: '13px', marginBottom: '4px' }}>编码</div>
