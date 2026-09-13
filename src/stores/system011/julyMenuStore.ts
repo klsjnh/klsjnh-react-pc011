@@ -6,6 +6,7 @@
 import { useMemo } from 'react';
 import { type MenuConfig } from '../../mock/menuConfig';
 import { isMockMode } from '../../config/appConfig';
+import { resolveMenuRoute } from '../../config/routes';
 import { fireApi } from '../../api/request';
 import { selectUserMenuTree } from '../../services/system011';
 import { createStore, useStoreState } from '../createStore';
@@ -18,7 +19,7 @@ function mapJulyMenuToConfig(m: JulyMenuVo011): MenuConfig {
     id: Number(m.id),
     parentId: pid,
     name: m.menuCode,
-    path: m.menuRoute,
+    path: resolveMenuRoute(m.menuRoute),
     icon: m.menuIcon || '📄',
     title: m.menuName,
     type: m.menuType === '3' ? 'button' : 'page',
