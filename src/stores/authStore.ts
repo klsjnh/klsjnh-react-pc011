@@ -19,9 +19,30 @@ interface AuthState {
   user: CurrentUser | null;
 }
 
+const TOKEN_KEY = 'token';
+const USER_KEY = 'pc011-user';
+
+/** 从 localStorage 恢复当前用户（刷新后保持登录态信息） */
+function loadStoredUser(): CurrentUser | null {
+  try {
+    const raw = localStorage.getItem(USER_KEY);
+    return raw ? (JSON.parse(raw) as CurrentUser) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** 持久化当前用户信息（登录后缓存到本地） */
+function persistUser(user: CurrentUser | null) {
+  try {
+    if (user) localStorage.setItem(USER_KEY, JSON.stringify(user));
+    else localStorage.removeItem(USER_KEY);
+  } catch { /* ignore */ }
+}
+
 let state: AuthState = {
-  token: localStorage.getItem('token'),
-  user: null,
+  token: localStorage.getItem(TOKEN_KEY),
+  user: loadStoredUser(),
 };
 
 const listeners = new Set<() => void>();
@@ -46,7 +67,8 @@ export const authStore = {
   /** Mock 态登录（由 LoginPage 本地校验后调用） */
   login: (token: string, user: CurrentUser) => {
     state = { ...state, token, user };
-    if (token) localStorage.setItem('token', token);
+    if (token) localStorage.setItem(TOKEN_KEY, token);
+    persistUser(user);
     emitChange();
   },
 
@@ -64,7 +86,8 @@ export const authStore = {
       roles: session.roles || [],
     };
     state = { ...state, token: session.token, user };
-    localStorage.setItem('token', session.token);
+    localStorage.setItem(TOKEN_KEY, session.token);
+    persistUser(user);
     emitChange();
     return user;
   },
@@ -83,18 +106,20 @@ export const authStore = {
       roles: session.roles || [],
     };
     state = { ...state, token: session.token, user };
-    localStorage.setItem('token', session.token);
+    localStorage.setItem(TOKEN_KEY, session.token);
+    persistUser(user);
     emitChange();
     return user;
   },
 
-  /** 登出：API 态通知后端（失败不影响本地清理），随后清 token */
+  /** 登出：API 态通知后端（失败不影响本地清理），随后清 token 与缓存用户 */
   logout: async () => {
     if (!isMockMode() && state.token) {
       try { await apiLogout(); } catch { /* 后端登出失败仍清本地 */ }
     }
     state = { token: null, user: null };
-    localStorage.removeItem('token');
+    localStorage.removeItem(TOKEN_KEY);
+    persistUser(null);
     emitChange();
   },
   isAuthenticated: () => !!state.token,

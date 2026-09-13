@@ -10,11 +10,10 @@
  *  - logicDelete      逻辑删除（有子组织或挂有用户会被拒绝）
  * 负责人：表单为用户下拉（pkUser），展示名取自后端用户列表
  */
-import React, { useState, useEffect } from 'react';
-import {
-  selectOrganizationTree, insertOrganization, updateOrganization, deleteOrganization,
-} from '../../services/system011';
-import { roleStore, useRoleState } from '../../stores/roleStore';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useOrganizationState } from '../../stores/system011/julyOrganizationStore';
+import { roleStore, useRoleState } from '../../stores/system011/julyRoleStore';
+import { fetchOrganizationTree, saveOrganization, removeOrganization } from '../../services/system011';
 import { toast } from '../../utils/toast';
 import type { JulyOrganizationVo011 } from '../../types/system011';
 
@@ -76,8 +75,7 @@ function projectOrg(o: JulyOrganizationVo011, userNameById: Map<string, string>)
 
 export const julyOrganization: React.FC = () => {
   const { users } = useRoleState();
-  const [departments, setDepartments] = useState<DeptNode[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { tree, loading } = useOrganizationState();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [modal, setModal] = useState<{ visible: boolean; mode: 'create' | 'edit'; node: DeptNode | null }>({ visible: false, mode: 'create', node: null });
   const [form, setForm] = useState({ name: '', code: '', leaderId: '', sortOrder: 0 });
@@ -93,21 +91,18 @@ export const julyOrganization: React.FC = () => {
     else toast.error(content);
   };
 
-  /** 拉取组织树（负责人名由后端用户列表解析） */
-  const load = React.useCallback(() => {
-    setLoading(true);
-    const userMap = new Map(users.map((u) => [u.id, u.realName] as [string, string]));
-    return selectOrganizationTree()
-      .then((tree) => {
-        setDepartments(tree.map((o) => projectOrg(o, userMap)));
-        setExpandedIds((prev) => (prev.size ? prev : new Set(tree.map((o) => o.id))));
-      })
-      .catch(() => setDepartments([]))
-      .finally(() => setLoading(false));
-  }, [users]);
+  useEffect(() => { roleStore.load(); fetchOrganizationTree(); }, []);
+  useEffect(() => { setExpandedIds((prev) => (prev.size ? prev : new Set(tree.map((o) => o.id)))); }, [tree]);
 
-  useEffect(() => { roleStore.load(); }, []);
-  useEffect(() => { load(); }, [load]);
+  /** 负责人 id → 姓名（来自后端用户列表） */
+  const userNameById = useMemo(
+    () => new Map(users.map((u) => [u.id, u.realName] as [string, string])),
+    [users],
+  );
+  const departments = useMemo(
+    () => tree.map((o) => projectOrg(o, userNameById)),
+    [tree, userNameById],
+  );
 
   const containsId = (node: DeptNode, id: string): boolean =>
     node.id === id || (node.children || []).some((c) => containsId(c, id));
@@ -151,28 +146,18 @@ export const julyOrganization: React.FC = () => {
     if (!form.name.trim()) { flash('⚠ 请填写组织名称'); return; }
     if (modal.mode === 'create' && !form.code.trim()) { flash('⚠ 请填写组织编码'); return; }
     setSaving(true);
+    const isEdit = modal.mode === 'edit' && !!modal.node;
     try {
-      if (modal.mode === 'create') {
-        const { id } = await insertOrganization({
-          orgCode: form.code.trim(),
-          orgName: form.name.trim(),
-          pkUser: form.leaderId || undefined,
-          parentId: parentChoice || undefined,
-          sortOrder: form.sortOrder,
-        });
-        flash(`✅ insert ${id} success ...`);
-      } else if (modal.node) {
-        const { id } = await updateOrganization({
-          id: modal.node.id,
-          orgName: form.name.trim(),
-          pkUser: form.leaderId || undefined,
-          parentId: parentChoice || undefined,
-          sortOrder: form.sortOrder,
-        });
-        flash(`✅ update ${id} success ...`);
-      }
+      const id = await saveOrganization({
+        id: modal.node?.id,
+        orgCode: form.code.trim(),
+        orgName: form.name.trim(),
+        pkUser: form.leaderId || undefined,
+        parentId: parentChoice || undefined,
+        sortOrder: form.sortOrder,
+      });
+      flash(`✅ ${isEdit ? 'update' : 'insert'} ${id} success ...`);
       setModal({ visible: false, mode: 'create', node: null });
-      await load();
     } catch (e: any) {
       flash(`⚠ ${e?.message || '保存失败'}`);
     } finally {
@@ -183,9 +168,8 @@ export const julyOrganization: React.FC = () => {
   const handleDelete = async (id: string) => {
     setDialog({ visible: false, id: '' });
     try {
-      const { id: deleted } = await deleteOrganization(id);
+      const deleted = await removeOrganization(id);
       flash(`✅ delete ${deleted} success ...`);
-      await load();
     } catch (e: any) {
       flash(`⚠ ${e?.message || '删除失败'}`);
     }

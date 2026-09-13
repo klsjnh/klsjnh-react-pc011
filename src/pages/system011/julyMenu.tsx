@@ -4,7 +4,7 @@
  * 右侧：当前菜单的编辑表单（右上角保存），点击树节点切换
  */
 import React, { useState, useEffect, useMemo } from 'react';
-import { menuStore, useMenuState, type MenuConfig } from '../../stores/menuStore';
+import { menuStore, useMenuState, type MenuConfig } from '../../stores/system011/julyMenuStore';
 import { ConfirmDialog } from '../../components';
 import { uiStore, useUiState } from '../../stores/uiStore';
 
