@@ -7,7 +7,7 @@
  * 菜单权限树经 selectMenuTree 投影自 JulyMenuVo011，勾选 key = 菜单 permissionCode）
  */
 import React, { useState, useEffect, useMemo } from 'react';
-import { roleStore, useRoleState, type RoleDetail } from '../../stores/roleStore';
+import { roleStore, useRoleState, type RoleDetail } from '../../stores/system011/julyRoleStore';
 import { selectMenuTree } from '../../services/system011';
 import { UserTransferModal } from '../../components/UserTransferModal';
 import type { JulyMenuVo011 } from '../../types/system011';

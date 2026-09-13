@@ -1,0 +1,41 @@
+/**
+ * 通用 store 工厂（useSyncExternalStore）
+ *
+ * 分层约定：
+ *  - store 只负责「状态 + 本地持久化」，不调用 service
+ *  - service 负责业务操作，成功后可写 store 状态
+ *  - 页面事件调 service、渲染读 store
+ *
+ * 状态需「整体替换引用」才会通知订阅者。
+ */
+import { useSyncExternalStore } from 'react';
+
+export interface StoreController<T extends object> {
+  getSnapshot(): T;
+  subscribe(listener: () => void): () => void;
+  /** 合并局部状态（浅合并并替换引用） */
+  setState(patch: Partial<T>): void;
+  /** 整体替换状态 */
+  replace(next: T): void;
+  /** 仅替换引用以触发通知（状态内容不变时用） */
+  emit(): void;
+}
+
+export function createStore<T extends object>(initial: T): StoreController<T> {
+  let state = initial;
+  const listeners = new Set<() => void>();
+  const notify = () => listeners.forEach((l) => l());
+  const getSnapshot = () => state;
+  const subscribe = (l: () => void) => {
+    listeners.add(l);
+    return () => { listeners.delete(l); };
+  };
+  const setState = (patch: Partial<T>) => { state = { ...state, ...patch }; notify(); };
+  const replace = (next: T) => { state = next; notify(); };
+  const emit = () => { state = { ...state }; notify(); };
+  return { getSnapshot, subscribe, setState, replace, emit };
+}
+
+export function useStoreState<T extends object>(store: StoreController<T>): T {
+  return useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
+}

@@ -2,7 +2,7 @@
  * 角色多选弹窗 - PC 端
  */
 import React, { useState } from 'react';
-import type { RoleDetail } from '../stores/roleStore';
+import type { RoleDetail } from '../stores/system011/julyRoleStore';
 
 interface RolePickerModalProps {
   title?: string;

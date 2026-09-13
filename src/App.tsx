@@ -6,7 +6,7 @@ import { LoginPage } from './pages/LoginPage';
 import { SidebarLayout } from './components/layout/SidebarLayout';
 import { Toaster } from './components/Toaster';
 import { useIsAuthenticated } from './stores/authStore';
-import { menuStore } from './stores/menuStore';
+import { menuStore } from './stores/system011/julyMenuStore';
 
 // 懒加载页面
 const DashboardPage = lazy(() => import('./pages/DashboardPage').then(m => ({ default: m.DashboardPage })));

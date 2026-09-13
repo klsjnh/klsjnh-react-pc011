@@ -6,8 +6,8 @@ import { useCurrentUser, authStore } from '@/stores/authStore';
 import { useUnreadCount } from '@/stores/notificationStore';
 import { uiStore, useUiState } from '@/stores/uiStore';
 import { appConfigStore, useAppConfig, isDevelopment, type DataMode, type RunState } from '@/config/appConfig';
-import { menuStore } from '@/stores/menuStore';
-import { roleStore } from '@/stores/roleStore';
+import { menuStore } from '@/stores/system011/julyMenuStore';
+import { roleStore } from '@/stores/system011/julyRoleStore';
 import { notificationStore } from '@/stores/notificationStore';
 
 interface SidebarLayoutProps {
