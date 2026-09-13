@@ -1,66 +1,48 @@
-/** 布局左侧：侧边栏导航（菜单由外部传入，来源见 config/global.ts / menuStore） */
-import React, { useState } from 'react';
-import { uiStore } from '@/stores/uiStore';
+/** 布局左侧：antd Sider + Menu（菜单来自 useNavMenus：全局配置 / 接口） */
+import React from 'react';
+import { Layout, Menu } from 'antd';
+import { uiStore, useUiState } from '@/stores/uiStore';
+import { useNavMenus } from '@/stores/system011/julyMenuStore';
 import type { NavItem } from '@/types/view/layout';
 
+const { Sider } = Layout;
+
+function toItems(nodes: NavItem[]): NonNullable<React.ComponentProps<typeof Menu>['items']> {
+  return nodes.map((n) => ({
+    key: n.path,
+    icon: <span className="nav-emoji">{n.icon}</span>,
+    label: n.label,
+    children: n.children?.length ? toItems(n.children) : undefined,
+  }));
+}
+
 interface LeftProps {
-  menus: NavItem[];
   currentPath: string;
-  collapsed: boolean;
   onNavigate: (path: string) => void;
 }
 
-export const Left: React.FC<LeftProps> = ({ menus, currentPath, collapsed, onNavigate }) => {
-  const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set(['/system', '/monitor']));
-
-  const toggleExpand = (path: string) => {
-    setExpandedMenus((prev) => {
-      const next = new Set(prev);
-      if (next.has(path)) next.delete(path);
-      else next.add(path);
-      return next;
-    });
-  };
-
-  const renderNavItem = (item: NavItem, depth = 0): React.ReactNode => {
-    const isActive = currentPath === item.path;
-    const isExpanded = expandedMenus.has(item.path);
-    const hasChildren = !!item.children && item.children.length > 0;
-
-    return (
-      <div key={item.path}>
-        <div
-          className={`sidebar-nav-item ${isActive ? 'active' : ''} depth-${depth}`}
-          onClick={() => {
-            if (hasChildren) toggleExpand(item.path);
-            else onNavigate(item.path);
-          }}
-        >
-          <span className="nav-icon">{item.icon}</span>
-          {!collapsed && <span className="nav-label">{item.label}</span>}
-          {!collapsed && hasChildren && (
-            <span className={`nav-arrow ${isExpanded ? 'expanded' : ''}`}>▸</span>
-          )}
-        </div>
-        {hasChildren && isExpanded && !collapsed && (
-          <div className="sidebar-nav-children">
-            {item.children!.map((child) => renderNavItem(child, depth + 1))}
-          </div>
-        )}
-      </div>
-    );
-  };
+export const Left: React.FC<LeftProps> = ({ currentPath, onNavigate }) => {
+  const collapsed = useUiState().sidebarCollapsed;
+  const menus = useNavMenus();
 
   return (
-    <aside className="pc-sidebar">
-      <nav className="sidebar-nav">
-        {menus.map((item) => renderNavItem(item))}
-      </nav>
-      <div className="sidebar-footer">
-        <button className="sidebar-toggle-btn" onClick={() => uiStore.setSidebarCollapsed(!collapsed)}>
-          {collapsed ? '▶' : '◀'} {!collapsed && '收起'}
-        </button>
-      </div>
-    </aside>
+    <Sider
+      className="app-sider"
+      theme="light"
+      collapsible
+      collapsed={collapsed}
+      onCollapse={(v) => uiStore.setSidebarCollapsed(v)}
+      width={220}
+      collapsedWidth={60}
+    >
+      <Menu
+        className="side-menu"
+        mode="inline"
+        items={toItems(menus)}
+        selectedKeys={[currentPath]}
+        defaultOpenKeys={['/system', '/tools']}
+        onClick={({ key }) => onNavigate(String(key))}
+      />
+    </Sider>
   );
 };

@@ -1,27 +1,13 @@
 /** 表单校验工具 */
+import type { JulyUserFormValues, JulyUserFormContext } from '@/types/view';
+
+export type { JulyUserFormValues, JulyUserFormContext };
 
 /** 邮箱格式 */
 export const isEmail = (v: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
 /** 手机号格式（中国大陆） */
 export const isMobile = (v: string): boolean => /^1[3-9]\d{9}$/.test(v);
-
-export interface JulyUserFormValues {
-  username: string;
-  realName: string;
-  email: string;
-  phone: string;
-  password: string;
-}
-
-export interface JulyUserFormContext {
-  /** 是否编辑（编辑时不校验账号/密码） */
-  isEdit: boolean;
-  /** 已选组织名（空 = 未选） */
-  department: string;
-  /** 已选角色 id */
-  roleIds: string[];
-}
 
 /** 用户新增/编辑表单校验，返回字段错误表（空 = 通过） */
 export function validateJulyUserForm(

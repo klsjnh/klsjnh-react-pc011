@@ -1,33 +1,30 @@
 /**
- * 通用 store 工厂（useSyncExternalStore）
+ * 通用 store 工厂（基于 zustand）
  *
  * 分层约定：
  *  - store 只负责「状态 + 本地持久化」，不调用 service
  *  - service 负责业务操作，成功后可写 store 状态
  *  - 页面事件调 service、渲染读 store
- *
- * 状态需「整体替换引用」才会通知订阅者。
  */
-import { useSyncExternalStore } from 'react';
+import { useStore } from 'zustand';
+import { createStore as createVanillaStore, type StoreApi } from 'zustand/vanilla';
 import type { StoreController } from '@/types/store';
 
 export type { StoreController };
 
 export function createStore<T extends object>(initial: T): StoreController<T> {
-  let state = initial;
-  const listeners = new Set<() => void>();
-  const notify = () => listeners.forEach((l) => l());
-  const getSnapshot = () => state;
-  const subscribe = (l: () => void) => {
-    listeners.add(l);
-    return () => { listeners.delete(l); };
+  const api: StoreApi<T> = createVanillaStore<T>(() => initial);
+  return {
+    api,
+    getSnapshot: api.getState,
+    subscribe: (listener: () => void) => api.subscribe(listener),
+    setState: (patch) => api.setState(patch),
+    replace: (next) => api.setState(next, true),
+    emit: () => api.setState({} as Partial<T>),
   };
-  const setState = (patch: Partial<T>) => { state = { ...state, ...patch }; notify(); };
-  const replace = (next: T) => { state = next; notify(); };
-  const emit = () => { state = { ...state }; notify(); };
-  return { getSnapshot, subscribe, setState, replace, emit };
 }
 
+/** 组件内订阅整个 store 状态 */
 export function useStoreState<T extends object>(store: StoreController<T>): T {
-  return useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
+  return useStore(store.api);
 }

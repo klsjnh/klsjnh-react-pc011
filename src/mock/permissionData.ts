@@ -2,17 +2,9 @@
  * 统一权限数据（所有角色/权限相关页面共用）
  * 键格式统一: colon 格式（system:user:list）
  */
+import type { PermissionItem, PermissionModule } from '@/types/view/mock';
 
-export interface PermissionItem {
-  key: string;
-  label: string;
-}
-
-export interface PermissionModule {
-  module: string;
-  icon: string;
-  items: PermissionItem[];
-}
+export type { PermissionItem, PermissionModule };
 
 export const permissionModules: PermissionModule[] = [
   {
