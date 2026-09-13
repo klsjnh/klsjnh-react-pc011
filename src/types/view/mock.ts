@@ -57,3 +57,6 @@ export interface MockEnvelope<T> {
   traceId: string;
   data: T;
 }
+
+/** Mock handler 函数签名 */
+export type MockHandler = (body: any) => Promise<MockEnvelope<any>>;

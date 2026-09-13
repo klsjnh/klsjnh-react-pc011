@@ -1,48 +1,54 @@
-/** 角色新增 / 编辑弹窗（julyPermission 模块组件） */
-import React, { useState, useEffect } from 'react';
-import { Modal } from '@/components/Modal';
-import { roleStore, type RoleDetail } from '@/stores/system011/julyRoleStore';
-
-interface RoleFormModalProps {
-  open: boolean;
-  /** null = 新建 */
-  role: RoleDetail | null;
-  onClose: () => void;
-}
+/** 角色新增 / 编辑弹窗（julyPermission 模块组件，antd Form） */
+import React, { useEffect } from 'react';
+import { Modal, Form, Input } from 'antd';
+import { roleStore } from '@/stores/system011/julyRoleStore';
+import type { RoleFormModalProps } from '@/types/system011/julyRole';
 
 export const RoleFormModal: React.FC<RoleFormModalProps> = ({ open, role, onClose }) => {
-  const [form, setForm] = useState({ name: '', label: '', description: '' });
+  const [form] = Form.useForm();
+  const isEdit = !!role;
 
   useEffect(() => {
     if (!open) return;
-    setForm({ name: role?.name || '', label: role?.label || '', description: role?.description || '' });
-  }, [open, role]);
-
-  const handleSave = () => {
-    if (!form.label.trim()) return;
     if (role) {
-      roleStore.updateRole(role.id, { label: form.label, description: form.description });
+      form.setFieldsValue({ roleCode: role.roleCode, roleName: role.roleName, remark: role.remark || '' });
     } else {
-      roleStore.addRole({ name: form.name, label: form.label, description: form.description, status: 'active', isBuiltin: false, permissions: [] });
+      form.resetFields();
+    }
+  }, [open, role, form]);
+
+  const handleSave = async () => {
+    const v = await form.validateFields();
+    if (role) {
+      roleStore.updateRole(role.id, { roleName: v.roleName, remark: v.remark });
+    } else {
+      roleStore.addRole({ roleCode: v.roleCode, roleName: v.roleName, remark: v.remark });
     }
     onClose();
   };
 
-  if (!open) return null;
-
   return (
-    <Modal title={role ? '编辑角色' : '新建角色'} onClose={onClose} onSave={handleSave} width={420}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <div><div style={{ fontSize: '13px', marginBottom: '4px' }}>角色标识</div>
-          <input className="form-input" style={{ width: '100%' }} value={form.name} disabled={!!role}
-            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} /></div>
-        <div><div style={{ fontSize: '13px', marginBottom: '4px' }}>角色名称 *</div>
-          <input className="form-input" style={{ width: '100%' }} value={form.label}
-            onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))} /></div>
-        <div><div style={{ fontSize: '13px', marginBottom: '4px' }}>描述</div>
-          <textarea className="form-input" style={{ width: '100%', height: '60px', resize: 'none' }} value={form.description}
-            onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} /></div>
-      </div>
+    <Modal
+      title={isEdit ? '编辑角色' : '新建角色'}
+      open={open}
+      onCancel={onClose}
+      onOk={handleSave}
+      okText="保存"
+      cancelText="取消"
+      width={420}
+      destroyOnClose
+    >
+      <Form form={form} layout="vertical" preserve={false}>
+        <Form.Item name="roleCode" label="角色标识" rules={isEdit ? [] : [{ required: true, message: '请输入角色标识' }]}>
+          <Input placeholder="如 manager" disabled={isEdit} />
+        </Form.Item>
+        <Form.Item name="roleName" label="角色名称" rules={[{ required: true, message: '请输入角色名称' }]}>
+          <Input placeholder="如 部门经理" />
+        </Form.Item>
+        <Form.Item name="remark" label="描述">
+          <Input.TextArea rows={3} placeholder="备注 / 描述" />
+        </Form.Item>
+      </Form>
     </Modal>
   );
 };

@@ -4,14 +4,9 @@
  * 分层：page → service → store；page 只读写状态。
  */
 import { createStore, useStoreState } from '../createStore';
-import type { JulyOrganizationVo011 } from '@/types/system011';
+import type { OrgState } from '@/types/system011/julyOrganization';
 
-export interface OrgState {
-  tree: JulyOrganizationVo011[];
-  /** 组织 id → 名称（用户「所属组织」列解析用） */
-  orgNameById: Map<string, string>;
-  loading: boolean;
-}
+export type { OrgState };
 
 const base = createStore<OrgState>({ tree: [], orgNameById: new Map(), loading: false });
 
@@ -20,8 +15,6 @@ export const julyOrganizationStore = {
   subscribe: base.subscribe,
   setState: base.setState,
   replace: base.replace,
-  /** 重置为初始状态 */
-  reset: () => base.replace({ tree: [], orgNameById: new Map(), loading: false }),
 };
 
 export function useOrganizationState(): OrgState {

@@ -1,43 +1,32 @@
 /**
  * 组织新增 / 编辑弹窗（antd Form + Modal）
+ * 字段对齐后端：orgName / orgCode / pkUser / parentId / sortOrder。
  * 提交走 julyOrganizationService.saveOrganization。
  */
 import React, { useEffect } from 'react';
 import { Modal, Form, Input, InputNumber, Select } from 'antd';
 import { saveOrganization } from '@/services/system011';
 import { toast } from '@/utils/toast';
-import type { UserInfo } from '@/stores/system011/julyRoleStore';
-import type { OrgDeptNode } from '@/types/view';
+import type { JulyOrganizationVo011, OrganizationFormModalProps } from '@/types/system011/julyOrganization';
 
-interface OrganizationFormModalProps {
-  open: boolean;
-  mode: 'create' | 'edit';
-  node: OrgDeptNode | null;
-  departments: OrgDeptNode[];
-  users: UserInfo[];
-  initialParentId: string;
-  onClose: () => void;
-  onSaved: () => void;
-}
-
-function containsId(node: OrgDeptNode, id: string): boolean {
+function containsId(node: JulyOrganizationVo011, id: string): boolean {
   return node.id === id || (node.children || []).some((c) => containsId(c, id));
 }
 
 /** 组织树 → 带缩进的下拉选项；编辑时排除自己及下级 */
 function toParentOptions(
-  tree: OrgDeptNode[],
-  exclude: OrgDeptNode | null,
+  tree: JulyOrganizationVo011[],
+  exclude: JulyOrganizationVo011 | null,
   depth = 0,
 ): { label: string; value: string; disabled: boolean }[] {
   const out: { label: string; value: string; disabled: boolean }[] = [];
-  tree.forEach((n) => {
+  tree.forEach((o) => {
     out.push({
-      label: `${'　'.repeat(depth)}${n.name}`,
-      value: n.id,
-      disabled: !!exclude && containsId(exclude, n.id),
+      label: `${'　'.repeat(depth)}${o.orgName}`,
+      value: o.id,
+      disabled: !!exclude && containsId(exclude, o.id),
     });
-    if (n.children?.length) out.push(...toParentOptions(n.children, exclude, depth + 1));
+    if (o.children?.length) out.push(...toParentOptions(o.children, exclude, depth + 1));
   });
   return out;
 }
@@ -51,9 +40,9 @@ export const OrganizationFormModal: React.FC<OrganizationFormModalProps> = ({
     if (!open) return;
     form.setFieldsValue({
       parentId: initialParentId || undefined,
-      orgName: node?.name || '',
-      orgCode: node?.code || '',
-      pkUser: node?.leaderId || undefined,
+      orgName: node?.orgName || '',
+      orgCode: node?.orgCode || '',
+      pkUser: node?.pkUser || undefined,
       sortOrder: node?.sortOrder ?? 0,
     });
   }, [open, node, initialParentId, form]);
@@ -108,7 +97,7 @@ export const OrganizationFormModal: React.FC<OrganizationFormModalProps> = ({
           <Select
             allowClear
             placeholder="（未指定）"
-            options={users.map((u) => ({ label: `${u.realName}（${u.username}）`, value: u.id }))}
+            options={users.map((u) => ({ label: `${u.userName}（${u.userAccount}）`, value: u.id }))}
             showSearch
             optionFilterProp="label"
           />

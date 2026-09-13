@@ -1,6 +1,6 @@
 /**
  * 组织机构管理页（julyOrganization）- antd 版
- * 树形表格（antd Table 树数据）；数据读 julyOrganizationStore，写操作走 julyOrganizationService。
+ * 树形表格（antd Table 树数据，直接消费 JulyOrganizationVo011）；写操作走 julyOrganizationService。
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { Button, Card, Popconfirm, Space, Table, Tag } from 'antd';
@@ -10,24 +10,10 @@ import { roleStore, useRoleState } from '@/stores/system011/julyRoleStore';
 import { fetchOrganizationTree, removeOrganization } from '@/services/system011';
 import { toast } from '@/utils/toast';
 import { OrganizationFormModal } from './OrganizationFormModal';
-import type { JulyOrganizationVo011 } from '@/types/system011';
-import type { OrgDeptNode } from '@/types/view';
+import type { JulyOrganizationVo011 } from '@/types/system011/julyOrganization';
 
-function projectOrg(o: JulyOrganizationVo011, userNameById: Map<string, string>): OrgDeptNode {
-  return {
-    id: o.id,
-    name: o.orgName,
-    code: o.orgCode,
-    leader: o.pkUser ? (userNameById.get(o.pkUser) || '—') : '—',
-    leaderId: o.pkUser || '',
-    count: o.memberCount || 0,
-    level: o.orgLevel,
-    sortOrder: o.sortOrder,
-    children: o.children?.map((c) => projectOrg(c, userNameById)),
-  };
-}
-
-function findParentId(items: OrgDeptNode[], id: string, parentId = ''): string | null {
+/** 返回父节点 id；顶级返回空串 */
+function findParentId(items: JulyOrganizationVo011[], id: string, parentId = ''): string | null {
   for (const item of items) {
     if (item.id === id) return parentId;
     if (item.children) {
@@ -41,22 +27,21 @@ function findParentId(items: OrgDeptNode[], id: string, parentId = ''): string |
 export const julyOrganization: React.FC = () => {
   const { users } = useRoleState();
   const { tree, loading } = useOrganizationState();
-  const [modal, setModal] = useState<{ open: boolean; mode: 'create' | 'edit'; node: OrgDeptNode | null; parentId: string }>(
+  const [modal, setModal] = useState<{ open: boolean; mode: 'create' | 'edit'; node: JulyOrganizationVo011 | null; parentId: string }>(
     { open: false, mode: 'create', node: null, parentId: '' },
   );
 
   useEffect(() => { roleStore.load(); fetchOrganizationTree(); }, []);
 
   const userNameById = useMemo(
-    () => new Map(users.map((u) => [u.id, u.realName] as [string, string])),
+    () => new Map(users.map((u) => [u.id, u.userName] as [string, string])),
     [users],
   );
-  const departments = useMemo(() => tree.map((o) => projectOrg(o, userNameById)), [tree, userNameById]);
 
-  const openCreate = (parent: OrgDeptNode | null) =>
+  const openCreate = (parent: JulyOrganizationVo011 | null) =>
     setModal({ open: true, mode: 'create', node: null, parentId: parent?.id || '' });
-  const openEdit = (dept: OrgDeptNode) =>
-    setModal({ open: true, mode: 'edit', node: dept, parentId: findParentId(departments, dept.id) ?? '' });
+  const openEdit = (node: JulyOrganizationVo011) =>
+    setModal({ open: true, mode: 'edit', node, parentId: findParentId(tree, node.id) ?? '' });
 
   const handleDelete = async (id: string) => {
     try {
@@ -67,24 +52,24 @@ export const julyOrganization: React.FC = () => {
     }
   };
 
-  const columns: ColumnsType<OrgDeptNode> = [
-    { title: '组织名称', dataIndex: 'name', render: (v, r) => (r.level === 1 ? <strong>{v}</strong> : v) },
-    { title: '编码', dataIndex: 'code', width: 140, render: (v) => <Tag>{v}</Tag> },
-    { title: '负责人', dataIndex: 'leader', width: 120 },
-    { title: '人数', dataIndex: 'count', width: 90, render: (v) => `${v} 人` },
+  const columns: ColumnsType<JulyOrganizationVo011> = [
+    { title: '组织名称', dataIndex: 'orgName', render: (v, r) => (r.orgLevel === 1 ? <strong>{v}</strong> : v) },
+    { title: '编码', dataIndex: 'orgCode', width: 140, render: (v) => <Tag>{v}</Tag> },
+    { title: '负责人', dataIndex: 'pkUser', width: 120, render: (v) => (v ? (userNameById.get(v) || '—') : '—') },
+    { title: '人数', dataIndex: 'memberCount', width: 90, render: (v) => `${v ?? 0} 人` },
     {
       title: '操作', key: 'action', width: 200,
-      render: (_, dept) => (
+      render: (_, node) => (
         <Space size="small">
-          <Button type="link" size="small" onClick={() => openEdit(dept)}>编辑</Button>
-          <Button type="link" size="small" onClick={() => openCreate(dept)}>+ 子部门</Button>
+          <Button type="link" size="small" onClick={() => openEdit(node)}>编辑</Button>
+          <Button type="link" size="small" onClick={() => openCreate(node)}>+ 子部门</Button>
           <Popconfirm
             title="确定删除这个组织吗？"
             description="有子组织或挂有用户时后端会拒绝。"
             okText="删除"
             cancelText="取消"
             okButtonProps={{ danger: true }}
-            onConfirm={() => handleDelete(dept.id)}
+            onConfirm={() => handleDelete(node.id)}
           >
             <Button type="link" size="small" danger>删除</Button>
           </Popconfirm>
@@ -103,13 +88,12 @@ export const julyOrganization: React.FC = () => {
       </div>
 
       <Card className="table-wrapper" styles={{ body: { padding: 0 } }}>
-        <Table<OrgDeptNode>
+        <Table<JulyOrganizationVo011>
           rowKey="id"
           columns={columns}
-          dataSource={departments}
+          dataSource={tree}
           loading={loading}
           pagination={false}
-          defaultExpandAllRows
           expandable={{ defaultExpandAllRows: true }}
         />
       </Card>
@@ -118,7 +102,7 @@ export const julyOrganization: React.FC = () => {
         open={modal.open}
         mode={modal.mode}
         node={modal.node}
-        departments={departments}
+        departments={tree}
         users={users}
         initialParentId={modal.parentId}
         onClose={() => setModal({ open: false, mode: 'create', node: null, parentId: '' })}

@@ -3,17 +3,7 @@
  */
 import React, { useState } from 'react';
 import { ConfirmDialog } from '../components';
-
-type FeedbackCategory = 'bug' | 'feature' | 'other';
-
-interface FeedbackItem {
-  id: number;
-  category: string;
-  content: string;
-  time: string;
-  status: 'pending' | 'replied';
-  reply?: string;
-}
+import type { FeedbackCategory, FeedbackItem } from '@/types/view/page';
 
 export const HelpPage: React.FC = () => {
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);

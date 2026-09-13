@@ -1,6 +1,7 @@
 /**
- * system011 公共契约类型
- * 路径固定：POST /klsjnh/system011/{julyXxx}/v1/{动作}；响应信封 Response011<T>
+ * 跨模块公共契约类型
+ *  - 分页 / 主键 / 批量结果：全模块通用
+ *  - BaseVo011：各 JulyXxxVo011 的公共字段基类
  */
 
 /**
@@ -30,4 +31,19 @@ export interface BatchDeleteResultVo011 {
   success: number;
   failed: number;
   errors: { id: string; message: string }[];
+}
+
+/**
+ * 实体基础字段（各 JulyXxxVo011 共有，后端 BaseVo011）
+ * 各模块 VO 继承本类，避免重复声明审计字段。
+ */
+export interface BaseVo011 {
+  /** UUID 字符串主键 */
+  id: string;
+  /** 状态：0 停用 / 1 启用（部分模块无此字段） */
+  status?: string;
+  createBy?: string | null;
+  updateBy?: string | null;
+  createTime?: string | null;
+  updateTime?: string | null;
 }

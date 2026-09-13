@@ -3,7 +3,7 @@ import React from 'react';
 import { Layout, Menu } from 'antd';
 import { uiStore, useUiState } from '@/stores/uiStore';
 import { useNavMenus } from '@/stores/system011/julyMenuStore';
-import type { NavItem } from '@/types/view/layout';
+import type { NavItem, LeftProps } from '@/types/view/layout';
 
 const { Sider } = Layout;
 
@@ -14,11 +14,6 @@ function toItems(nodes: NavItem[]): NonNullable<React.ComponentProps<typeof Menu
     label: n.label,
     children: n.children?.length ? toItems(n.children) : undefined,
   }));
-}
-
-interface LeftProps {
-  currentPath: string;
-  onNavigate: (path: string) => void;
 }
 
 export const Left: React.FC<LeftProps> = ({ currentPath, onNavigate }) => {

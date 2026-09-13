@@ -1,8 +1,7 @@
 /**
  * 角色 store（system011 · julyRole）
- * 权限管理页数据源：角色 → 关联用户 + 权限项目；组织树取自 julyOrganizationStore
- * 角色-权限 / 角色-用户 关系由前端 mockRelations 投影
- * （真实后端经 julyRole/v1/updatePermission、julyRoleUser/v1/insert 维护）
+ * 权限管理页数据源：角色 → 关联用户 + 权限项目；组织树来自 julyOrganizationStore。
+ * 角色-权限 / 角色-用户 关系由前端 mockRelations 投影。
  */
 import { useMemo } from 'react';
 import { isMockMode } from '@/config/appConfig';
@@ -11,46 +10,27 @@ import { selectRoleListByPage, selectUserListByPage, fetchOrganizationTree } fro
 import { julyOrganizationStore } from './julyOrganizationStore';
 import { createStore, useStoreState } from '../createStore';
 import { mockRelations } from '@/mock/system011';
-import type { JulyRoleVo011, JulyUserVo011, JulyOrganizationVo011 } from '@/types/system011';
+import type { JulyRoleVo011 } from '@/types/system011/julyRole';
+import type { RoleDetail, RoleState } from '@/types/system011/julyRole';
+import type { JulyUserVo011, JulyUserView } from '@/types/system011/julyUser';
 
-import type { RoleDetail, UserInfo, RoleState } from '@/types/view/julyRole';
-import type { OrgTreeNode } from '@/types/view/organization';
-
-export type { RoleDetail, UserInfo, OrgTreeNode, RoleState };
-
-const orgLevelToType: Record<string, string> = { '1': 'group', '2': 'company', '3': 'department' };
+export type { RoleDetail, RoleState };
+export type { JulyUserView as UserInfo } from '@/types/system011/julyUser';
 
 function projectRole(r: JulyRoleVo011, userAccountToId: Map<string, string>): RoleDetail {
-  const roleCode = r.roleCode;
-  const userAccounts = mockRelations.roleUserAccounts(roleCode);
+  const accounts = mockRelations.roleUserAccounts(r.roleCode);
   return {
-    id: r.id,
-    name: r.roleCode,
-    label: r.roleName,
-    description: r.remark || '',
-    status: r.status === '1' ? 'active' : 'inactive',
-    isBuiltin: r.isBuiltin === '1',
-    permissions: mockRelations.rolePermissions(roleCode),
-    userIds: userAccounts.map((acct) => userAccountToId.get(acct)).filter((x): x is string => x != null),
+    ...r,
+    permissions: mockRelations.rolePermissions(r.roleCode),
+    userIds: accounts.map((a) => userAccountToId.get(a)).filter((x): x is string => x != null),
   };
 }
 
-function projectUser(u: JulyUserVo011, orgNameById: Map<string, string>): UserInfo {
+function projectUser(u: JulyUserVo011, orgNameById: Map<string, string>): JulyUserView {
   return {
-    id: u.id,
-    username: u.userAccount,
-    realName: u.userName || u.userAccount,
+    ...u,
     department: u.pkOrg ? (orgNameById.get(u.pkOrg) || '') : '',
-    departmentId: u.pkOrg || '',
-  };
-}
-
-function projectOrg(o: JulyOrganizationVo011): OrgTreeNode {
-  return {
-    id: o.id,
-    name: o.orgName,
-    type: orgLevelToType[String(o.orgLevel)] || 'team',
-    children: o.children?.map(projectOrg),
+    roles: mockRelations.userRoles(u.userAccount),
   };
 }
 
@@ -75,19 +55,17 @@ export const roleStore = {
       // 组织树取自组织服务（单一数据源），组织名映射用于用户「所属组织」
       await fetchOrganizationTree();
       const orgSnapshot = julyOrganizationStore.getSnapshot();
-      const orgNameById = orgSnapshot.orgNameById;
       const userAccountToId = new Map<string, string>(
         userPage.rows.map((u) => [u.userAccount, u.id] as [string, string]),
       );
       base.setState({
         roles: rolePage.rows.map((r) => projectRole(r, userAccountToId)),
-        users: userPage.rows.map((u) => projectUser(u, orgNameById)),
-        orgTree: orgSnapshot.tree.map(projectOrg),
+        users: userPage.rows.map((u) => projectUser(u, orgSnapshot.orgNameById)),
+        orgTree: orgSnapshot.tree,
         loaded: true,
         loading: false,
       });
     } catch {
-      // 加载失败：保留空数据，loaded 仍为 false，登录后可 reload 重试
       base.setState({ loading: false });
     }
   },
@@ -106,7 +84,7 @@ export const roleStore = {
   getRole: (id: string) => base.getSnapshot().roles.find((r) => r.id === id),
 
   /** 获取角色关联的用户信息 */
-  getRoleUsers: (roleId: string): UserInfo[] => {
+  getRoleUsers: (roleId: string): JulyUserView[] => {
     const s = base.getSnapshot();
     const role = s.roles.find((r) => r.id === roleId);
     if (!role) return [];
@@ -114,7 +92,7 @@ export const roleStore = {
   },
 
   /** 获取未关联该角色的用户 */
-  getUnassignedUsers: (roleId: string): UserInfo[] => {
+  getUnassignedUsers: (roleId: string): JulyUserView[] => {
     const s = base.getSnapshot();
     const role = s.roles.find((r) => r.id === roleId);
     if (!role) return [];
@@ -122,15 +100,27 @@ export const roleStore = {
   },
 
   /** 添加角色（投影层）；api 模式静默写回真实后端 */
-  addRole: (data: Omit<RoleDetail, 'id' | 'userIds'>) => {
+  addRole: (data: { roleCode: string; roleName: string; remark?: string }) => {
     const s = base.getSnapshot();
-    const created: RoleDetail = { ...data, id: `tmp-role-${Date.now()}`, userIds: [] };
+    const now = new Date().toISOString().slice(0, 19);
+    const created: RoleDetail = {
+      id: `tmp-role-${Date.now()}`,
+      roleCode: data.roleCode,
+      roleName: data.roleName,
+      isBuiltin: '0',
+      remark: data.remark || null,
+      status: '1',
+      createTime: now,
+      updateTime: now,
+      permissions: [],
+      userIds: [],
+    };
     base.setState({ roles: [...s.roles, created] });
-    if (!isMockMode()) fireApi('/julyRole/v1/insert', { roleCode: data.name, roleName: data.label, remark: data.description });
+    if (!isMockMode()) fireApi('/julyRole/v1/insert', { roleCode: data.roleCode, roleName: data.roleName, remark: data.remark });
   },
 
   /** 更新角色 */
-  updateRole: (id: string, data: Partial<RoleDetail>) => {
+  updateRole: (id: string, data: Partial<Pick<RoleDetail, 'roleName' | 'remark' | 'status'>>) => {
     const s = base.getSnapshot();
     base.setState({ roles: s.roles.map((r) => (r.id === id ? { ...r, ...data } : r)) });
     if (!isMockMode()) fireApi('/julyRole/v1/update', { id, ...data });

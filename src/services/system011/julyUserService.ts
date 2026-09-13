@@ -16,13 +16,13 @@ import type {
   JulyUserQueryVo011,
   JulyUserInsertVo011,
   JulyUserUpdateVo011,
-  JulyUserResetPasswordVo011,
-  JulyUserChangePasswordVo011,
   JulyUserAssignRolesVo011,
+  SaveUserParams,
   PageResult011,
   IdVo011,
-  BatchDeleteResultVo011,
 } from '@/types/system011';
+
+export type { SaveUserParams };
 
 /** 账号密码登录（任何运行态可用） */
 export function login(userAccount: string, password: string): Promise<JulyUserSessionVo011> {
@@ -44,41 +44,6 @@ export function selectUserListByPage(body: object = {}): Promise<PageResult011<J
   return api.post<PageResult011<JulyUserVo011>>(SYSTEM011_ACTIONS.user.selectListByPage, body);
 }
 
-/** 用户详情（主键查询） */
-export function getUserById(id: string): Promise<JulyUserVo011> {
-  return api.post<JulyUserVo011>(SYSTEM011_ACTIONS.user.getById, { id } as IdVo011);
-}
-
-/** 新增用户（返回新用户 id） */
-export function insertUser(data: JulyUserInsertVo011): Promise<IdVo011> {
-  return api.post<IdVo011>(SYSTEM011_ACTIONS.user.insert, data);
-}
-
-/** 修改用户资料（不含账号与密码；返回 id） */
-export function updateUser(data: JulyUserUpdateVo011): Promise<IdVo011> {
-  return api.post<IdVo011>(SYSTEM011_ACTIONS.user.update, data);
-}
-
-/** 批量逻辑删除用户（body 直接是 id 数组；返回批量结果） */
-export function logicDeleteUsers(ids: string[]): Promise<BatchDeleteResultVo011> {
-  return api.post<BatchDeleteResultVo011>(SYSTEM011_ACTIONS.user.logicDelete, ids);
-}
-
-/** 重置密码（管理员动作） */
-export function resetUserPassword(id: string, password: string): Promise<IdVo011> {
-  return api.post<IdVo011>(SYSTEM011_ACTIONS.user.resetPassword, { id, password } as JulyUserResetPasswordVo011);
-}
-
-/** 本人修改密码（验旧密） */
-export function changePassword(data: JulyUserChangePasswordVo011): Promise<IdVo011> {
-  return api.post<IdVo011>(SYSTEM011_ACTIONS.user.changePassword, data);
-}
-
-/** 分配角色（整存替换） */
-export function assignUserRoles(id: string, pkRoles: string[]): Promise<IdVo011> {
-  return api.post<IdVo011>(SYSTEM011_ACTIONS.user.assignRoles, { id, pkRoles } as JulyUserAssignRolesVo011);
-}
-
 // ==================== 业务编排（写 store 状态） ====================
 
 /** 拉取用户分页并写入 store（patch 与当前查询合并） */
@@ -98,34 +63,24 @@ export async function fetchUserPage(patch: Partial<JulyUserQueryVo011> = {}): Pr
   }
 }
 
-import type { SaveUserParams } from '@/types/system011';
-
-export type { SaveUserParams };
-
 /** 新增 / 修改用户 + 分配角色，成功后刷新列表（返回用户 id） */
-export async function saveUser(params: SaveUserParams, roleIds: string[]): Promise<string> {
-  const { id, userAccount, userName, password, mobile, email, pkOrg } = params;
-  let savedId: string;
-  if (id) {
-    ({ id: savedId } = await updateUser({ id, userName, mobile, email, pkOrg }));
-  } else {
-    ({ id: savedId } = await insertUser({
-      userAccount: userAccount || '',
-      userName,
-      password: password || '',
-      mobile,
-      email,
-      pkOrg,
-    }));
+export async function saveUser(params: SaveUserParams): Promise<string> {
+  const { id, userAccount, userName, password, mobile, email, pkOrg, roleIds = [] } = params;
+  const { id: savedId } = id
+    ? await api.post<IdVo011>(SYSTEM011_ACTIONS.user.update, { id, userName, mobile, email, pkOrg } as JulyUserUpdateVo011)
+    : await api.post<IdVo011>(SYSTEM011_ACTIONS.user.insert, {
+        userAccount,
+        userName,
+        password: password || '',
+        mobile,
+        email,
+        pkOrg,
+      } as JulyUserInsertVo011);
+
+  if (roleIds.length > 0) {
+    await api.post<IdVo011>(SYSTEM011_ACTIONS.user.assignRoles, { id: savedId, pkRoles: roleIds } as JulyUserAssignRolesVo011);
   }
-  if (roleIds.length > 0) await assignUserRoles(savedId, roleIds);
   const q = julyUserStore.getSnapshot().query;
   await fetchUserPage({ ...q, pageIndex: id ? q.pageIndex : 1 });
   return savedId;
-}
-
-/** 批量逻辑删除 + 刷新列表 */
-export async function removeUsers(ids: string[]): Promise<void> {
-  await logicDeleteUsers(ids);
-  await fetchUserPage(julyUserStore.getSnapshot().query);
 }

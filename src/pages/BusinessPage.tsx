@@ -2,10 +2,7 @@
  * 业务中心页 - PC 端（3 分组 × 8 项 = 24 个业务入口）
  */
 import React from 'react';
-
-interface BusinessPageProps {
-  onNavigate?: (path: string) => void;
-}
+import type { BusinessPageProps } from '@/types/view/page';
 
 export const BusinessPage: React.FC<BusinessPageProps> = ({ onNavigate }) => {
   const groups = [

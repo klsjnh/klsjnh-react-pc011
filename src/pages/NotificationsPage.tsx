@@ -4,8 +4,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { notificationStore, useNotificationState } from '@/stores/notificationStore';
-
-type FilterType = 'all' | 'system' | 'user' | 'order';
+import type { FilterType } from '@/types/view/page';
 
 export const NotificationsPage: React.FC = () => {
   const { notifications } = useNotificationState();
