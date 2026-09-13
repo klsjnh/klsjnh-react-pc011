@@ -1,5 +1,8 @@
 /**
  * 通知状态管理（顶栏红点未读数 + 消息通知页共用）
+ *
+ * 数据源：统一 mock 后端 /notification/v1/*（真实 JulyNotificationVo011 形状，createTime 字段）
+ * mock / api 共用 request.ts 路由；读取失败保留本地 initialNotifications 兜底。
  */
 import { useSyncExternalStore } from 'react';
 import { isMockMode } from '../config/appConfig';
@@ -12,6 +15,16 @@ export interface NotificationItem {
   time: string;
   read: boolean;
   type: 'system' | 'user' | 'order';
+}
+
+/** 真实后端 JulyNotificationVo011（mock 与 api 同形） */
+interface NotificationVo {
+  id: number;
+  title: string;
+  content: string;
+  type: 'system' | 'user' | 'order';
+  read: boolean;
+  createTime: string;
 }
 
 const initialNotifications: NotificationItem[] = [
@@ -41,23 +54,28 @@ function getSnapshot(): NotificationState { return state; }
 function subscribe(l: () => void) { listeners.add(l); return () => { listeners.delete(l); }; }
 function emit() { state = { ...state }; listeners.forEach((l) => l()); }
 
+/** 后端 JulyNotificationVo011 → UI NotificationItem */
+function mapVo(v: NotificationVo): NotificationItem {
+  return { id: v.id, title: v.title, content: v.content, type: v.type, read: v.read, time: v.createTime };
+}
+
 export const notificationStore = {
   getSnapshot,
   subscribe,
 
-  /** 初始化（api 模式从后端拉取，失败时回退本地 mock） */
+  /** 初始化（mock / api 共用 services 层，统一经 request.ts 路由） */
   load: async () => {
     if (state.loaded) return;
-    if (!isMockMode()) {
-      try {
-        const data = await api.post<NotificationItem[]>('/notification/selectListByPage', {});
-        state = { notifications: data, loaded: true };
-        emit();
-        return;
-      } catch { /* 请求失败保留初始 mock 数据 */ }
+    try {
+      const data = await api.post<NotificationVo[]>('/notification/v1/selectListByPage', {});
+      state = { notifications: data.map(mapVo), loaded: true };
+      emit();
+      return;
+    } catch {
+      // 请求失败保留本地兜底数据（按契约不白屏）
+      state = { ...state, loaded: true };
+      emit();
     }
-    state = { ...state, loaded: true };
-    emit();
   },
 
   /** 重载（切换数据模式后调用） */
@@ -68,22 +86,22 @@ export const notificationStore = {
 
   /** 标记单条已读 */
   markAsRead: (id: number) => {
-    state.notifications = state.notifications.map(n => n.id === id ? { ...n, read: true } : n);
-    if (!isMockMode()) fireApi('/notification/read', { id });
+    state.notifications = state.notifications.map((n) => (n.id === id ? { ...n, read: true } : n));
+    if (!isMockMode()) fireApi('/notification/v1/read', { id });
     emit();
   },
 
   /** 全部已读 */
   markAllRead: () => {
-    state.notifications = state.notifications.map(n => ({ ...n, read: true }));
-    if (!isMockMode()) fireApi('/notification/readAll');
+    state.notifications = state.notifications.map((n) => ({ ...n, read: true }));
+    if (!isMockMode()) fireApi('/notification/v1/readAll');
     emit();
   },
 
   /** 删除通知 */
   remove: (id: number) => {
-    state.notifications = state.notifications.filter(n => n.id !== id);
-    if (!isMockMode()) fireApi('/notification/logicDelete', { id });
+    state.notifications = state.notifications.filter((n) => n.id !== id);
+    if (!isMockMode()) fireApi('/notification/v1/logicDelete', { id });
     emit();
   },
 };
@@ -96,5 +114,5 @@ export function useNotificationState(): NotificationState {
 /** 未读数量（顶栏红点用） */
 export function useUnreadCount(): number {
   const { notifications } = useNotificationState();
-  return notifications.filter(n => !n.read).length;
+  return notifications.filter((n) => !n.read).length;
 }

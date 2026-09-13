@@ -1,9 +1,11 @@
 /**
  * 角色新建/编辑表单页 - 移动端
+ * 数据来源：统一 mock 后端 /julyRole/v1/selectListByPage（真实 JulyRoleVo011 形状）
  */
 import React, { useState, useEffect } from 'react';
-import { mockApi, Role } from '../mock';
 import { PageHeader } from '../components';
+import { selectRoleListByPage } from '../services/system011';
+import type { JulyRoleVo011 } from '../types/system011';
 
 interface RoleFormPageProps {
   roleId?: number;
@@ -15,18 +17,17 @@ export const RoleFormPage: React.FC<RoleFormPageProps> = ({ roleId, onBack, onSa
   const isEdit = !!roleId;
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState<Partial<Role>>({ name: '', label: '', description: '', permissions: [] });
+  // roleCode → 角色标识(name)；roleName → 名称(label)；remark → 描述(description)；权限分配为独立端点，本页不维护
+  const [form, setForm] = useState<{ name: string; label: string; description: string; permissions: string[] }>({ name: '', label: '', description: '', permissions: [] });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (roleId) {
-      mockApi.getRoleList().then(res => {
-        if (res.code === 0) {
-          const role = res.data.find(r => r.id === roleId);
-          if (role) setForm(role);
-        }
+      selectRoleListByPage({ pageIndex: 1, pageSize: 100 }).then((page) => {
+        const role = page.rows.find((r: JulyRoleVo011) => Number(r.id) === roleId);
+        if (role) setForm({ name: role.roleCode, label: role.roleName, description: role.remark || '', permissions: [] });
         setLoading(false);
-      });
+      }).catch(() => setLoading(false));
     }
   }, [roleId]);
 

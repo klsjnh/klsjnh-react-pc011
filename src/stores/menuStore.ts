@@ -3,9 +3,28 @@
  * 菜单管理页的增删改 → 实时驱动 TabBar / 系统宫格 / 首页快捷入口
  */
 import { useSyncExternalStore, useMemo } from 'react';
-import { mockApi, type MenuConfig } from '../mock/menuConfig';
+import { type MenuConfig } from '../mock/menuConfig';
 import { isMockMode } from '../config/appConfig';
 import { api, fireApi } from '../api/request';
+import { selectUserMenuTree } from '../services/system011';
+import type { JulyMenuVo011 } from '../types/system011';
+
+/** 后端 JulyMenuVo011 → 前端 MenuConfig（菜单管理页消费的结构） */
+function mapJulyMenuToConfig(m: JulyMenuVo011): MenuConfig {
+  const pid = m.parentId ? Number(m.parentId) : 0;
+  return {
+    id: Number(m.id),
+    parentId: pid,
+    name: m.menuCode,
+    path: m.menuRoute,
+    icon: m.menuIcon || '📄',
+    title: m.menuName,
+    type: m.menuType === '3' ? 'button' : 'page',
+    sort: m.sortOrder ?? 0,
+    visible: m.status === '1',
+    children: m.children?.map(mapJulyMenuToConfig),
+  };
+}
 
 // ==================== 类型 ====================
 
@@ -49,14 +68,13 @@ export const menuStore = {
     if (state.loading || state.loaded) return;
     state = { ...state, loading: true };
     try {
-      const res = isMockMode()
-        ? await mockApi.getMenuConfig()
-        : { code: 0, data: await api.post<MenuConfig[]>('/menu/selectListByPage', {}) };
-      if (res.code === 0) {
-        state = { menus: res.data, loaded: true, loading: false };
-      }
+      // mock / api 共用：selectUserMenuTree 在 mock 模式命中统一 mock 后端（返回 JulyMenuVo011[]）
+      const tree = await selectUserMenuTree();
+      state = { menus: tree.map(mapJulyMenuToConfig), loaded: true, loading: false };
+    } catch {
+      // 加载失败：保留空菜单，loaded 仍为 false，登录后可 reload 重试
+      state = { ...state, loading: false };
     } finally {
-      state.loading = false;
       emitChange();
     }
   },

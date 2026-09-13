@@ -141,5 +141,3 @@ export const mockApi = {
     return { code: 0, data: null, message: 'toggle success' };
   },
 };
-
-export type { MenuConfig };

@@ -6,27 +6,30 @@ import React, { useState, useMemo } from 'react';
 
 // ==================== 类型 ====================
 
+/** id 统一为 string | number：本地 mock 可能给数字，后端真实数据为 UUID 字符串 */
+export type NodeId = string | number;
+
 export interface OrgTreeNode {
-  id: number;
+  id: NodeId;
   name: string;
   type: string;
   children?: OrgTreeNode[];
 }
 
 export interface TransferUser {
-  id: number;
+  id: NodeId;
   username: string;
   realName: string;
   department: string;
-  departmentId: number;
+  departmentId: NodeId;
 }
 
 interface UserTransferModalProps {
   title: string;
   orgTree: OrgTreeNode[];
   allUsers: TransferUser[];
-  excludedUserIds: number[];
-  onConfirm: (userIds: number[]) => void;
+  excludedUserIds: NodeId[];
+  onConfirm: (userIds: NodeId[]) => void;
   onCancel: () => void;
 }
 
@@ -34,11 +37,11 @@ interface UserTransferModalProps {
 
 const OrgTree: React.FC<{
   tree: OrgTreeNode[];
-  selectedId: number | null;
-  onSelect: (id: number | null, name: string) => void;
+  selectedId: NodeId | null;
+  onSelect: (id: NodeId | null, name: string) => void;
   depth?: number;
 }> = ({ tree, selectedId, onSelect, depth = 0 }) => {
-  const [expanded, setExpanded] = useState<Set<number>>(new Set(tree.map(n => n.id)));
+  const [expanded, setExpanded] = useState<Set<NodeId>>(new Set(tree.map(n => n.id)));
 
   const typeIcons: Record<string, string> = { group: '🏛', company: '🏢', department: '📋', team: '👥' };
 
@@ -83,10 +86,10 @@ const OrgTree: React.FC<{
 export const UserTransferModal: React.FC<UserTransferModalProps> = ({
   title, orgTree, allUsers, excludedUserIds, onConfirm, onCancel,
 }) => {
-  const [selectedOrgId, setSelectedOrgId] = useState<number | null>(null);
+  const [selectedOrgId, setSelectedOrgId] = useState<NodeId | null>(null);
   const [selectedOrgName, setSelectedOrgName] = useState('');
   const [keyword, setKeyword] = useState('');
-  const [selectedUserIds, setSelectedUserIds] = useState<Set<number>>(new Set());
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<NodeId>>(new Set());
 
   /** 可选用户（排除已关联的） */
   const availableUsers = useMemo(() =>
@@ -109,7 +112,7 @@ export const UserTransferModal: React.FC<UserTransferModalProps> = ({
     [availableUsers, selectedUserIds]
   );
 
-  const toggleSelect = (id: number) => {
+  const toggleSelect = (id: NodeId) => {
     setSelectedUserIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
