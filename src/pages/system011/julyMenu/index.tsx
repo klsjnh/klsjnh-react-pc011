@@ -1,15 +1,35 @@
 /**
  * 菜单管理页（julyMenu）- antd 版
  * 左侧：antd Tree（可拖拽 + 右键菜单）；右侧：antd Form 编辑
+ * 字段直接使用后端名：menuCode/menuName/menuIcon/menuRoute/menuType/sortOrder/status
  */
 import React, { useState, useEffect, useMemo } from 'react';
-import { Button, Card, Col, Dropdown, Empty, Form, Input, Modal, Row, Select, Space, Switch, Tree, Typography } from 'antd';
+import { Button, Card, Col, Dropdown, Empty, Form, Input, InputNumber, Modal, Row, Select, Space, Tree } from 'antd';
 import type { DataNode, TreeProps } from 'antd/es/tree';
-import { menuStore, useMenuState, type MenuConfig } from '@/stores/system011/julyMenuStore';
+import { menuStore, useMenuState } from '@/stores/system011/julyMenuStore';
 import { uiStore, useUiState } from '@/stores/uiStore';
+import type { JulyMenuVo011 } from '@/types/system011/julyMenu';
+import type { MenuListPageProps } from '@/types/view/page';
 
-interface MenuListPageProps {
-  onNavigate?: (path: string) => void;
+const MENU_TYPE_OPTIONS = [
+  { value: '1', label: '目录' },
+  { value: '2', label: '菜单' },
+  { value: '3', label: '按钮' },
+];
+
+function findMenu(items: JulyMenuVo011[], id: string): JulyMenuVo011 | null {
+  for (const item of items) {
+    if (item.id === id) return item;
+    if (item.children) {
+      const found = findMenu(item.children, id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function containsId(node: JulyMenuVo011, id: string): boolean {
+  return node.id === id || (node.children || []).some((c) => containsId(c, id));
 }
 
 export const julyMenu: React.FC<MenuListPageProps> = () => {
@@ -20,7 +40,7 @@ export const julyMenu: React.FC<MenuListPageProps> = () => {
 
   const [form] = Form.useForm();
   const [createForm] = Form.useForm();
-  const [createModal, setCreateModal] = useState<{ open: boolean; parentId: number }>({ open: false, parentId: 0 });
+  const [createModal, setCreateModal] = useState(false);
 
   useEffect(() => {
     if (loaded && menus.length > 0 && ui.menuTreeExpandedIds === null) {
@@ -28,35 +48,40 @@ export const julyMenu: React.FC<MenuListPageProps> = () => {
     }
   }, [loaded, menus, ui.menuTreeExpandedIds]);
 
-  const findNode = (items: MenuConfig[], id: number): MenuConfig | null => {
-    for (const item of items) {
-      if (item.id === id) return item;
-      if (item.children) {
-        const found = findNode(item.children, id);
-        if (found) return found;
-      }
-    }
-    return null;
-  };
-
-  const containsId = (node: MenuConfig, id: number): boolean =>
-    node.id === id || (node.children || []).some((c) => containsId(c, id));
-
-  const selectedNode = selectedId != null ? findNode(menus, selectedId) : null;
+  const selectedNode = selectedId != null ? findMenu(menus, selectedId) : null;
 
   useEffect(() => {
     if (selectedNode) {
       form.setFieldsValue({
-        title: selectedNode.title, path: selectedNode.path, icon: selectedNode.icon,
-        type: selectedNode.type, parentId: selectedNode.parentId, visible: selectedNode.visible,
+        menuName: selectedNode.menuName,
+        menuIcon: selectedNode.menuIcon,
+        menuRoute: selectedNode.menuRoute,
+        menuType: selectedNode.menuType,
+        parentId: selectedNode.parentId || '',
+        status: selectedNode.status,
       });
     }
   }, [selectedId, menus, selectedNode, form]);
 
-  const selectNode = (id: number) => uiStore.setMenuTreeSelectedId(id);
+  const selectNode = (id: string) => uiStore.setMenuTreeSelectedId(id);
 
-  /** 组织树 → antd Tree DataNode（title 内嵌右键下拉） */
-  const toTreeData = (items: MenuConfig[]): DataNode[] =>
+  const buildParentOptions = (exclude: JulyMenuVo011 | null) => {
+    const options: { value: string; label: string; disabled: boolean }[] = [];
+    const walk = (items: JulyMenuVo011[], depth: number) => {
+      items.forEach((m) => {
+        options.push({
+          value: m.id,
+          label: `${'　'.repeat(depth)}${m.menuIcon} ${m.menuName}`,
+          disabled: !!exclude && containsId(exclude, m.id),
+        });
+        if (m.children) walk(m.children, depth + 1);
+      });
+    };
+    walk(menus, 0);
+    return options;
+  };
+
+  const toTreeData = (items: JulyMenuVo011[]): DataNode[] =>
     items.map((m) => ({
       key: m.id,
       title: (
@@ -77,63 +102,52 @@ export const julyMenu: React.FC<MenuListPageProps> = () => {
           }}
         >
           <span className="menu-tree-title">
-            {m.icon || '📄'} {m.title}
-            {!m.visible && <Typography.Text type="secondary" className="text-sm">（隐藏）</Typography.Text>}
+            {m.menuIcon} {m.menuName}
+            {m.status !== '1' && <span className="text-muted text-sm">（停用）</span>}
           </span>
         </Dropdown>
       ),
       children: m.children?.length ? toTreeData(m.children) : undefined,
     }));
 
-  const buildParentOptions = (excludeNode: MenuConfig | null) => {
-    const options: { value: number; label: string; disabled: boolean }[] = [];
-    const walk = (items: MenuConfig[], depth: number) => {
-      items.forEach((m) => {
-        options.push({
-          value: m.id,
-          label: `${'　'.repeat(depth)}${m.icon} ${m.title}`,
-          disabled: excludeNode != null && containsId(excludeNode, m.id),
-        });
-        if (m.children) walk(m.children, depth + 1);
-      });
-    };
-    walk(menus, 0);
-    return options;
-  };
-
-  const openCreate = (parentId: number) => {
+  const openCreate = (parentId: string) => {
     createForm.resetFields();
-    createForm.setFieldsValue({ parentId, type: 'page', icon: '📄' });
-    setCreateModal({ open: true, parentId });
+    createForm.setFieldsValue({ parentId, menuType: '2', menuIcon: '📄' });
+    setCreateModal(true);
   };
 
-  const handleSaveCreate = async () => {
+  const handleCreate = async () => {
     const v = await createForm.validateFields();
-    const parent = v.parentId === 0 ? null : findNode(menus, v.parentId);
     menuStore.add({
-      parentId: v.parentId,
-      name: v.path.split('/').pop() || 'NewPage',
-      path: v.path,
-      icon: v.icon || '📄',
-      title: v.title,
-      type: v.type,
-      sort: (parent?.children?.length || 0) + 1,
-      visible: true,
+      parentId: v.parentId || '',
+      menuCode: v.menuCode,
+      menuName: v.menuName,
+      menuIcon: v.menuIcon || '📄',
+      menuRoute: v.menuRoute,
+      menuType: v.menuType,
+      permissionCode: null,
+      component: null,
+      sortOrder: 0,
+      status: '1',
     });
-    if (v.parentId !== 0) {
-      uiStore.setMenuTreeExpandedIds(Array.from(new Set([...expandedKeys, v.parentId])));
-    }
-    setCreateModal({ open: false, parentId: 0 });
+    if (v.parentId) uiStore.setMenuTreeExpandedIds(Array.from(new Set([...expandedKeys, v.parentId])));
+    setCreateModal(false);
   };
 
   const handleSaveEdit = async () => {
     if (!selectedNode) return;
     const v = await form.validateFields();
-    menuStore.update(selectedNode.id, { title: v.title, path: v.path, icon: v.icon, type: v.type, visible: v.visible });
-    if (v.parentId !== selectedNode.parentId) menuStore.move(selectedNode.id, v.parentId);
+    menuStore.update(selectedNode.id, {
+      menuName: v.menuName,
+      menuIcon: v.menuIcon,
+      menuRoute: v.menuRoute,
+      menuType: v.menuType,
+      status: v.status,
+    });
+    if (v.parentId !== selectedNode.parentId) menuStore.move(selectedNode.id, v.parentId || '');
   };
 
-  const handleDelete = (menu: MenuConfig) => {
+  const handleDelete = (menu: JulyMenuVo011) => {
     if (menu.children && menu.children.length > 0) {
       Modal.warning({ title: '无法删除', content: '该菜单下存在子菜单，无法删除。' });
       return;
@@ -152,12 +166,11 @@ export const julyMenu: React.FC<MenuListPageProps> = () => {
   };
 
   const onDrop: TreeProps['onDrop'] = (info) => {
-    const dragId = Number(info.dragNode.key);
-    const dropId = Number(info.node.key);
+    const dragId = String(info.dragNode.key);
+    const dropId = String(info.node.key);
     if (dragId === dropId) return;
-    const dragNode = findNode(menus, dragId);
+    const dragNode = findMenu(menus, dragId);
     if (!dragNode || containsId(dragNode, dropId)) return;
-    // 放到目标节点下（成为子菜单）
     menuStore.move(dragId, dropId);
     uiStore.setMenuTreeExpandedIds(Array.from(new Set([...expandedKeys, dropId])));
   };
@@ -174,7 +187,7 @@ export const julyMenu: React.FC<MenuListPageProps> = () => {
           className="menu-sider"
           title="菜单结构"
           styles={{ body: { padding: 8, maxHeight: 560, overflowY: 'auto' } }}
-          extra={<Button type="link" size="small" onClick={() => openCreate(0)}>+ 新建顶级菜单</Button>}
+          extra={<Button type="link" size="small" onClick={() => openCreate('')}>+ 新建顶级菜单</Button>}
         >
           {menus.length === 0
             ? <Empty description="暂无菜单" />
@@ -186,8 +199,8 @@ export const julyMenu: React.FC<MenuListPageProps> = () => {
                 treeData={toTreeData(menus)}
                 expandedKeys={expandedKeys}
                 selectedKeys={selectedId != null ? [selectedId] : []}
-                onExpand={(keys) => uiStore.setMenuTreeExpandedIds(keys as number[])}
-                onSelect={(keys) => uiStore.setMenuTreeSelectedId((keys[0] as number) ?? null)}
+                onExpand={(keys) => uiStore.setMenuTreeExpandedIds(keys as string[])}
+                onSelect={(keys) => uiStore.setMenuTreeSelectedId((keys[0] as string) ?? null)}
                 onDrop={onDrop}
               />
             )}
@@ -196,37 +209,37 @@ export const julyMenu: React.FC<MenuListPageProps> = () => {
         <div className="menu-main">
           {selectedNode ? (
             <Card
-              title={`${selectedNode.icon} 编辑菜单 - ${selectedNode.title}`}
+              title={`${selectedNode.menuIcon} 编辑菜单 - ${selectedNode.menuName}`}
               extra={<Button type="primary" onClick={handleSaveEdit}>保存</Button>}
             >
               <Form form={form} layout="vertical">
                 <Row gutter={24}>
                   <Col span={12}>
-                    <Form.Item name="title" label="菜单标题" rules={[{ required: true, message: '请输入菜单标题' }]}>
+                    <Form.Item name="menuName" label="菜单名称" rules={[{ required: true, message: '请输入菜单名称' }]}>
                       <Input />
                     </Form.Item>
                   </Col>
                   <Col span={12}>
-                    <Form.Item name="icon" label="图标（emoji）"><Input /></Form.Item>
+                    <Form.Item name="menuIcon" label="图标（emoji）"><Input /></Form.Item>
                   </Col>
                   <Col span={12}>
-                    <Form.Item name="path" label="路由路径" rules={[{ required: true, message: '请输入路由路径' }]}>
+                    <Form.Item name="menuRoute" label="路由路径" rules={[{ required: true, message: '请输入路由路径' }]}>
                       <Input />
                     </Form.Item>
                   </Col>
                   <Col span={12}>
-                    <Form.Item name="type" label="类型">
-                      <Select options={[{ value: 'page', label: '页面' }, { value: 'tab', label: '导航' }]} />
+                    <Form.Item name="menuType" label="类型">
+                      <Select options={MENU_TYPE_OPTIONS} />
                     </Form.Item>
                   </Col>
                   <Col span={12}>
                     <Form.Item name="parentId" label="上级菜单">
-                      <Select options={[{ value: 0, label: '（顶级菜单）' }, ...buildParentOptions(selectedNode)]} />
+                      <Select allowClear placeholder="（顶级菜单）" options={buildParentOptions(selectedNode)} />
                     </Form.Item>
                   </Col>
                   <Col span={12}>
-                    <Form.Item name="visible" label="在导航中显示" valuePropName="checked">
-                      <Switch />
+                    <Form.Item name="status" label="状态">
+                      <Select options={[{ value: '1', label: '启用' }, { value: '0', label: '停用' }]} />
                     </Form.Item>
                   </Col>
                 </Row>
@@ -240,30 +253,33 @@ export const julyMenu: React.FC<MenuListPageProps> = () => {
 
       <Modal
         title="新建菜单"
-        open={createModal.open}
-        onCancel={() => setCreateModal({ open: false, parentId: 0 })}
-        onOk={handleSaveCreate}
+        open={createModal}
+        onCancel={() => setCreateModal(false)}
+        onOk={handleCreate}
         okText="保存"
         cancelText="取消"
         destroyOnClose
       >
         <Form form={createForm} layout="vertical" preserve={false}>
           <Form.Item name="parentId" label="上级菜单">
-            <Select options={[{ value: 0, label: '（顶级菜单）' }, ...buildParentOptions(null)]} />
+            <Select allowClear placeholder="（顶级菜单）" options={buildParentOptions(null)} />
           </Form.Item>
-          <Form.Item name="title" label="菜单标题" rules={[{ required: true, message: '请输入菜单标题' }]}>
-            <Input placeholder="请输入菜单标题" />
+          <Form.Item name="menuCode" label="菜单编码" rules={[{ required: true, message: '请输入菜单编码' }]}>
+            <Input placeholder="如 config" />
           </Form.Item>
-          <Form.Item name="path" label="路由路径" rules={[{ required: true, message: '请输入路由路径' }]}>
+          <Form.Item name="menuName" label="菜单名称" rules={[{ required: true, message: '请输入菜单名称' }]}>
+            <Input placeholder="请输入菜单名称" />
+          </Form.Item>
+          <Form.Item name="menuRoute" label="路由路径" rules={[{ required: true, message: '请输入路由路径' }]}>
             <Input placeholder="如 /business/newpage" />
           </Form.Item>
           <Row gutter={12}>
             <Col span={12}>
-              <Form.Item name="icon" label="图标（emoji）"><Input /></Form.Item>
+              <Form.Item name="menuIcon" label="图标（emoji）"><Input /></Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="type" label="类型">
-                <Select options={[{ value: 'page', label: '页面' }, { value: 'tab', label: '导航' }]} />
+              <Form.Item name="menuType" label="类型">
+                <Select options={MENU_TYPE_OPTIONS} />
               </Form.Item>
             </Col>
           </Row>

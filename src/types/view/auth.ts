@@ -6,3 +6,8 @@ export interface CurrentUser {
   avatar: string;
   roles: string[];
 }
+
+export interface AuthState {
+  token: string | null;
+  user: CurrentUser | null;
+}

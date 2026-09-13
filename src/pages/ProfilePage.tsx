@@ -5,10 +5,7 @@ import React, { useState } from 'react';
 import { useCurrentUser, authStore } from '@/stores/authStore';
 import { SYSTEM011_ROUTES } from '@/config/routes';
 import { ConfirmDialog } from '../components';
-
-interface ProfilePageProps {
-  onNavigate?: (path: string) => void;
-}
+import type { ProfilePageProps } from '@/types/view/page';
 
 export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
   const user = useCurrentUser();

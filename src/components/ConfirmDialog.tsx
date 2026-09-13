@@ -2,17 +2,7 @@
  * 确认弹窗组件
  */
 import React from 'react';
-
-interface ConfirmDialogProps {
-  visible: boolean;
-  title?: string;
-  content: string;
-  onConfirm: () => void;
-  onCancel: () => void;
-  confirmText?: string;
-  cancelText?: string;
-  danger?: boolean;
-}
+import type { ConfirmDialogProps } from '@/types/view/components';
 
 export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   visible,

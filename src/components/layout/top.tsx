@@ -9,12 +9,9 @@ import { menuStore } from '@/stores/system011/julyMenuStore';
 import { roleStore } from '@/stores/system011/julyRoleStore';
 import { globalConfig } from '@/config/global';
 import { toast } from '@/utils/toast';
+import type { TopProps } from '@/types/view/layout';
 
 const { Header } = Layout;
-
-interface TopProps {
-  onNavigate: (path: string) => void;
-}
 
 export const Top: React.FC<TopProps> = ({ onNavigate }) => {
   const user = useCurrentUser();

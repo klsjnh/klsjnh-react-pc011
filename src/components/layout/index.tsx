@@ -2,14 +2,9 @@
 import React from 'react';
 import { Layout } from 'antd';
 import { useNavMenus } from '@/stores/system011/julyMenuStore';
+import type { SidebarLayoutProps } from '@/types/view/layout';
 import { Top } from './top';
 import { Left } from './left';
-
-interface SidebarLayoutProps {
-  children: React.ReactNode;
-  currentPath: string;
-  onNavigate: (path: string) => void;
-}
 
 export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children, currentPath, onNavigate }) => {
   const menus = useNavMenus();

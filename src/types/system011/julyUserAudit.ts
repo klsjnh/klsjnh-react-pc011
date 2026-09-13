@@ -1,6 +1,7 @@
-/** julyUserAudit 模块契约类型（/julyUserAudit/v1/*） */
+/** julyUserAudit 模块类型（契约，合并单文件） */
+import type { BaseVo011 } from '@/types/common';
 
-/** 审计事件类型（julyUserAudit.auditType；取自真实后端实测枚举） */
+/** 审计事件类型 */
 export type JulyUserAuditType011 =
   | 'LOGIN'
   | 'LOGIN_FAILED'
@@ -9,24 +10,23 @@ export type JulyUserAuditType011 =
   | 'EXPORT'
   | (string & {});
 
-/** 审计日志（julyUser 事件流水，julyUserAudit/v1/selectListByPage） */
-export interface JulyUserAuditVo011 {
-  id: string;
-  pkMt: string | null; // 操作者 id（登录失败可空）
-  userAccount: string; // 操作者账号（冗余）
-  auditType: JulyUserAuditType011; // 事件类型
-  objectCode: string; // 对象编码（如 july_user）
-  auditContent: string; // 事件描述
-  auditIp: string; // 客户端 IP
-  createTime: string; // 事件时间
+/** 审计日志（julyUser 事件流水） */
+export interface JulyUserAuditVo011 extends BaseVo011 {
+  pkMt: string | null;
+  userAccount: string;
+  auditType: JulyUserAuditType011;
+  objectCode: string;
+  auditContent: string;
+  auditIp: string;
+  createTime: string;
 }
 
-/** 审计查询参数（julyUserAudit/v1/selectListByPage） */
+/** 审计查询参数 */
 export interface JulyUserAuditQueryVo011 {
   pageIndex: number;
   pageSize: number;
-  userAccount?: string; // 操作者账号（模糊）
-  auditType?: string; // 事件类型（精确）
-  beginTime?: string; // 事件时间下界（含）
-  endTime?: string; // 事件时间上界（含）
+  userAccount?: string;
+  auditType?: string;
+  beginTime?: string;
+  endTime?: string;
 }

@@ -5,6 +5,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { ConfirmDialog } from '../components';
+import type { ConfigItem } from '@/types/view/page';
 
 // ==================== 通用样式 ====================
 
@@ -42,15 +43,6 @@ const statCardStyle: React.CSSProperties = {
 };
 
 // ==================== 配置管理 ====================
-
-interface ConfigItem {
-  id: number;
-  key: string;
-  value: string;
-  group: string;
-  remark: string;
-  enabled: boolean;
-}
 
 export const ConfigPage: React.FC = () => {
   const [configs, setConfigs] = useState<ConfigItem[]>([

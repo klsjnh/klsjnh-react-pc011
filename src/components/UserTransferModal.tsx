@@ -3,20 +3,11 @@
  * 用于角色管理添加用户
  */
 import React, { useState, useMemo } from 'react';
-import type { NodeId } from '@/types/view/common';
-import type { OrgTreeNode } from '@/types/view/organization';
+import type { NodeId, OrgTreeNode } from '@/types/view/common';
 import type { TransferUser } from '@/types/view/transfer';
+import type { UserTransferModalProps } from '@/types/view/components';
 
 export type { NodeId, OrgTreeNode, TransferUser };
-
-interface UserTransferModalProps {
-  title: string;
-  orgTree: OrgTreeNode[];
-  allUsers: TransferUser[];
-  excludedUserIds: NodeId[];
-  onConfirm: (userIds: NodeId[]) => void;
-  onCancel: () => void;
-}
 
 // ==================== 组织树 ====================
 

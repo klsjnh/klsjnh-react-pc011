@@ -38,8 +38,8 @@ export const uiStore = {
   getSnapshot,
   subscribe,
   setSidebarCollapsed: (collapsed: boolean) => setState({ sidebarCollapsed: collapsed }),
-  setMenuTreeExpandedIds: (ids: number[]) => setState({ menuTreeExpandedIds: ids }),
-  setMenuTreeSelectedId: (id: number | null) => setState({ menuTreeSelectedId: id }),
+  setMenuTreeExpandedIds: (ids: string[]) => setState({ menuTreeExpandedIds: ids }),
+  setMenuTreeSelectedId: (id: string | null) => setState({ menuTreeSelectedId: id }),
 };
 
 export function useUiState(): UiState {

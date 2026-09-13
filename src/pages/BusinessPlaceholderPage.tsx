@@ -2,11 +2,7 @@
  * 业务功能占位页 - PC 端（用于尚未实现的具体功能）
  */
 import React from 'react';
-
-interface BusinessPlaceholderPageProps {
-  title: string;
-  path?: string;
-}
+import type { BusinessPlaceholderPageProps } from '@/types/view/page';
 
 /** 业务名称 → 描述信息映射 */
 const businessInfo: Record<string, { desc: string; icon: string; features: string[] }> = {

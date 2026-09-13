@@ -3,17 +3,9 @@
  * 优先级：localStorage 运行时切换 > VITE_DATA_MODE 环境变量 > 默认 mock
  */
 import { useSyncExternalStore } from 'react';
-import type { DataMode, RunState } from '@/types/view/appConfig';
+import type { DataMode, RunState, AppConfigState } from '@/types/view/appConfig';
 
 export type { DataMode, RunState };
-
-interface AppConfigState {
-  dataMode: DataMode;
-  runState: RunState;
-  apiBaseUrl: string;
-  /** 最近一次 API 请求错误（模式切换下拉里展示） */
-  lastApiError: string | null;
-}
 
 const MODE_KEY = 'pc011-data-mode';
 const RUN_KEY = 'pc011-run-state';

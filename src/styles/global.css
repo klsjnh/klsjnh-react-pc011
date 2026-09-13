@@ -240,6 +240,8 @@ body {
 .mb-8 { margin-bottom: 8px; }
 .mb-16 { margin-bottom: 16px; }
 .w-full { width: 100%; }
+.search-input { width: 240px; }
+.filter-select { width: 140px; }
 
 /* 登录页 */
 .login-page {
@@ -291,3 +293,4 @@ body {
 .menu-main { flex: 1; min-width: 0; }
 .menu-empty { display: flex; align-items: center; justify-content: center; min-height: 460px; }
 .menu-tree-title { display: inline-flex; align-items: center; gap: 4px; }
+

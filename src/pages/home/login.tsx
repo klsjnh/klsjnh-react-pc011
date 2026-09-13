@@ -12,8 +12,7 @@ import { isDevelopment, useAppConfig } from '@/config/appConfig';
 import { readDevLoginUserName } from '@/utils/devLogin';
 import { globalConfig } from '@/config/global';
 import { toast } from '@/utils/toast';
-
-type LoginTab = 'username' | 'password';
+import type { LoginTab } from '@/types/view/page';
 
 const DEFAULT_USER_NAME = 'klsjnh';
 

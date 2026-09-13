@@ -1,4 +1,4 @@
-/** 前端 UI 视图类型出口（非后端契约；契约类型见 src/types/system011/） */
+/** 前端 UI 通用类型出口（非模块专属；模块契约+视图见 src/types/system011/<module>/） */
 export * from './common';
 export * from './layout';
 export * from './auth';
@@ -7,7 +7,5 @@ export * from './ui';
 export * from './toast';
 export * from './notification';
 export * from './transfer';
-export * from './julyUser';
-export * from './organization';
-export * from './julyRole';
-export * from './julyMenu';
+export * from './components';
+export * from './page';

@@ -6,14 +6,9 @@ import { isMockMode } from '@/config/appConfig';
 import { login as apiLogin, loginByUserName as apiLoginByUserName, logout as apiLogout } from '@/services/system011';
 import type { JulyUserSessionVo011 } from '@/types/system011';
 
-import type { CurrentUser } from '@/types/view/auth';
+import type { CurrentUser, AuthState } from '@/types/view/auth';
 
 export type { CurrentUser };
-
-interface AuthState {
-  token: string | null;
-  user: CurrentUser | null;
-}
 
 const TOKEN_KEY = 'token';
 const USER_KEY = 'pc011-user';
