@@ -106,12 +106,94 @@ export interface JulyOrganizationVo011 {
   updateTime?: string;
 }
 
-/** 用户查询参数（julyUser/v1/selectListByPage） */
+/** 用户查询参数（julyUser/v1/selectListByPage）
+ *  注意：后端 userName 为「姓名」精确过滤（实测 'zhang' → 0 条），userAccount 为账号模糊 */
 export interface JulyUserQueryVo011 {
   pageIndex: number;
   pageSize: number;
   userAccount?: string;
   userName?: string;
+}
+
+/** 主键入参（julyUser/v1/getById 等） */
+export interface IdVo011 {
+  id: string;
+}
+
+/** 新增用户（julyUser/v1/insert）；password/userAccount/userName 必填 */
+export interface JulyUserInsertVo011 {
+  userAccount: string; // 登录账号（唯一，最长 30，创建后不可修改）
+  userName: string; // 用户姓名（最长 60）
+  password: string; // 初始密码（明文传输，服务端 bcrypt 存储）
+  mobile?: string;
+  email?: string;
+  avatar?: string;
+  pkOrg?: string; // 所属组织 id
+}
+
+/** 修改用户资料（julyUser/v1/update，不含账号与密码）；id/userName 必填 */
+export interface JulyUserUpdateVo011 {
+  id: string;
+  userName: string;
+  mobile?: string;
+  email?: string;
+  avatar?: string;
+  pkOrg?: string;
+}
+
+/** 重置密码（julyUser/v1/resetPassword，管理员动作） */
+export interface JulyUserResetPasswordVo011 {
+  id: string;
+  password: string;
+}
+
+/** 本人修改密码（julyUser/v1/changePassword） */
+export interface JulyUserChangePasswordVo011 {
+  id: string;
+  oldPassword: string;
+  newPassword: string;
+}
+
+/** 批量逻辑删除结果（julyUser/v1/logicDelete 返回 data） */
+export interface BatchDeleteResultVo011 {
+  total: number;
+  success: number;
+  failed: number;
+  errors: { id: string; message: string }[];
+}
+
+/** 逻辑删除入参：主键数组（直接作为 body 发送，非对象包裹） */
+export type IdsVo011 = string[];
+
+/** 审计事件类型（julyUserAudit.auditType；取自真实后端实测枚举） */
+export type JulyUserAuditType011 =
+  | 'LOGIN'
+  | 'LOGIN_FAILED'
+  | 'LOGOUT'
+  | 'CHANGE_PASSWORD'
+  | 'EXPORT'
+  | (string & {});
+
+/** 审计日志（julyUser 事件流水，julyUserAudit/v1/selectListByPage） */
+export interface JulyUserAuditVo011 {
+  id: string;
+  pkMt: string | null; // 操作者 id（登录失败可空）
+  userAccount: string; // 操作者账号（冗余）
+  auditType: JulyUserAuditType011; // 事件类型
+  objectCode: string; // 对象编码（如 july_user）
+  auditContent: string; // 事件描述
+  auditIp: string; // 客户端 IP
+  createTime: string; // 事件时间
+}
+
+/** 审计查询参数（julyUserAudit/v1/selectListByPage） */
+export interface JulyUserAuditQueryVo011 {
+  pageIndex: number;
+  pageSize: number;
+  userAccount?: string; // 操作者账号（模糊）
+  auditType?: string; // 事件类型（精确）
+  beginTime?: string; // 事件时间下界（含）
+  endTime?: string; // 事件时间上界（含）
 }
 
 /** 角色查询参数（julyRole/v1/selectListByPage） */

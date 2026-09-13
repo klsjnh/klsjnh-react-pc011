@@ -18,6 +18,15 @@ import type {
   JulyRoleVo011,
   JulyOrganizationVo011,
   PageResult011,
+  IdVo011,
+  JulyUserInsertVo011,
+  JulyUserUpdateVo011,
+  JulyUserResetPasswordVo011,
+  JulyUserChangePasswordVo011,
+  JulyUserAssignRolesVo011,
+  JulyUserAuditVo011,
+  JulyUserAuditQueryVo011,
+  BatchDeleteResultVo011,
 } from '../types/system011';
 
 /** 统一 action 路径常量（禁止在 store 里再写分散的 /menu、/role 等旧路径） */
@@ -27,6 +36,16 @@ export const SYSTEM011_ACTIONS = {
     loginByUserName: '/julyUser/v1/loginByUserName',
     logout: '/julyUser/v1/logout',
     selectListByPage: '/julyUser/v1/selectListByPage',
+    getById: '/julyUser/v1/getById',
+    insert: '/julyUser/v1/insert',
+    update: '/julyUser/v1/update',
+    logicDelete: '/julyUser/v1/logicDelete',
+    resetPassword: '/julyUser/v1/resetPassword',
+    changePassword: '/julyUser/v1/changePassword',
+    assignRoles: '/julyUser/v1/assignRoles',
+  },
+  userAudit: {
+    selectListByPage: '/julyUserAudit/v1/selectListByPage',
   },
   menu: {
     selectUserMenuTree: '/julyMenu/v1/selectUserMenuTree',
@@ -71,6 +90,46 @@ export function selectMenuListByPage(body: object = {}): Promise<PageResult011<J
 /** 用户分页查询 */
 export function selectUserListByPage(body: object = {}): Promise<PageResult011<JulyUserVo011>> {
   return api.post<PageResult011<JulyUserVo011>>(SYSTEM011_ACTIONS.user.selectListByPage, body);
+}
+
+/** 用户详情（主键查询） */
+export function getUserById(id: string): Promise<JulyUserVo011> {
+  return api.post<JulyUserVo011>(SYSTEM011_ACTIONS.user.getById, { id } as IdVo011);
+}
+
+/** 新增用户（返回新用户 id） */
+export function insertUser(data: JulyUserInsertVo011): Promise<IdVo011> {
+  return api.post<IdVo011>(SYSTEM011_ACTIONS.user.insert, data);
+}
+
+/** 修改用户资料（不含账号与密码；返回 id） */
+export function updateUser(data: JulyUserUpdateVo011): Promise<IdVo011> {
+  return api.post<IdVo011>(SYSTEM011_ACTIONS.user.update, data);
+}
+
+/** 批量逻辑删除用户（body 直接是 id 数组；返回批量结果） */
+export function logicDeleteUsers(ids: string[]): Promise<BatchDeleteResultVo011> {
+  return api.post<BatchDeleteResultVo011>(SYSTEM011_ACTIONS.user.logicDelete, ids);
+}
+
+/** 重置密码（管理员动作） */
+export function resetUserPassword(id: string, password: string): Promise<IdVo011> {
+  return api.post<IdVo011>(SYSTEM011_ACTIONS.user.resetPassword, { id, password } as JulyUserResetPasswordVo011);
+}
+
+/** 本人修改密码（验旧密） */
+export function changePassword(data: JulyUserChangePasswordVo011): Promise<IdVo011> {
+  return api.post<IdVo011>(SYSTEM011_ACTIONS.user.changePassword, data);
+}
+
+/** 分配角色（整存替换） */
+export function assignUserRoles(id: string, pkRoles: string[]): Promise<IdVo011> {
+  return api.post<IdVo011>(SYSTEM011_ACTIONS.user.assignRoles, { id, pkRoles } as JulyUserAssignRolesVo011);
+}
+
+/** 审计日志分页查询（julyUser 事件流水） */
+export function selectUserAuditListByPage(body: object = {}): Promise<PageResult011<JulyUserAuditVo011>> {
+  return api.post<PageResult011<JulyUserAuditVo011>>(SYSTEM011_ACTIONS.userAudit.selectListByPage, body as JulyUserAuditQueryVo011);
 }
 
 /** 角色分页查询 */
