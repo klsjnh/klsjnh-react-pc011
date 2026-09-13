@@ -2,8 +2,8 @@
  * 个人中心页 - PC 端（账号信息 + 快捷入口 + 偏好设置）
  */
 import React, { useState } from 'react';
-import { useCurrentUser, authStore } from '../stores/authStore';
-import { SYSTEM011_ROUTES } from '../config/routes';
+import { useCurrentUser, authStore } from '@/stores/authStore';
+import { SYSTEM011_ROUTES } from '@/config/routes';
 import { ConfirmDialog } from '../components';
 
 interface ProfilePageProps {

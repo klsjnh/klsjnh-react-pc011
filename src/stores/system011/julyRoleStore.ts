@@ -5,50 +5,18 @@
  * （真实后端经 julyRole/v1/updatePermission、julyRoleUser/v1/insert 维护）
  */
 import { useMemo } from 'react';
-import { isMockMode } from '../../config/appConfig';
-import { fireApi } from '../../api/request';
-import { selectRoleListByPage, selectUserListByPage, fetchOrganizationTree } from '../../services/system011';
+import { isMockMode } from '@/config/appConfig';
+import { fireApi } from '@/api/request';
+import { selectRoleListByPage, selectUserListByPage, fetchOrganizationTree } from '@/services/system011';
 import { julyOrganizationStore } from './julyOrganizationStore';
 import { createStore, useStoreState } from '../createStore';
-import { mockRelations } from '../../mock/system011';
-import type { JulyRoleVo011, JulyUserVo011, JulyOrganizationVo011 } from '../../types/system011';
+import { mockRelations } from '@/mock/system011';
+import type { JulyRoleVo011, JulyUserVo011, JulyOrganizationVo011 } from '@/types/system011';
 
-/** UI 投影：角色（id 为后端 UUID 字符串，禁止数字化） */
-export interface RoleDetail {
-  id: string;
-  name: string;            // roleCode
-  label: string;           // roleName
-  description: string;     // remark
-  status: 'active' | 'inactive';
-  isBuiltin: boolean;
-  permissions: string[];
-  userIds: string[];
-}
+import type { RoleDetail, UserInfo, RoleState } from '@/types/view/julyRole';
+import type { OrgTreeNode } from '@/types/view/organization';
 
-/** UI 投影：用户（username/realName/department 来自 JulyUserVo011；id 为 UUID 字符串） */
-export interface UserInfo {
-  id: string;
-  username: string;        // userAccount
-  realName: string;        // userName
-  department: string;      // 组织名称（orgName(pkOrg)）
-  departmentId: string;    // 组织 id（pkOrg，UUID 字符串）
-}
-
-/** UI 投影：组织树（供用户穿梭框；id 为 UUID 字符串） */
-export interface OrgTreeNode {
-  id: string;
-  name: string;
-  type: string;
-  children?: OrgTreeNode[];
-}
-
-export interface RoleState {
-  roles: RoleDetail[];
-  users: UserInfo[];
-  orgTree: OrgTreeNode[];
-  loaded: boolean;
-  loading: boolean;
-}
+export type { RoleDetail, UserInfo, OrgTreeNode, RoleState };
 
 const orgLevelToType: Record<string, string> = { '1': 'group', '2': 'company', '3': 'department' };
 

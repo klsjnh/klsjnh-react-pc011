@@ -3,9 +3,12 @@
  * 对齐 docs/016.api-contract.md：POST + JSON body + 统一响应信封
  * URL 结构：{apiBaseUrl}/{模块}/{动作}，apiBaseUrl 默认 /api/v1
  */
-import { appConfigStore, isMockMode } from '../config/appConfig';
-import { authStore } from '../stores/authStore';
-import { getMockResponse } from '../mock/system011';
+import { appConfigStore, isMockMode } from '@/config/appConfig';
+import { authStore } from '@/stores/authStore';
+import { getMockResponse } from '@/mock/system011';
+import type { ApiResponse } from '@/types/api';
+
+export type { ApiResponse };
 
 /**
  * 鉴权头：登录后携带后端签发的 JWT（klsjnh 约定 Authorization: Bearer <token>）
@@ -14,16 +17,6 @@ import { getMockResponse } from '../mock/system011';
 function authHeaders(): Record<string, string> {
   const token = authStore.getSnapshot().token;
   return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
-/** 统一响应信封（六字段固定） */
-export interface ApiResponse<T> {
-  statusCode: number;
-  message: string;
-  errorMessage: string;
-  timestamp: number;
-  traceId: string;
-  data: T;
 }
 
 export class ApiError extends Error {

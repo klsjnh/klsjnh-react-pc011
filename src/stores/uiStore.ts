@@ -3,15 +3,9 @@
  * 左侧导航收起状态、菜单管理树的展开/选中状态等
  */
 import { useSyncExternalStore } from 'react';
+import type { UiState } from '@/types/view/ui';
 
-export interface UiState {
-  /** 左侧导航侧边栏是否收起 */
-  sidebarCollapsed: boolean;
-  /** 菜单管理树展开的节点 ID（null = 从未设置，使用默认值：仅第一个顶级展开） */
-  menuTreeExpandedIds: number[] | null;
-  /** 菜单管理树当前选中节点 */
-  menuTreeSelectedId: number | null;
-}
+export type { UiState };
 
 const STORAGE_KEY = 'pc011-ui-state';
 

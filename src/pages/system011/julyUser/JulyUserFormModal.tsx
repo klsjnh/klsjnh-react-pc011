@@ -3,13 +3,13 @@
  * 负责表单字段、校验、组织/角色选择；提交走 julyUserService.saveUser。
  */
 import React, { useState, useEffect } from 'react';
-import { saveUser } from '../../../services/system011';
-import { OrgPickerModal } from '../../../components/OrgPickerModal';
-import { RolePickerModal } from '../../../components/RolePickerModal';
-import { toast } from '../../../utils/toast';
-import { validateJulyUserForm } from '../../../utils/validate';
-import type { RoleDetail, OrgTreeNode } from '../../../stores/system011/julyRoleStore';
-import type { JulyUserView } from '../../../types/view';
+import { saveUser } from '@/services/system011';
+import { OrgPickerModal } from '@/components/OrgPickerModal';
+import { RolePickerModal } from '@/components/RolePickerModal';
+import { toast } from '@/utils/toast';
+import { validateJulyUserForm } from '@/utils/validate';
+import type { RoleDetail, OrgTreeNode } from '@/stores/system011/julyRoleStore';
+import type { JulyUserView } from '@/types/view';
 
 interface JulyUserFormModalProps {
   open: boolean;

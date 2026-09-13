@@ -84,3 +84,14 @@ export interface JulyUserAssignRolesVo011 {
   id: string;
   pkRoles: string[];
 }
+
+/** 用户保存入参（service 编排用：有 id = 编辑，无 id = 新增） */
+export interface SaveUserParams {
+  id?: string;
+  userAccount?: string;
+  userName: string;
+  password?: string;
+  mobile?: string;
+  email?: string;
+  pkOrg?: string;
+}

@@ -12,7 +12,7 @@
 import type {
   JulyUserVo011, JulyRoleVo011, JulyMenuVo011, JulyOrganizationVo011,
   JulyUserSessionVo011, PageResult011, JulyUserAuditVo011,
-} from '../types/system011';
+} from '@/types/system011';
 
 /** 六字段响应信封（与后端 Response011<T> 一致） */
 export interface MockEnvelope<T> {

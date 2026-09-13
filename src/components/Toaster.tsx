@@ -3,7 +3,7 @@
  * 与 src/utils/toast.ts 的单例 store 解耦：业务侧直接 toast.success() 即可。
  */
 import React, { useSyncExternalStore } from 'react';
-import { subscribeToast, getToastSnapshot, dismissToast, type ToastKind } from '../utils/toast';
+import { subscribeToast, getToastSnapshot, dismissToast, type ToastKind } from '@/utils/toast';
 
 const ICON: Record<ToastKind, string> = {
   success: '✓',

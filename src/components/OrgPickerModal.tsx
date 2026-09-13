@@ -2,7 +2,7 @@
  * 组织选择弹窗 - PC 端（组织架构树单选）
  */
 import React, { useState } from 'react';
-import type { OrgTreeNode } from '../stores/system011/julyRoleStore';
+import type { OrgTreeNode } from '@/stores/system011/julyRoleStore';
 
 interface OrgPickerModalProps {
   title?: string;

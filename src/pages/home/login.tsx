@@ -9,9 +9,9 @@
  * mock / api 两模式共用 authStore 登录方法，解包逻辑一致。
  */
 import React, { useState, useEffect, useCallback } from 'react';
-import { authStore } from '../stores/authStore';
-import { isDevelopment, useAppConfig } from '../config/appConfig';
-import { readDevLoginUserName } from '../utils/devLogin';
+import { authStore } from '@/stores/authStore';
+import { isDevelopment, useAppConfig } from '@/config/appConfig';
+import { readDevLoginUserName } from '@/utils/devLogin';
 
 type LoginTab = 'username' | 'password';
 
