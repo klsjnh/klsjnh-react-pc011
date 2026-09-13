@@ -7,6 +7,7 @@ import { SidebarLayout } from './components/layout/SidebarLayout';
 import { Toaster } from './components/Toaster';
 import { useIsAuthenticated } from './stores/authStore';
 import { menuStore } from './stores/system011/julyMenuStore';
+import { SYSTEM011_ROUTES, DEFAULT_ROUTE } from './config/routes';
 
 // 懒加载页面
 const DashboardPage = lazy(() => import('./pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
@@ -52,7 +53,7 @@ export const App: React.FC = () => {
   const isAuthenticated = useIsAuthenticated();
   const [currentPath, setCurrentPath] = useState(() => {
     const hash = window.location.hash.replace('#', '');
-    return hash || '/dashboard';
+    return hash || DEFAULT_ROUTE;
   });
 
   const handleNavigate = (path: string) => {
@@ -64,7 +65,7 @@ export const App: React.FC = () => {
     menuStore.load();
     const handlePopState = () => {
       const hash = window.location.hash.replace('#', '');
-      setCurrentPath(hash || '/dashboard');
+      setCurrentPath(hash || DEFAULT_ROUTE);
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
@@ -110,10 +111,10 @@ export const App: React.FC = () => {
 
     const pageMap: Record<string, React.FC<any>> = {
       '/dashboard': DashboardPage,
-      '/user': julyUser,
-      '/menu': julyMenu,
-      '/permission': julyPermission,
-      '/organization': julyOrganization,
+      [SYSTEM011_ROUTES.julyUser]: julyUser,
+      [SYSTEM011_ROUTES.julyMenu]: julyMenu,
+      [SYSTEM011_ROUTES.julyPermission]: julyPermission,
+      [SYSTEM011_ROUTES.julyOrganization]: julyOrganization,
       '/audit': AuditPage,
       '/settings': SettingsPage,
       '/business': BusinessPage,

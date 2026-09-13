@@ -3,6 +3,7 @@
  */
 import React, { useState } from 'react';
 import { useCurrentUser, authStore } from '../stores/authStore';
+import { SYSTEM011_ROUTES } from '../config/routes';
 import { ConfirmDialog } from '../components';
 
 interface ProfilePageProps {
@@ -31,10 +32,10 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
   };
 
   const navItems = [
-    { icon: '👥', label: '用户管理', path: '/user' },
-    { icon: '🔑', label: '权限管理', path: '/permission' },
-    { icon: '🏢', label: '组织管理', path: '/organization' },
-    { icon: '📋', label: '菜单管理', path: '/menu' },
+    { icon: '👥', label: '用户管理', path: SYSTEM011_ROUTES.julyUser },
+    { icon: '🔑', label: '权限管理', path: SYSTEM011_ROUTES.julyPermission },
+    { icon: '🏢', label: '组织管理', path: SYSTEM011_ROUTES.julyOrganization },
+    { icon: '📋', label: '菜单管理', path: SYSTEM011_ROUTES.julyMenu },
     { icon: '📊', label: '数据报表', path: '/reports' },
     { icon: '🔔', label: '消息通知', path: '/notifications' },
     { icon: '📝', label: '审计日志', path: '/audit' },

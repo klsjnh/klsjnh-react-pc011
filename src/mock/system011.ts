@@ -218,10 +218,10 @@ const mockMenus: JulyMenuVo011[] = [
     id: 'menu0000000000000000000000root1', parentId: '', menuCode: 'system', menuName: '系统管理', menuType: '1',
     menuIcon: '⚙️', menuRoute: '/system', permissionCode: null, component: null, sortOrder: 1, status: '1',
     children: [
-      { id: 'menu0000000000000000000000000101', parentId: 'menu0000000000000000000000root1', menuCode: 'menu', menuName: '菜单管理', menuType: '2', menuIcon: '📋', menuRoute: '/menu', permissionCode: 'system:menu:list', component: null, sortOrder: 1, status: '1', children: [] },
-      { id: 'menu0000000000000000000000000102', parentId: 'menu0000000000000000000000root1', menuCode: 'organization', menuName: '组织管理', menuType: '2', menuIcon: '🏢', menuRoute: '/organization', permissionCode: 'organization:view', component: null, sortOrder: 2, status: '1', children: [] },
-      { id: 'menu0000000000000000000000000103', parentId: 'menu0000000000000000000000root1', menuCode: 'user', menuName: '用户管理', menuType: '2', menuIcon: '👥', menuRoute: '/user', permissionCode: 'system:user:list', component: null, sortOrder: 3, status: '1', children: [] },
-      { id: 'menu0000000000000000000000000104', parentId: 'menu0000000000000000000000root1', menuCode: 'permission', menuName: '权限管理', menuType: '2', menuIcon: '🔑', menuRoute: '/permission', permissionCode: 'system:role:list', component: null, sortOrder: 4, status: '1', children: [] },
+      { id: 'menu0000000000000000000000000101', parentId: 'menu0000000000000000000000root1', menuCode: 'menu', menuName: '菜单管理', menuType: '2', menuIcon: '📋', menuRoute: '/system011/julyMenu', permissionCode: 'system:menu:list', component: null, sortOrder: 1, status: '1', children: [] },
+      { id: 'menu0000000000000000000000000102', parentId: 'menu0000000000000000000000root1', menuCode: 'organization', menuName: '组织管理', menuType: '2', menuIcon: '🏢', menuRoute: '/system011/julyOrganization', permissionCode: 'organization:view', component: null, sortOrder: 2, status: '1', children: [] },
+      { id: 'menu0000000000000000000000000103', parentId: 'menu0000000000000000000000root1', menuCode: 'user', menuName: '用户管理', menuType: '2', menuIcon: '👥', menuRoute: '/system011/julyUser', permissionCode: 'system:user:list', component: null, sortOrder: 3, status: '1', children: [] },
+      { id: 'menu0000000000000000000000000104', parentId: 'menu0000000000000000000000root1', menuCode: 'permission', menuName: '权限管理', menuType: '2', menuIcon: '🔑', menuRoute: '/system011/julyPermission', permissionCode: 'system:role:list', component: null, sortOrder: 4, status: '1', children: [] },
     ],
   },
   {

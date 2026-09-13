@@ -3,6 +3,7 @@
  */
 import React, { useState } from 'react';
 import { useCurrentUser, authStore } from '@/stores/authStore';
+import { SYSTEM011_ROUTES } from '@/config/routes';
 import { useUnreadCount } from '@/stores/notificationStore';
 import { uiStore, useUiState } from '@/stores/uiStore';
 import { appConfigStore, useAppConfig, isDevelopment, type DataMode, type RunState } from '@/config/appConfig';
@@ -30,10 +31,10 @@ const navMenus: NavItem[] = [
     label: '系统管理',
     icon: '⚙️',
     children: [
-      { path: '/menu', label: '菜单管理', icon: '📋' },
-      { path: '/organization', label: '组织管理', icon: '🏢' },
-      { path: '/user', label: '用户管理', icon: '👥' },
-      { path: '/permission', label: '权限管理', icon: '🔑' },
+      { path: SYSTEM011_ROUTES.julyMenu, label: '菜单管理', icon: '📋' },
+      { path: SYSTEM011_ROUTES.julyOrganization, label: '组织管理', icon: '🏢' },
+      { path: SYSTEM011_ROUTES.julyUser, label: '用户管理', icon: '👥' },
+      { path: SYSTEM011_ROUTES.julyPermission, label: '权限管理', icon: '🔑' },
     ],
   },
   { path: '/business', label: '业务中心', icon: '💼' },
