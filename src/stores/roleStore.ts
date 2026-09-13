@@ -63,12 +63,12 @@ function projectRole(r: JulyRoleVo011, userAccountToId: Map<string, string>): Ro
   };
 }
 
-function projectUser(u: JulyUserVo011): UserInfo {
+function projectUser(u: JulyUserVo011, orgNameById: Map<string, string>): UserInfo {
   return {
     id: u.id,
     username: u.userAccount,
     realName: u.userName || u.userAccount,
-    department: mockRelations.orgName(u.pkOrg || undefined),
+    department: u.pkOrg ? (orgNameById.get(u.pkOrg) || '') : '',
     departmentId: u.pkOrg || '',
   };
 }
@@ -119,9 +119,17 @@ export const roleStore = {
       const userAccountToId = new Map<string, string>(
         userPage.rows.map((u) => [u.userAccount, u.id] as [string, string]),
       );
+      // 组织 id → 名称（由真实组织树构建，用户「所属组织」列据此解析）
+      const orgNameById = new Map<string, string>();
+      (function walkOrgs(list: JulyOrganizationVo011[]) {
+        for (const o of list) {
+          orgNameById.set(o.id, o.orgName);
+          if (o.children) walkOrgs(o.children);
+        }
+      })(orgPage.rows);
       state = {
         roles: rolePage.rows.map((r) => projectRole(r, userAccountToId)),
-        users: userPage.rows.map(projectUser),
+        users: userPage.rows.map((u) => projectUser(u, orgNameById)),
         orgTree: orgPage.rows.map(projectOrg),
         loaded: true,
         loading: false,
