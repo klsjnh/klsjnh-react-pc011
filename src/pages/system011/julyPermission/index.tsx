@@ -1,199 +1,176 @@
 /**
- * 权限管理页 - PC 端专版（左右分栏主子表）
- * 左侧：角色列表表格
- * 右侧：Tab（菜单权限树 + 关联用户）
- *
- * 数据源：统一 mock 后端（角色经 roleStore 投影自 JulyRoleVo011；
- * 菜单权限树经 selectMenuTree 投影自 JulyMenuVo011，勾选 key = 菜单 permissionCode）
+ * 权限管理页（julyPermission）- antd 版（左右分栏）
+ * 左侧：角色列表；右侧：菜单权限树（antd Tree）/ 关联用户（antd Table）
  */
-import React, { useState, useEffect, useMemo } from 'react';
-import { roleStore, useRoleState, type RoleDetail } from '@/stores/system011/julyRoleStore';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Button, Card, Empty, List, Popconfirm, Space, Table, Tabs, Tag, Tree, Typography } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import type { DataNode } from 'antd/es/tree';
+import { roleStore, useRoleState, type RoleDetail, type UserInfo } from '@/stores/system011/julyRoleStore';
 import { selectMenuTree } from '@/services/system011';
 import { UserTransferModal } from '@/components/UserTransferModal';
-import { Modal } from '@/components/Modal';
-import { buildMenuTree, MenuCheckTree, type MenuTreeNode } from './MenuCheckTree';
 import { RoleFormModal } from './RoleFormModal';
+import { buildMenuTree, type MenuTreeNode } from './MenuCheckTree';
+import type { JulyMenuVo011 } from '@/types/system011';
 
-// ==================== 主组件 ====================
+/** MenuTreeNode → antd Tree DataNode */
+function toTreeData(nodes: MenuTreeNode[]): DataNode[] {
+  return nodes.map((n) => ({
+    title: `${n.icon} ${n.title}`,
+    key: n.permissionCode,
+    children: n.children?.length ? toTreeData(n.children) : undefined,
+  }));
+}
 
 export const julyPermission: React.FC = () => {
   const { roles, users, orgTree, loaded } = useRoleState();
   const [menuTree, setMenuTree] = useState<MenuTreeNode[]>([]);
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'users' | 'perms'>('perms');
+  const [activeTab, setActiveTab] = useState<'perms' | 'users'>('perms');
   const [editModal, setEditModal] = useState<{ open: boolean; role: RoleDetail | null }>({ open: false, role: null });
-  const [dialog, setDialog] = useState<{ visible: boolean; id: string }>({ visible: false, id: '' });
+  const [permissionDraft, setPermissionDraft] = useState<string[]>([]);
   const [addUserModal, setAddUserModal] = useState(false);
-  const [permissionDraft, setPermissionDraft] = useState<Set<string>>(new Set());
 
   useEffect(() => { roleStore.load(); }, []);
   useEffect(() => {
-    selectMenuTree().then((tree) => setMenuTree(buildMenuTree(tree))).catch(() => setMenuTree([]));
+    selectMenuTree().then((t) => setMenuTree(buildMenuTree(t))).catch(() => setMenuTree([]));
   }, []);
 
   const selectedRole = roles.find((r) => r.id === selectedRoleId) || null;
-  const roleUsers = useMemo(() => {
-    if (!selectedRole) return [];
-    return selectedRole.userIds.map((id) => users.find((u) => u.id === id)!).filter(Boolean);
-  }, [selectedRole, users]);
-  const unassignedUsers = useMemo(() => {
-    if (!selectedRole) return [];
-    return users.filter((u) => !selectedRole.userIds.includes(u.id));
-  }, [selectedRole, users]);
+  const roleUsers = useMemo(
+    () => (selectedRole ? selectedRole.userIds.map((id) => users.find((u) => u.id === id)!).filter(Boolean) : []),
+    [selectedRole, users],
+  );
 
   const selectRole = (role: RoleDetail) => {
     setSelectedRoleId(role.id);
-    setPermissionDraft(new Set(role.permissions));
-  };
-
-  const togglePermission = (code: string) => {
-    setPermissionDraft((prev) => { const n = new Set(prev); n.has(code) ? n.delete(code) : n.add(code); return n; });
+    setPermissionDraft([...role.permissions]);
   };
 
   const savePermissions = () => {
-    if (!selectedRole) return;
-    roleStore.assignPermissions(selectedRole.id, Array.from(permissionDraft));
+    if (selectedRole) roleStore.assignPermissions(selectedRole.id, permissionDraft);
   };
 
-  const handleDelete = (role: RoleDetail) => {
-    if (role.userIds.length > 0) { alert('该角色下存在用户，无法删除'); return; }
-    setDialog({ visible: true, id: role.id });
-  };
+  const userColumns: ColumnsType<UserInfo> = [
+    { title: '用户名', dataIndex: 'username' },
+    { title: '姓名', dataIndex: 'realName' },
+    { title: '部门', dataIndex: 'department' },
+    {
+      title: '操作', key: 'action', width: 90,
+      render: (_, u) => (
+        <Button type="link" size="small" danger onClick={() => selectedRole && roleStore.removeUserFromRole(selectedRole.id, u.id)}>
+          移除
+        </Button>
+      ),
+    },
+  ];
 
   return (
     <div>
       <div className="page-header"><h2>权限管理</h2><p>共 {roles.length} 个角色 · 左侧选择角色配置菜单权限</p></div>
 
-      <div style={{ display: 'flex', gap: '16px', minHeight: '500px' }}>
-        {/* ===== 左侧：操作栏 + 角色列表 ===== */}
-        <div style={{ width: '300px', flexShrink: 0 }}>
-          <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
-            <button
-              className="btn btn-primary btn-sm"
-              onClick={() => setEditModal({ open: true, role: null })}
-            >
-              + 新建
-            </button>
-            <button
-              className="btn btn-default btn-sm"
-              disabled={!selectedRole}
-              style={{ opacity: selectedRole ? 1 : 0.4, cursor: selectedRole ? 'pointer' : 'not-allowed' }}
-              onClick={() => { if (selectedRole) setEditModal({ open: true, role: selectedRole }); }}
-            >
-              ✏️ 编辑
-            </button>
-            <button
-              className="btn btn-default btn-sm"
-              disabled={!selectedRole}
-              style={{ opacity: selectedRole ? 1 : 0.4, cursor: selectedRole ? 'pointer' : 'not-allowed', color: selectedRole ? 'var(--danger)' : 'var(--text-muted)', borderColor: selectedRole ? 'var(--danger)' : 'var(--border)' }}
-              onClick={() => { if (selectedRole) handleDelete(selectedRole); }}
-            >
-              🗑 删除
-            </button>
-          </div>
-          <div className="table-wrapper" style={{ maxHeight: '600px', overflowY: 'auto' }}>
-            {!loaded ? (
-              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>加载中...</div>
-            ) : (
-              roles.map((role) => (
-                <div key={role.id}
-                  onClick={() => selectRole(role)}
-                  style={{
-                    padding: '12px 14px', cursor: 'pointer',
-                    borderBottom: '1px solid var(--border-light)',
-                    background: selectedRoleId === role.id ? '#e6f7ff' : 'transparent',
-                    borderLeft: selectedRoleId === role.id ? '3px solid var(--primary)' : '3px solid transparent',
-                  }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '16px' }}>🔑</span>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '13px', fontWeight: selectedRoleId === role.id ? 600 : 400 }}>{role.label}</div>
-                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                        {role.name} · {role.userIds.length}用户 · {role.permissions.length}菜单
-                      </div>
-                    </div>
-                    <span className={`status-badge status-${role.status}`}>
-                      {role.status === 'active' ? '启用' : '停用'}
-                    </span>
-                  </div>
-                </div>
-              ))
+      <div className="permission-layout">
+        {/* 左侧：角色列表 */}
+        <Card
+          className="permission-sider"
+          title="角色"
+          styles={{ body: { padding: 0 } }}
+          extra={
+            <Space size="small">
+              <Button size="small" type="primary" onClick={() => setEditModal({ open: true, role: null })}>+ 新建</Button>
+              <Button size="small" disabled={!selectedRole} onClick={() => selectedRole && setEditModal({ open: true, role: selectedRole })}>编辑</Button>
+              <Popconfirm
+                title="确定删除这个角色吗？"
+                okText="删除"
+                cancelText="取消"
+                okButtonProps={{ danger: true }}
+                disabled={!selectedRole}
+                onConfirm={() => {
+                  if (!selectedRole) return;
+                  if (selectedRole.userIds.length > 0) { roleStore.removeRole(selectedRole.id); return; }
+                  roleStore.removeRole(selectedRole.id);
+                  setSelectedRoleId(null);
+                }}
+              >
+                <Button size="small" danger disabled={!selectedRole}>删除</Button>
+              </Popconfirm>
+            </Space>
+          }
+        >
+          <List
+            loading={!loaded}
+            dataSource={roles}
+            renderItem={(role) => (
+              <List.Item
+                className={`role-item ${selectedRoleId === role.id ? 'active' : ''}`}
+                onClick={() => selectRole(role)}
+              >
+                <List.Item.Meta
+                  avatar={<span className="role-icon">🔑</span>}
+                  title={role.label}
+                  description={`${role.name} · ${role.userIds.length}用户 · ${role.permissions.length}菜单`}
+                />
+                <Tag color={role.status === 'active' ? 'green' : 'red'}>{role.status === 'active' ? '启用' : '停用'}</Tag>
+              </List.Item>
             )}
-          </div>
-        </div>
+          />
+        </Card>
 
-        {/* ===== 右侧：详情面板 ===== */}
-        <div style={{ flex: 1 }}>
+        {/* 右侧：详情 */}
+        <div className="permission-main">
           {!selectedRole ? (
-            <div className="table-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
-              <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
-                <div style={{ fontSize: '48px', marginBottom: '12px' }}>👈</div>
-                <p>请从左侧选择一个角色配置权限</p>
-                <p style={{ fontSize: '12px', marginTop: '8px' }}>可查看菜单权限和关联用户</p>
-              </div>
-            </div>
+            <Card className="permission-empty"><Empty description="请从左侧选择一个角色配置权限" /></Card>
           ) : (
-            <div className="table-wrapper">
-              <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ fontSize: '28px' }}>🔑</span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '18px', fontWeight: 700 }}>{selectedRole.label}</div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{selectedRole.description}</div>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', borderBottom: '1px solid var(--border-light)' }}>
-                {([['perms', `菜单权限 (${selectedRole.permissions.length})`], ['users', `关联用户 (${selectedRole.userIds.length})`]] as [typeof activeTab, string][]).map(([key, label]) => (
-                  <button key={key} onClick={() => setActiveTab(key)}
-                    style={{
-                      padding: '12px 24px', background: 'transparent', border: 'none',
-                      borderBottom: activeTab === key ? '2px solid var(--primary)' : '2px solid transparent',
-                      fontSize: '14px', fontWeight: activeTab === key ? 600 : 400,
-                      color: activeTab === key ? 'var(--primary)' : 'var(--text-secondary)', cursor: 'pointer',
-                    }}>
-                    {label}
-                  </button>
-                ))}
-              </div>
-
-              {activeTab === 'perms' && (
-                <div style={{ padding: '16px' }}>
-                  <div style={{ marginBottom: '12px', textAlign: 'right' }}>
-                    <button onClick={savePermissions} className="btn btn-primary btn-sm">保存</button>
-                  </div>
-                  {menuTree.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>加载菜单树中...</div>
-                  ) : (
-                    <MenuCheckTree tree={menuTree} checkedCodes={permissionDraft} onCheck={togglePermission} />
-                  )}
-                </div>
-              )}
-
-              {activeTab === 'users' && (
-                <div style={{ padding: '16px' }}>
-                  <div style={{ marginBottom: '12px', textAlign: 'right' }}>
-                    <button className="btn btn-primary btn-sm" onClick={() => setAddUserModal(true)}>+ 添加用户</button>
-                  </div>
-                  {roleUsers.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>暂无关联用户</div>
-                  ) : (
-                    <table className="data-table">
-                      <thead><tr><th>用户名</th><th>姓名</th><th>部门</th><th style={{ width: '80px' }}>操作</th></tr></thead>
-                      <tbody>
-                        {roleUsers.map((u) => (
-                          <tr key={u.id}>
-                            <td>{u.username}</td>
-                            <td style={{ fontWeight: 500 }}>{u.realName}</td>
-                            <td>{u.department}</td>
-                            <td><button className="btn-link danger" onClick={() => roleStore.removeUserFromRole(selectedRole.id, u.id)}>移除</button></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-              )}
-            </div>
+            <Card
+              title={<span>{selectedRole.label} <Typography.Text type="secondary" className="text-sm">{selectedRole.description}</Typography.Text></span>}
+            >
+              <Tabs
+                activeKey={activeTab}
+                onChange={(k) => setActiveTab(k as 'perms' | 'users')}
+                items={[
+                  {
+                    key: 'perms',
+                    label: `菜单权限 (${permissionDraft.length})`,
+                    children: (
+                      <>
+                        <div className="text-right mb-8">
+                          <Button type="primary" size="small" onClick={savePermissions}>保存</Button>
+                        </div>
+                        {menuTree.length === 0
+                          ? <Empty description="暂无菜单" />
+                          : (
+                            <Tree
+                              checkable
+                              defaultExpandAll
+                              treeData={toTreeData(menuTree)}
+                              checkedKeys={permissionDraft}
+                              onCheck={(keys) => setPermissionDraft(keys as string[])}
+                            />
+                          )}
+                      </>
+                    ),
+                  },
+                  {
+                    key: 'users',
+                    label: `关联用户 (${selectedRole.userIds.length})`,
+                    children: (
+                      <>
+                        <div className="text-right mb-8">
+                          <Button type="primary" size="small" onClick={() => setAddUserModal(true)}>+ 添加用户</Button>
+                        </div>
+                        <Table<UserInfo>
+                          rowKey="id"
+                          size="small"
+                          columns={userColumns}
+                          dataSource={roleUsers}
+                          pagination={false}
+                        />
+                      </>
+                    ),
+                  },
+                ]}
+              />
+            </Card>
           )}
         </div>
       </div>
@@ -220,18 +197,6 @@ export const julyPermission: React.FC = () => {
         role={editModal.role}
         onClose={() => setEditModal({ open: false, role: null })}
       />
-
-      {dialog.visible && (
-        <Modal title="删除角色" onClose={() => setDialog({ visible: false, id: '' })} width={320}>
-          <div style={{ textAlign: 'center' }}>
-            <p>确定删除这个角色吗？</p>
-            <div style={{ display: 'flex', gap: '10px', marginTop: '16px', justifyContent: 'center' }}>
-              <button className="btn btn-default" onClick={() => setDialog({ visible: false, id: '' })}>取消</button>
-              <button className="btn btn-danger" onClick={() => { roleStore.removeRole(dialog.id); setDialog({ visible: false, id: '' }); }}>删除</button>
-            </div>
-          </div>
-        </Modal>
-      )}
     </div>
   );
 };

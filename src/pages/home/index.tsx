@@ -2,7 +2,8 @@
  * 登录后主界面（Home）：hash 路由分发 + 侧边栏布局
  * 登录判定由 App.tsx 负责；本组件仅在已登录时挂载。
  */
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useEffect, Suspense, lazy } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { SidebarLayout } from '@/components/layout';
 import { menuStore } from '@/stores/system011/julyMenuStore';
 import { SYSTEM011_ROUTES, DEFAULT_ROUTE } from '@/config/routes';
@@ -84,25 +85,13 @@ const PAGE_MAP: Record<string, React.FC<any>> = {
 };
 
 export const Home: React.FC = () => {
-  const [currentPath, setCurrentPath] = useState(() => {
-    const hash = window.location.hash.replace('#', '');
-    return hash || DEFAULT_ROUTE;
-  });
-
-  const handleNavigate = (path: string) => {
-    setCurrentPath(path);
-    window.history.pushState({}, '', `#${path}`);
-  };
+  const location = useLocation();
+  const navigate = useNavigate();
+  const currentPath = location.pathname || DEFAULT_ROUTE;
 
   useEffect(() => {
     // 登录后进入主界面：重新拉取菜单（清缓存，避免上次会话残留）
     menuStore.reload();
-    const handlePopState = () => {
-      const hash = window.location.hash.replace('#', '');
-      setCurrentPath(hash || DEFAULT_ROUTE);
-    };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   const renderPage = () => {
@@ -114,11 +103,11 @@ export const Home: React.FC = () => {
       return <BusinessPlaceholderPage title={BUSINESS_TITLES[action] || '业务功能'} path={currentPath} />;
     }
     const PageComponent = PAGE_MAP[currentPath] || DashboardPage;
-    return <PageComponent onNavigate={handleNavigate} />;
+    return <PageComponent onNavigate={(p: string) => navigate(p)} />;
   };
 
   return (
-    <SidebarLayout currentPath={currentPath} onNavigate={handleNavigate}>
+    <SidebarLayout currentPath={currentPath} onNavigate={(p) => navigate(p)}>
       <Suspense fallback={<div className="page-loading">加载中...</div>}>
         {renderPage()}
       </Suspense>

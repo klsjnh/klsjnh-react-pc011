@@ -1,15 +1,10 @@
 /**
- * 用户列表页（julyUser）- PC 端
- * 列表读 julyUserStore；分页/保存调 julyUserService（新增/编辑弹窗见 JulyUserFormModal）。
- *
- * 已对齐接口：
- *  - selectListByPage  分页查询（userAccount 账号模糊）
- *  - insert/update/assignRoles  由 service.saveUser 编排
- *
- * 说明：用户→角色关系后端由 assignRoles 维护，列表接口不返回角色，
- *      因此角色列为前端关系数据（mockRelations.userRoles）展示。
+ * 用户列表页（julyUser）- antd 版
+ * 列表读 julyUserStore；分页/保存调 julyUserService；新增/编辑弹窗见 JulyUserFormModal。
  */
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Card, Input, Select, Space, Button, Table, Tag } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
 import { roleStore, useRoleState } from '@/stores/system011/julyRoleStore';
 import { useUserState } from '@/stores/system011/julyUserStore';
 import { fetchUserPage } from '@/services/system011';
@@ -19,7 +14,7 @@ import { JulyUserFormModal } from './JulyUserFormModal';
 import type { JulyUserVo011 } from '@/types/system011';
 import type { JulyUserView } from '@/types/view';
 
-/** 后端 JulyUserVo011 → 页面 UI 视图（角色来自前端关系数据，组织名来自后端组织树） */
+/** 后端 JulyUserVo011 → 页面 UI 视图 */
 function toUI(u: JulyUserVo011, orgNameById: Map<string, string>): JulyUserView {
   return {
     id: u.id,
@@ -42,14 +37,13 @@ interface UserListPageProps {
 
 export const julyUser: React.FC<UserListPageProps> = () => {
   const { roles, orgTree } = useRoleState();
-  const { list, total, totalPages, query } = useUserState();
+  const { list, total, loading, query } = useUserState();
   const [keyword, setKeyword] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   /** 启停用为本地展示（后端无启停接口），用覆盖表保留切换结果 */
   const [statusOverride, setStatusOverride] = useState<Record<string, JulyUserView['status']>>({});
-  const [formModal, setFormModal] = useState<{ open: boolean; user: JulyUserView | null }>({ open: false, user: null });
+  const [modal, setModal] = useState<{ open: boolean; user: JulyUserView | null }>({ open: false, user: null });
 
-  /** 组织 id → 名称（由后端组织树建立，用于「组织」列展示） */
   const orgNameById = useMemo(() => {
     const m = new Map<string, string>();
     const walk = (nodes: typeof orgTree) => {
@@ -62,7 +56,6 @@ export const julyUser: React.FC<UserListPageProps> = () => {
   useEffect(() => { roleStore.load(); }, []);
   useEffect(() => { fetchUserPage({ pageIndex: 1, pageSize: 10 }); }, []);
 
-  /** 用户列表 UI 投影（组织名来自后端组织树，角色来自前端关系数据） */
   const users = useMemo(
     () => list.map((u) => {
       const ui = toUI(u, orgNameById);
@@ -71,20 +64,45 @@ export const julyUser: React.FC<UserListPageProps> = () => {
     [list, orgNameById, statusOverride],
   );
 
-  /** 状态过滤为纯前端（后端用户查询无 status 字段），作用于当前页 */
-  const pageData = users.filter((u) => !statusFilter || u.status === statusFilter);
-
-  const page = query.pageIndex;
-  const pageSize = query.pageSize;
+  const dataSource = users.filter((u) => !statusFilter || u.status === statusFilter);
   const roleLabel = (name: string) => roles.find((r) => r.name === name)?.label || name;
 
-  /** 启停用：真实后端 update 不含 status → 仅前端展示切换（本地覆盖） */
   const toggleStatus = (id: string) => {
     const cur = users.find((u) => u.id === id);
     if (!cur) return;
     setStatusOverride((prev) => ({ ...prev, [id]: cur.status === 'active' ? 'inactive' : 'active' }));
     toast.success('状态已切换（仅本地展示；后端无启停接口）');
   };
+
+  const columns: ColumnsType<JulyUserView> = [
+    { title: '用户名', dataIndex: 'username', width: 120 },
+    { title: '姓名', dataIndex: 'realName', width: 100 },
+    { title: '邮箱', dataIndex: 'email', render: (v) => v || '—' },
+    { title: '手机号', dataIndex: 'phone', width: 130, render: (v) => v || '—' },
+    { title: '组织', dataIndex: 'department', width: 140, render: (v) => v || '—' },
+    {
+      title: '角色', dataIndex: 'roles', width: 160,
+      render: (names: string[]) => names.length === 0
+        ? '—'
+        : names.map((n) => <Tag key={n} color="blue">{roleLabel(n)}</Tag>),
+    },
+    {
+      title: '状态', dataIndex: 'status', width: 90,
+      render: (s: JulyUserView['status']) => <Tag color={s === 'active' ? 'green' : 'red'}>{s === 'active' ? '正常' : '停用'}</Tag>,
+    },
+    { title: '最近登录', dataIndex: 'lastLoginTime', width: 160 },
+    {
+      title: '操作', key: 'action', width: 130, fixed: 'right',
+      render: (_, user) => (
+        <Space size="small">
+          <Button type="link" size="small" onClick={() => setModal({ open: true, user })}>编辑</Button>
+          <Button type="link" size="small" onClick={() => toggleStatus(user.id)}>
+            {user.status === 'active' ? '停用' : '启用'}
+          </Button>
+        </Space>
+      ),
+    },
+  ];
 
   return (
     <div>
@@ -95,84 +113,56 @@ export const julyUser: React.FC<UserListPageProps> = () => {
 
       <div className="page-toolbar">
         <div className="toolbar-left">
-          <input className="form-input" placeholder="搜索用户名" style={{ width: '240px' }}
-            value={keyword} onChange={(e) => { const v = e.target.value; setKeyword(v); fetchUserPage({ pageIndex: 1, userAccount: v || undefined }); }} />
-          <select className="form-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-            <option value="">全部状态</option>
-            <option value="active">正常</option>
-            <option value="inactive">停用</option>
-          </select>
+          <Input.Search
+            allowClear
+            placeholder="搜索用户名"
+            style={{ width: 240 }}
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            onSearch={(v) => fetchUserPage({ pageIndex: 1, userAccount: v || undefined })}
+            onClear={() => { setKeyword(''); fetchUserPage({ pageIndex: 1, userAccount: undefined }); }}
+          />
+          <Select
+            style={{ width: 140 }}
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={[
+              { value: '', label: '全部状态' },
+              { value: 'active', label: '正常' },
+              { value: 'inactive', label: '停用' },
+            ]}
+          />
         </div>
         <div className="toolbar-right">
-          <button className="btn btn-primary" onClick={() => setFormModal({ open: true, user: null })}>+ 新建用户</button>
+          <Button type="primary" onClick={() => setModal({ open: true, user: null })}>+ 新建用户</Button>
         </div>
       </div>
 
-      <div className="table-wrapper">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>用户名</th><th>姓名</th><th>邮箱</th><th>手机号</th><th>组织</th><th>角色</th><th>状态</th><th>最近登录</th><th style={{ width: '120px' }}>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pageData.length === 0 ? (
-              <tr><td colSpan={9} style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>暂无数据</td></tr>
-            ) : (
-              pageData.map((user) => (
-                <tr key={user.id}>
-                  <td style={{ fontWeight: 500 }}>{user.username}</td>
-                  <td>{user.realName}</td>
-                  <td style={{ color: 'var(--text-muted)' }}>{user.email || '—'}</td>
-                  <td style={{ color: 'var(--text-muted)' }}>{user.phone || '—'}</td>
-                  <td>{user.department || '—'}</td>
-                  <td>
-                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                      {user.roles.length === 0
-                        ? <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>—</span>
-                        : user.roles.map((name) => (
-                            <span key={name} className="status-badge" style={{ background: '#f0f5ff', color: '#597ef7' }}>{roleLabel(name)}</span>
-                          ))}
-                    </div>
-                  </td>
-                  <td><span className={`status-badge status-${user.status}`}>{user.status === 'active' ? '正常' : '停用'}</span></td>
-                  <td style={{ color: 'var(--text-muted)', fontSize: '12px' }}>{user.lastLoginTime}</td>
-                  <td>
-                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                      <button className="btn-link" onClick={() => setFormModal({ open: true, user })}>编辑</button>
-                      <button className="btn-link" onClick={() => toggleStatus(user.id)}>{user.status === 'active' ? '停用' : '启用'}</button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="pagination-bar">
-        <span className="page-info">共 {total} 条</span>
-        <select
-          className="form-select"
-          style={{ width: 'auto', height: '32px' }}
-          value={pageSize}
-          onChange={(e) => { fetchUserPage({ pageIndex: 1, pageSize: Number(e.target.value) }); }}
-        >
-          <option value={10}>10 条/页</option>
-          <option value={50}>50 条/页</option>
-          <option value={100}>100 条/页</option>
-        </select>
-        <button className="page-btn" disabled={page <= 1} onClick={() => fetchUserPage({ pageIndex: page - 1 })}>上一页</button>
-        <span className="page-info">{page} / {totalPages}</span>
-        <button className="page-btn" disabled={page >= totalPages} onClick={() => fetchUserPage({ pageIndex: page + 1 })}>下一页</button>
-      </div>
+      <Card className="table-wrapper" styles={{ body: { padding: 0 } }}>
+        <Table<JulyUserView>
+          rowKey="id"
+          columns={columns}
+          dataSource={dataSource}
+          loading={loading}
+          scroll={{ x: 1100 }}
+          pagination={{
+            current: query.pageIndex,
+            pageSize: query.pageSize,
+            total,
+            showSizeChanger: true,
+            pageSizeOptions: [10, 50, 100],
+            showTotal: (t) => `共 ${t} 条`,
+            onChange: (pageIndex, pageSize) => fetchUserPage({ pageIndex, pageSize }),
+          }}
+        />
+      </Card>
 
       <JulyUserFormModal
-        open={formModal.open}
-        user={formModal.user}
+        open={modal.open}
+        user={modal.user}
         roles={roles}
         orgTree={orgTree}
-        onClose={() => setFormModal({ open: false, user: null })}
+        onClose={() => setModal({ open: false, user: null })}
         onSaved={() => { roleStore.reload(); }}
       />
     </div>

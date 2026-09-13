@@ -1,15 +1,9 @@
 /** 菜单权限勾选树（julyPermission 模块组件） */
 import React, { useState } from 'react';
 import type { JulyMenuVo011 } from '@/types/system011';
+import type { MenuTreeNode } from '@/types/view/julyMenu';
 
-export interface MenuTreeNode {
-  id: number;
-  title: string;
-  path: string;
-  icon: string;
-  permissionCode: string;
-  children?: MenuTreeNode[];
-}
+export type { MenuTreeNode };
 
 export function buildMenuTree(list: JulyMenuVo011[]): MenuTreeNode[] {
   return list.map((m) => ({

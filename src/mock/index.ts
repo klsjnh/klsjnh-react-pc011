@@ -1,43 +1,9 @@
 /**
  * Mock 数据层
  */
+import type { User, Role, MenuItem } from '@/types/view/mock';
 
-export interface User {
-  id: number;
-  username: string;
-  realName: string;
-  email: string;
-  phone: string;
-  department: string;
-  role: string;
-  status: 'active' | 'inactive' | 'locked';
-  avatar: string;
-  createdAt: string;
-  lastLoginAt: string;
-}
-
-export interface Role {
-  id: number;
-  name: string;
-  label: string;
-  description: string;
-  status: 'active' | 'inactive';
-  userCount: number;
-  permissions: string[];
-  createdAt: string;
-}
-
-export interface MenuItem {
-  id: number;
-  parentId: number;
-  name: string;
-  path: string;
-  icon: string;
-  title: string;
-  type: 'directory' | 'menu' | 'button';
-  sort: number;
-  children?: MenuItem[];
-}
+export type { User, Role, MenuItem };
 
 // ==================== Mock 数据 ====================
 

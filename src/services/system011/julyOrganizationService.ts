@@ -64,15 +64,9 @@ export async function fetchOrganizationTree(): Promise<void> {
   }
 }
 
-/** 组织保存入参（有 id = 编辑，无 id = 新增） */
-export interface SaveOrganizationParams {
-  id?: string;
-  orgCode?: string;
-  orgName: string;
-  pkUser?: string;
-  parentId?: string;
-  sortOrder?: number;
-}
+import type { SaveOrganizationParams } from '@/types/system011';
+
+export type { SaveOrganizationParams };
 
 /** 新增 / 修改组织，成功后刷新组织树（返回 id） */
 export async function saveOrganization(params: SaveOrganizationParams): Promise<string> {

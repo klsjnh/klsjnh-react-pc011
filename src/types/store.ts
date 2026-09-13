@@ -1,5 +1,9 @@
-/** 通用 store 工厂类型 */
+/** 通用 store 类型（zustand vanilla StoreApi 适配） */
+import type { StoreApi } from 'zustand/vanilla';
+
 export interface StoreController<T extends object> {
+  /** 原始 zustand store（供 useStore 使用） */
+  api: StoreApi<T>;
   getSnapshot(): T;
   subscribe(listener: () => void): () => void;
   /** 合并局部状态（浅合并并替换引用） */

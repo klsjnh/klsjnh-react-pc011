@@ -1,9 +1,6 @@
-/**
- * PC 端布局容器：组装顶栏（Top）+ 侧边栏（Left）+ 内容区（面包屑 + children）
- * 侧边栏菜单来源见 julyMenuStore.useNavMenus（全局配置 / 接口）。
- */
+/** 布局容器：antd Layout（Header + Sider + Content） */
 import React from 'react';
-import { useUiState } from '@/stores/uiStore';
+import { Layout } from 'antd';
 import { useNavMenus } from '@/stores/system011/julyMenuStore';
 import { Top } from './top';
 import { Left } from './left';
@@ -15,7 +12,6 @@ interface SidebarLayoutProps {
 }
 
 export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children, currentPath, onNavigate }) => {
-  const collapsed = useUiState().sidebarCollapsed;
   const menus = useNavMenus();
 
   const breadcrumb = (() => {
@@ -31,15 +27,15 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children, currentP
   })();
 
   return (
-    <div className={`pc-layout ${collapsed ? 'collapsed' : ''}`}>
+    <Layout className="app-layout">
       <Top onNavigate={onNavigate} />
-      <div className="pc-body">
-        <Left menus={menus} currentPath={currentPath} collapsed={collapsed} onNavigate={onNavigate} />
-        <main className="pc-content">
+      <Layout>
+        <Left currentPath={currentPath} onNavigate={onNavigate} />
+        <Layout.Content className="layout-content">
           <div className="content-breadcrumb">{breadcrumb}</div>
           {children}
-        </main>
-      </div>
-    </div>
+        </Layout.Content>
+      </Layout>
+    </Layout>
   );
 };

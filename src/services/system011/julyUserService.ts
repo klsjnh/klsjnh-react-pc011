@@ -98,16 +98,9 @@ export async function fetchUserPage(patch: Partial<JulyUserQueryVo011> = {}): Pr
   }
 }
 
-/** 用户保存入参（有 id = 编辑，无 id = 新增；字段命名为表单语义） */
-export interface SaveUserParams {
-  id?: string;
-  userAccount?: string;
-  userName: string;
-  password?: string;
-  mobile?: string;
-  email?: string;
-  pkOrg?: string;
-}
+import type { SaveUserParams } from '@/types/system011';
+
+export type { SaveUserParams };
 
 /** 新增 / 修改用户 + 分配角色，成功后刷新列表（返回用户 id） */
 export async function saveUser(params: SaveUserParams, roleIds: string[]): Promise<string> {
