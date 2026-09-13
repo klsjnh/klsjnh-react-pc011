@@ -2,7 +2,10 @@
  * 管理页面集合 - PC 端（所有按钮可点击）
  * 角色管理 / 菜单管理 / 权限管理 / 审计日志 / 系统设置（组织管理已迁移至 system011/julyOrg）
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { selectUserAuditListByPage } from '../services/system011';
+import { toast } from '../utils/toast';
+import type { JulyUserAuditVo011 } from '../types/system011';
 
 // ==================== 通用弹窗 ====================
 
@@ -276,45 +279,136 @@ export const PermissionPage: React.FC = () => {
 
 // ==================== 审计日志 ====================
 
+/** 事件类型 → 中文文案（取自真实后端实测枚举：LOGIN / LOGIN_FAILED / LOGOUT / CHANGE_PASSWORD / EXPORT） */
+const AUDIT_TYPE_LABEL: Record<string, string> = {
+  LOGIN: '登录成功',
+  LOGIN_FAILED: '登录失败',
+  LOGOUT: '退出登录',
+  CHANGE_PASSWORD: '修改密码',
+  EXPORT: '导出',
+};
+
+/** 事件类型 → badge 样式（成功/失败/中性） */
+function auditBadge(type: string): string {
+  if (type === 'LOGIN_FAILED') return 'status-inactive';
+  if (type === 'LOGIN' || type === 'LOGOUT') return 'status-active';
+  return 'status-warning';
+}
+
 export const AuditPage: React.FC = () => {
-  const logs = [
-    { id: 1, time: '2026-09-12 10:30:15', user: 'admin', module: '认证', action: '登录系统', ip: '192.168.1.100', status: '成功' },
-    { id: 2, time: '2026-09-12 10:29:58', user: 'manager', module: '用户管理', action: '修改用户权限', ip: '192.168.1.101', status: '成功' },
-    { id: 3, time: '2026-09-12 10:28:42', user: 'editor01', module: '配置管理', action: '更新配置', ip: '172.16.0.10', status: '成功' },
-    { id: 4, time: '2026-09-12 10:27:20', user: 'admin', module: '角色管理', action: '创建角色', ip: '192.168.1.100', status: '成功' },
-    { id: 5, time: '2026-09-12 10:25:15', user: 'user001', module: '认证', action: '登录系统', ip: '10.0.0.55', status: '失败' },
-  ];
-  const [exported, setExported] = useState(false);
+  const [logs, setLogs] = useState<JulyUserAuditVo011[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [keyword, setKeyword] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const pageSize = 10;
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await selectUserAuditListByPage({
+        pageIndex: page,
+        pageSize,
+        userAccount: keyword.trim() || undefined,
+        auditType: typeFilter || undefined,
+      });
+      setLogs(res.rows);
+      setTotal(res.total);
+      setTotalPages(res.totalPages || 1);
+    } catch (e: any) {
+      // 失败提示走全局 toast（对齐老项目 message.error）
+      toast.error(e?.message || '加载审计日志失败');
+      setLogs([]);
+      setTotal(0);
+      setTotalPages(1);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, keyword, typeFilter]);
+
+  useEffect(() => { load(); }, [load]);
+
+  /** 导出当前页为 CSV（后端另有 /export/v1 通用导出接口） */
+  const handleExport = () => {
+    const header = ['时间', '操作者账号', '事件类型', '对象编码', '事件描述', 'IP'];
+    const lines = logs.map(l => [
+      l.createTime?.replace('T', ' ') || '', l.userAccount, AUDIT_TYPE_LABEL[l.auditType] || l.auditType,
+      l.objectCode, l.auditContent, l.auditIp,
+    ].map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','));
+    const csv = '\uFEFF' + [header.join(','), ...lines].join('\r\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `julyUserAudit-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`导出 ${logs.length} 条成功`);
+  };
 
   return (
     <div>
-      <div className="page-header"><h2>审计日志</h2><p>共 {logs.length} 条记录</p></div>
+      <div className="page-header">
+        <h2>审计日志</h2>
+        <p>共 {total} 条记录 · 接口 /julyUserAudit/v1/selectListByPage</p>
+      </div>
+
       <div className="page-toolbar">
         <div className="toolbar-left">
-          <input className="form-input" placeholder="搜索用户/操作" style={{ width: '220px' }} />
-          <select className="form-select"><option>全部模块</option><option>认证</option><option>用户管理</option></select>
+          <input className="form-input" placeholder="搜索操作者账号" style={{ width: '220px' }}
+            value={keyword} onChange={(e) => { setKeyword(e.target.value); setPage(1); }} />
+          <select className="form-select" value={typeFilter} onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}>
+            <option value="">全部事件类型</option>
+            <option value="LOGIN">登录成功</option>
+            <option value="LOGIN_FAILED">登录失败</option>
+            <option value="LOGOUT">退出登录</option>
+            <option value="CHANGE_PASSWORD">修改密码</option>
+            <option value="EXPORT">导出</option>
+          </select>
         </div>
         <div className="toolbar-right">
-          {exported && <span style={{ color: '#52c41a', fontSize: '13px' }}>✅ 已导出</span>}
-          <button className="btn btn-default" onClick={() => { setExported(true); setTimeout(() => setExported(false), 2000); }}>📥 导出</button>
+          <button className="btn btn-default" onClick={handleExport} disabled={logs.length === 0}>📥 导出当前页</button>
         </div>
       </div>
+
       <div className="table-wrapper">
         <table className="data-table">
-          <thead><tr><th>时间</th><th>用户</th><th>模块</th><th>操作</th><th>IP</th><th>状态</th></tr></thead>
+          <thead>
+            <tr>
+              <th>时间</th><th>操作者</th><th>事件类型</th><th>对象</th><th>描述</th><th>IP</th>
+            </tr>
+          </thead>
           <tbody>
-            {logs.map(log => (
-              <tr key={log.id}>
-                <td style={{ color: 'var(--text-muted)' }}>{log.time}</td>
-                <td style={{ fontWeight: 500 }}>{log.user}</td>
-                <td>{log.module}</td>
-                <td>{log.action}</td>
-                <td style={{ color: 'var(--text-muted)' }}>{log.ip}</td>
-                <td><span className={`status-badge ${log.status === '成功' ? 'status-active' : 'status-inactive'}`}>{log.status}</span></td>
-              </tr>
-            ))}
+            {loading ? (
+              <tr><td colSpan={6} style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>加载中...</td></tr>
+            ) : logs.length === 0 ? (
+              <tr><td colSpan={6} style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>暂无数据</td></tr>
+            ) : (
+              logs.map(log => (
+                <tr key={log.id}>
+                  <td style={{ color: 'var(--text-muted)' }}>{log.createTime?.replace('T', ' ') || '—'}</td>
+                  <td style={{ fontWeight: 500 }}>{log.userAccount}</td>
+                  <td>
+                    <span className={`status-badge ${auditBadge(log.auditType)}`}>
+                      {AUDIT_TYPE_LABEL[log.auditType] || log.auditType}
+                    </span>
+                  </td>
+                  <td style={{ color: 'var(--text-muted)', fontSize: '12px' }}>{log.objectCode || '—'}</td>
+                  <td style={{ color: 'var(--text-muted)' }}>{log.auditContent || '—'}</td>
+                  <td style={{ color: 'var(--text-muted)' }}>{log.auditIp || '—'}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
+      </div>
+
+      <div className="pagination-bar">
+        <span className="page-info">共 {total} 条</span>
+        <button className="page-btn" disabled={page <= 1 || loading} onClick={() => setPage(p => p - 1)}>上一页</button>
+        <span className="page-info">{page} / {totalPages}</span>
+        <button className="page-btn" disabled={page >= totalPages || loading} onClick={() => setPage(p => p + 1)}>下一页</button>
       </div>
     </div>
   );

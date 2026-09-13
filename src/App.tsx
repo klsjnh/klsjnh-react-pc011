@@ -4,6 +4,7 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { LoginPage } from './pages/LoginPage';
 import { SidebarLayout } from './components/layout/SidebarLayout';
+import { Toaster } from './components/Toaster';
 import { useIsAuthenticated } from './stores/authStore';
 import { menuStore } from './stores/menuStore';
 
@@ -128,10 +129,14 @@ export const App: React.FC = () => {
   };
 
   return (
-    <SidebarLayout currentPath={currentPath} onNavigate={handleNavigate}>
-      <Suspense fallback={<div className="page-loading">加载中...</div>}>
-        {renderPage()}
-      </Suspense>
-    </SidebarLayout>
+    <>
+      {/* 全局 Toast 浮层（对齐老项目 MessageBridge 的职责，业务侧用 toast.xxx() 调用） */}
+      <Toaster />
+      <SidebarLayout currentPath={currentPath} onNavigate={handleNavigate}>
+        <Suspense fallback={<div className="page-loading">加载中...</div>}>
+          {renderPage()}
+        </Suspense>
+      </SidebarLayout>
+    </>
   );
 };

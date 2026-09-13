@@ -11,7 +11,7 @@
  */
 import type {
   JulyUserVo011, JulyRoleVo011, JulyMenuVo011, JulyOrganizationVo011,
-  JulyUserSessionVo011, PageResult011,
+  JulyUserSessionVo011, PageResult011, JulyUserAuditVo011,
 } from '../types/system011';
 
 /** 六字段响应信封（与后端 Response011<T> 一致） */
@@ -126,6 +126,18 @@ const mockNotifications = [
   { id: 6, title: '安全警告', content: '检测到异常登录尝试，如非本人操作请立即修改密码。', type: 'system', read: false, createTime: '2026-09-11 14:00:00' },
 ];
 
+// ==================== 审计日志（JulyUserAuditVo011，mock 内置） ====================
+
+/** 与真实后端同形：auditType 取 LOGIN / LOGIN_FAILED / LOGOUT / CHANGE_PASSWORD / EXPORT */
+const mockAudits: JulyUserAuditVo011[] = [
+  { id: 'aud0000000000000000000000000001', pkMt: '19a2c9b330ab46078079e557e732d1ab', userAccount: 'klsjnh', auditType: 'LOGIN', objectCode: 'july_user', auditContent: 'passwordless login', auditIp: '192.168.3.30', createTime: '2026-09-13T15:43:16' },
+  { id: 'aud0000000000000000000000000002', pkMt: null, userAccount: 'klsjnh', auditType: 'LOGIN_FAILED', objectCode: 'july_user', auditContent: 'wrong account or password', auditIp: '192.168.3.30', createTime: '2026-09-13T15:42:48' },
+  { id: 'aud0000000000000000000000000003', pkMt: '19a2c9b330ab46078079e557e732d1ab', userAccount: 'klsjnh', auditType: 'LOGOUT', objectCode: 'july_user', auditContent: 'logout', auditIp: '192.168.3.30', createTime: '2026-09-13T15:30:49' },
+  { id: 'aud0000000000000000000000000004', pkMt: '8070b9deec124a4bb0913e2ea56023c2', userAccount: 'zhangsan', auditType: 'LOGIN', objectCode: 'july_user', auditContent: 'password login', auditIp: '192.168.3.31', createTime: '2026-09-13T07:14:29' },
+  { id: 'aud0000000000000000000000000005', pkMt: '8070b9deec124a4bb0913e2ea56023c2', userAccount: 'zhangsan', auditType: 'CHANGE_PASSWORD', objectCode: 'july_user', auditContent: 'change password', auditIp: '192.168.3.31', createTime: '2026-09-13T07:10:02' },
+  { id: 'aud0000000000000000000000000006', pkMt: '8070b9deec124a4bb0913e2ea56023c2', userAccount: 'zhangsan', auditType: 'EXPORT', objectCode: 'julyUser', auditContent: 'export user list', auditIp: '192.168.3.31', createTime: '2026-09-12T22:29:43' },
+];
+
 // ==================== 菜单（JulyMenuVo011，树） ====================
 
 /** 与真实后端 selectUserMenuTree 完全一致：三棵根树（系统管理/业务中心/系统工具），
@@ -193,12 +205,122 @@ const handlers: Record<string, Handler> = {
     return ok<JulyUserSessionVo011>({ token: `mock-${acct}-${Date.now()}`, userAccount: u.userAccount, userName: u.userName, roles: mockUserRoles[acct] || ['viewer'] });
   },
 
-  // ===== 用户分页 =====
+  // ===== 用户分页（后端 userName 为姓名精确匹配，userAccount 为账号模糊，与真实后端一致） =====
   '/julyUser/v1/selectListByPage': async (body) => {
     await delay(350);
     let rows = [...mockUsers];
-    const kw = (body?.userAccount || body?.userName || '').trim().toLowerCase();
-    if (kw) rows = rows.filter((u) => u.userAccount.toLowerCase().includes(kw) || (u.userName || '').toLowerCase().includes(kw));
+    const acct = (body?.userAccount || '').trim().toLowerCase();
+    const name = (body?.userName || '').trim().toLowerCase();
+    if (acct) rows = rows.filter((u) => u.userAccount.toLowerCase().includes(acct));
+    if (name) rows = rows.filter((u) => (u.userName || '').toLowerCase() === name);
+    return ok(pageResult(rows, body?.pageIndex || 1, body?.pageSize || 10));
+  },
+
+  // ===== 用户详情 =====
+  '/julyUser/v1/getById': async (body) => {
+    await delay(200);
+    const u = mockUsers.find((x) => x.id === body?.id);
+    if (!u) return fail(`record not found, id=${body?.id}`, 404);
+    return ok(structuredClone(u));
+  },
+
+  // ===== 新增用户（userAccount 唯一；password 必填） =====
+  '/julyUser/v1/insert': async (body) => {
+    await delay(400);
+    const acct = (body?.userAccount || '').trim();
+    const name = (body?.userName || '').trim();
+    if (!acct) return fail('insert: userAccount is required', 400);
+    if (!name) return fail('insert: userName is required', 400);
+    if (!body?.password) return fail('insert: password is required', 400);
+    if (mockUsers.some((u) => u.userAccount === acct)) return fail(`insert: userAccount already exists, ${acct}`, 400);
+    const now = new Date().toISOString().slice(0, 19);
+    const nu: JulyUserVo011 = {
+      id: 'mockuser' + Math.random().toString(36).slice(2, 10).padEnd(8, '0') + '00000000',
+      userAccount: acct, userName: name,
+      mobile: body.mobile || null, email: body.email || null, avatar: body.avatar || null,
+      pkOrg: body.pkOrg || null, lastLoginTime: null, status: '1',
+      createBy: null, updateBy: null, createTime: now, updateTime: now,
+    };
+    mockUsers.unshift(nu);
+    userNameById.set(nu.id, nu.userName || nu.userAccount);
+    if (body.password) mockCredentials[acct] = body.password;
+    return ok({ id: nu.id });
+  },
+
+  // ===== 修改用户资料（不含账号与密码） =====
+  '/julyUser/v1/update': async (body) => {
+    await delay(350);
+    const u = mockUsers.find((x) => x.id === body?.id);
+    if (!u) return fail(`record not found, id=${body?.id}`, 404);
+    if (!(body?.userName || '').trim()) return fail('update: userName is required', 400);
+    u.userName = body.userName.trim();
+    if (body.mobile !== undefined) u.mobile = body.mobile || null;
+    if (body.email !== undefined) u.email = body.email || null;
+    if (body.avatar !== undefined) u.avatar = body.avatar || null;
+    if (body.pkOrg !== undefined) u.pkOrg = body.pkOrg || null;
+    u.updateTime = new Date().toISOString().slice(0, 19);
+    userNameById.set(u.id, u.userName || u.userAccount);
+    return ok({ id: u.id });
+  },
+
+  // ===== 批量逻辑删除（body 直接为 id 数组） =====
+  '/julyUser/v1/logicDelete': async (body) => {
+    await delay(350);
+    const ids: string[] = Array.isArray(body) ? body : [];
+    const errors: { id: string; message: string }[] = [];
+    let success = 0;
+    for (const id of ids) {
+      const i = mockUsers.findIndex((x) => x.id === id);
+      if (i < 0) { errors.push({ id, message: 'record not found' }); continue; }
+      const [removed] = mockUsers.splice(i, 1);
+      userNameById.delete(removed.id);
+      success++;
+    }
+    return ok({ total: ids.length, success, failed: errors.length, errors });
+  },
+
+  // ===== 重置密码（管理员动作） =====
+  '/julyUser/v1/resetPassword': async (body) => {
+    await delay(300);
+    const u = mockUsers.find((x) => x.id === body?.id);
+    if (!u) return fail(`record not found, id=${body?.id}`, 404);
+    if (!body?.password) return fail('resetPassword: password is required', 400);
+    mockCredentials[u.userAccount] = body.password;
+    return ok({ id: u.id });
+  },
+
+  // ===== 本人修改密码（验旧密） =====
+  '/julyUser/v1/changePassword': async (body) => {
+    await delay(300);
+    const u = mockUsers.find((x) => x.id === body?.id);
+    if (!u) return fail(`record not found, id=${body?.id}`, 404);
+    if (mockCredentials[u.userAccount] !== body?.oldPassword) return fail('old password is incorrect', 400);
+    mockCredentials[u.userAccount] = body?.newPassword || '';
+    return ok({ id: u.id });
+  },
+
+  // ===== 分配角色（整存替换） =====
+  '/julyUser/v1/assignRoles': async (body) => {
+    await delay(300);
+    const u = mockUsers.find((x) => x.id === body?.id);
+    if (!u) return fail(`record not found, id=${body?.id}`, 404);
+    const codes = (Array.isArray(body?.pkRoles) ? body.pkRoles : [])
+      .map((rid: string) => [...mockRoles, ...mockExtraRoles].find((r) => r.id === rid)?.roleCode)
+      .filter((c: string | undefined): c is string => !!c);
+    mockUserRoles[u.userAccount] = codes;
+    return ok({ id: u.id });
+  },
+
+  // ===== 审计日志分页（账号模糊 / 类型精确 / 时间段） =====
+  '/julyUserAudit/v1/selectListByPage': async (body) => {
+    await delay(350);
+    let rows = [...mockAudits];
+    const acct = (body?.userAccount || '').trim().toLowerCase();
+    if (acct) rows = rows.filter((a) => a.userAccount.toLowerCase().includes(acct));
+    if (body?.auditType) rows = rows.filter((a) => a.auditType === body.auditType);
+    if (body?.beginTime) rows = rows.filter((a) => a.createTime >= body.beginTime);
+    if (body?.endTime) rows = rows.filter((a) => a.createTime <= body.endTime);
+    rows.sort((a, b) => (a.createTime < b.createTime ? 1 : -1));
     return ok(pageResult(rows, body?.pageIndex || 1, body?.pageSize || 10));
   },
 
