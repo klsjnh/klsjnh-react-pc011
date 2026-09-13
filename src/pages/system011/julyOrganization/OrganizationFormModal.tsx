@@ -3,11 +3,11 @@
  * 支持选择上级组织（编辑时可移动并排除自己及下级）；提交走 julyOrganizationService.saveOrganization。
  */
 import React, { useState, useEffect } from 'react';
-import { Modal } from '../../../components/Modal';
-import { saveOrganization } from '../../../services/system011';
-import { toast } from '../../../utils/toast';
-import type { UserInfo } from '../../../stores/system011/julyRoleStore';
-import type { OrgDeptNode } from '../../../types/view';
+import { Modal } from '@/components/Modal';
+import { saveOrganization } from '@/services/system011';
+import { toast } from '@/utils/toast';
+import type { UserInfo } from '@/stores/system011/julyRoleStore';
+import type { OrgDeptNode } from '@/types/view';
 
 interface OrganizationFormModalProps {
   open: boolean;

@@ -5,9 +5,9 @@
  *  - loginByUserName 免密登录，仅 debug / development 运行态（生产拒用）
  *  - logout         登出（客户端清除 token）
  */
-import { api } from '../../api/request';
+import { api } from '@/api/request';
 import { SYSTEM011_ACTIONS } from './actions';
-import { julyUserStore } from '../../stores/system011/julyUserStore';
+import { julyUserStore } from '@/stores/system011/julyUserStore';
 import type {
   JulyUserLoginVo011,
   JulyUserLoginByNameVo011,
@@ -22,7 +22,7 @@ import type {
   PageResult011,
   IdVo011,
   BatchDeleteResultVo011,
-} from '../../types/system011';
+} from '@/types/system011';
 
 /** 账号密码登录（任何运行态可用） */
 export function login(userAccount: string, password: string): Promise<JulyUserSessionVo011> {

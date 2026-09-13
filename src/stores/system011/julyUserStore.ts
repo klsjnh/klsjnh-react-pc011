@@ -4,7 +4,7 @@
  * 分层：page → service → store；page 只读写状态。
  */
 import { createStore, useStoreState } from '../createStore';
-import type { JulyUserVo011, JulyUserQueryVo011 } from '../../types/system011';
+import type { JulyUserVo011, JulyUserQueryVo011 } from '@/types/system011';
 
 export interface UserState {
   list: JulyUserVo011[];

@@ -7,76 +7,12 @@
  * 菜单权限树经 selectMenuTree 投影自 JulyMenuVo011，勾选 key = 菜单 permissionCode）
  */
 import React, { useState, useEffect, useMemo } from 'react';
-import { roleStore, useRoleState, type RoleDetail } from '../../../stores/system011/julyRoleStore';
-import { selectMenuTree } from '../../../services/system011';
-import { UserTransferModal } from '../../../components/UserTransferModal';
-import type { JulyMenuVo011 } from '../../../types/system011';
-
-// ==================== 菜单树（来自后端 JulyMenuVo011） ====================
-
-interface MenuTreeNode {
-  id: number; title: string; path: string; icon: string;
-  permissionCode: string; children?: MenuTreeNode[];
-}
-
-function buildMenuTree(list: JulyMenuVo011[]): MenuTreeNode[] {
-  return list.map((m) => ({
-    id: Number(m.id),
-    title: m.menuName,
-    path: m.menuRoute,
-    icon: m.menuIcon || '📄',
-    permissionCode: m.permissionCode || m.menuRoute,
-    children: m.children?.length ? buildMenuTree(m.children) : undefined,
-  }));
-}
-
-function collectLeafCodes(nodes: MenuTreeNode[]): string[] {
-  const codes: string[] = [];
-  nodes.forEach((n) => {
-    if (n.children?.length) codes.push(...collectLeafCodes(n.children));
-    else codes.push(n.permissionCode);
-  });
-  return codes;
-}
-function collectAllCodes(nodes: MenuTreeNode[]): string[] {
-  const codes: string[] = [];
-  nodes.forEach((n) => { codes.push(n.permissionCode); if (n.children) codes.push(...collectAllCodes(n.children)); });
-  return codes;
-}
-
-const MenuCheckTree: React.FC<{
-  tree: MenuTreeNode[]; checkedCodes: Set<string>;
-  onCheck: (code: string, checked: boolean) => void; depth?: number;
-}> = ({ tree, checkedCodes, onCheck, depth = 0 }) => {
-  const [expanded, setExpanded] = useState<Set<number>>(new Set());
-  return (
-    <div style={{ paddingLeft: depth > 0 ? `${depth * 20}px` : 0 }}>
-      {tree.map((node) => {
-        const hasChildren = !!(node.children && node.children.length > 0);
-        const isExpanded = expanded.has(node.id);
-        const isChecked = checkedCodes.has(node.permissionCode);
-        const leafCodes = hasChildren ? collectLeafCodes(node.children!) : [node.permissionCode];
-        const checkedCount = leafCodes.filter((c) => checkedCodes.has(c)).length;
-        const isIndeterminate = hasChildren && checkedCount > 0 && checkedCount < leafCodes.length;
-        return (
-          <div key={node.id}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '3px 0' }}>
-              {hasChildren ? (
-                <button onClick={(e) => { e.stopPropagation(); setExpanded((prev) => { const n = new Set(prev); n.has(node.id) ? n.delete(node.id) : n.add(node.id); return n; }); }}
-                  style={{ background: 'none', border: 'none', fontSize: '10px', cursor: 'pointer', padding: '0 2px', transform: isExpanded ? 'rotate(90deg)' : 'rotate(0)' }}>▶</button>
-              ) : <span style={{ width: '14px' }} />}
-              <input type="checkbox" checked={isChecked} ref={(el) => { if (el) el.indeterminate = isIndeterminate; }}
-                onChange={(e) => { const all = hasChildren ? collectAllCodes([node]) : [node.permissionCode]; all.forEach((c) => onCheck(c, e.target.checked)); }} />
-              <span style={{ fontSize: '13px' }}>{node.icon} {node.title}</span>
-              {hasChildren && <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{checkedCount}/{leafCodes.length}</span>}
-            </div>
-            {hasChildren && isExpanded && <MenuCheckTree tree={node.children!} checkedCodes={checkedCodes} onCheck={onCheck} depth={depth + 1} />}
-          </div>
-        );
-      })}
-    </div>
-  );
-};
+import { roleStore, useRoleState, type RoleDetail } from '@/stores/system011/julyRoleStore';
+import { selectMenuTree } from '@/services/system011';
+import { UserTransferModal } from '@/components/UserTransferModal';
+import { Modal } from '@/components/Modal';
+import { buildMenuTree, MenuCheckTree, type MenuTreeNode } from './MenuCheckTree';
+import { RoleFormModal } from './RoleFormModal';
 
 // ==================== 主组件 ====================
 
@@ -85,8 +21,7 @@ export const julyPermission: React.FC = () => {
   const [menuTree, setMenuTree] = useState<MenuTreeNode[]>([]);
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'users' | 'perms'>('perms');
-  const [editModal, setEditModal] = useState<{ visible: boolean; role: RoleDetail | null }>({ visible: false, role: null });
-  const [form, setForm] = useState({ name: '', label: '', description: '' });
+  const [editModal, setEditModal] = useState<{ open: boolean; role: RoleDetail | null }>({ open: false, role: null });
   const [dialog, setDialog] = useState<{ visible: boolean; id: string }>({ visible: false, id: '' });
   const [addUserModal, setAddUserModal] = useState(false);
   const [permissionDraft, setPermissionDraft] = useState<Set<string>>(new Set());
@@ -120,13 +55,6 @@ export const julyPermission: React.FC = () => {
     roleStore.assignPermissions(selectedRole.id, Array.from(permissionDraft));
   };
 
-  const handleSaveEdit = () => {
-    if (!form.label.trim()) return;
-    if (editModal.role) roleStore.updateRole(editModal.role.id, { label: form.label, description: form.description });
-    else roleStore.addRole({ name: form.name, label: form.label, description: form.description, status: 'active', isBuiltin: false, permissions: [] });
-    setEditModal({ visible: false, role: null });
-  };
-
   const handleDelete = (role: RoleDetail) => {
     if (role.userIds.length > 0) { alert('该角色下存在用户，无法删除'); return; }
     setDialog({ visible: true, id: role.id });
@@ -142,7 +70,7 @@ export const julyPermission: React.FC = () => {
           <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
             <button
               className="btn btn-primary btn-sm"
-              onClick={() => { setForm({ name: '', label: '', description: '' }); setEditModal({ visible: true, role: null }); }}
+              onClick={() => setEditModal({ open: true, role: null })}
             >
               + 新建
             </button>
@@ -150,11 +78,7 @@ export const julyPermission: React.FC = () => {
               className="btn btn-default btn-sm"
               disabled={!selectedRole}
               style={{ opacity: selectedRole ? 1 : 0.4, cursor: selectedRole ? 'pointer' : 'not-allowed' }}
-              onClick={() => {
-                if (!selectedRole) return;
-                setForm({ name: selectedRole.name, label: selectedRole.label, description: selectedRole.description });
-                setEditModal({ visible: true, role: selectedRole });
-              }}
+              onClick={() => { if (selectedRole) setEditModal({ open: true, role: selectedRole }); }}
             >
               ✏️ 编辑
             </button>
@@ -291,46 +215,22 @@ export const julyPermission: React.FC = () => {
         />
       )}
 
-      {editModal.visible && (
-        <div className="modal-overlay" onClick={() => setEditModal({ visible: false, role: null })}>
-          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>{editModal.role ? '编辑角色' : '新建角色'}</h3>
-              <button className="modal-close" onClick={() => setEditModal({ visible: false, role: null })}>×</button>
-            </div>
-            <div className="modal-body">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div><div style={{ fontSize: '13px', marginBottom: '4px' }}>角色标识</div>
-                  <input className="form-input" style={{ width: '100%' }} value={form.name} disabled={!!editModal.role}
-                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} /></div>
-                <div><div style={{ fontSize: '13px', marginBottom: '4px' }}>角色名称 *</div>
-                  <input className="form-input" style={{ width: '100%' }} value={form.label}
-                    onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))} /></div>
-                <div><div style={{ fontSize: '13px', marginBottom: '4px' }}>描述</div>
-                  <textarea className="form-input" style={{ width: '100%', height: '60px', resize: 'none' }} value={form.description}
-                    onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} /></div>
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-default" onClick={() => setEditModal({ visible: false, role: null })}>取消</button>
-              <button className="btn btn-primary" onClick={handleSaveEdit}>保存</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <RoleFormModal
+        open={editModal.open}
+        role={editModal.role}
+        onClose={() => setEditModal({ open: false, role: null })}
+      />
 
       {dialog.visible && (
-        <div className="modal-overlay" onClick={() => setDialog({ visible: false, id: '' })}>
-          <div className="modal-container" style={{ width: '320px' }} onClick={(e) => e.stopPropagation()}>
-            <div className="modal-body" style={{ textAlign: 'center' }}>
-              <p>确定删除这个角色吗？</p>
-              <div style={{ display: 'flex', gap: '10px', marginTop: '16px', justifyContent: 'center' }}>
-                <button className="btn btn-default" onClick={() => setDialog({ visible: false, id: '' })}>取消</button>
-                <button className="btn btn-danger" onClick={() => { roleStore.removeRole(dialog.id); setDialog({ visible: false, id: '' }); }}>删除</button>
-              </div>
+        <Modal title="删除角色" onClose={() => setDialog({ visible: false, id: '' })} width={320}>
+          <div style={{ textAlign: 'center' }}>
+            <p>确定删除这个角色吗？</p>
+            <div style={{ display: 'flex', gap: '10px', marginTop: '16px', justifyContent: 'center' }}>
+              <button className="btn btn-default" onClick={() => setDialog({ visible: false, id: '' })}>取消</button>
+              <button className="btn btn-danger" onClick={() => { roleStore.removeRole(dialog.id); setDialog({ visible: false, id: '' }); }}>删除</button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

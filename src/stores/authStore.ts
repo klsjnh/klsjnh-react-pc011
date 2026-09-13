@@ -2,17 +2,13 @@
  * 认证状态管理
  */
 import { useSyncExternalStore } from 'react';
-import { isMockMode } from '../config/appConfig';
-import { login as apiLogin, loginByUserName as apiLoginByUserName, logout as apiLogout } from '../services/system011';
-import type { JulyUserSessionVo011 } from '../types/system011';
+import { isMockMode } from '@/config/appConfig';
+import { login as apiLogin, loginByUserName as apiLoginByUserName, logout as apiLogout } from '@/services/system011';
+import type { JulyUserSessionVo011 } from '@/types/system011';
 
-export interface CurrentUser {
-  id: number;
-  username: string;
-  realName: string;
-  avatar: string;
-  roles: string[];
-}
+import type { CurrentUser } from '@/types/view/auth';
+
+export type { CurrentUser };
 
 interface AuthState {
   token: string | null;

@@ -3,7 +3,7 @@
  * 数据来源：notificationStore（与顶栏未读红点共用）
  */
 import React, { useState, useEffect } from 'react';
-import { notificationStore, useNotificationState } from '../stores/notificationStore';
+import { notificationStore, useNotificationState } from '@/stores/notificationStore';
 
 type FilterType = 'all' | 'system' | 'user' | 'order';
 

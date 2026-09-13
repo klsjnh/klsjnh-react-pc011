@@ -14,16 +14,9 @@
  *   toast.warning('注意');
  */
 
-export type ToastKind = 'success' | 'error' | 'info' | 'warning';
+import type { ToastKind, ToastItem } from '@/types/view/toast';
 
-export interface ToastItem {
-  id: number;
-  kind: ToastKind;
-  content: string;
-  /** 开始时间戳（用于进度条动画） */
-  createdAt: number;
-  duration: number;
-}
+export type { ToastKind, ToastItem };
 
 type Listener = () => void;
 

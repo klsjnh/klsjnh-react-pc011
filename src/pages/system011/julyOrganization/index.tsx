@@ -4,14 +4,14 @@
  * 新增/编辑弹窗见 OrganizationFormModal。
  */
 import React, { useState, useEffect, useMemo } from 'react';
-import { useOrganizationState } from '../../../stores/system011/julyOrganizationStore';
-import { roleStore, useRoleState } from '../../../stores/system011/julyRoleStore';
-import { fetchOrganizationTree, removeOrganization } from '../../../services/system011';
-import { toast } from '../../../utils/toast';
-import { Modal } from '../../../components/Modal';
+import { useOrganizationState } from '@/stores/system011/julyOrganizationStore';
+import { roleStore, useRoleState } from '@/stores/system011/julyRoleStore';
+import { fetchOrganizationTree, removeOrganization } from '@/services/system011';
+import { toast } from '@/utils/toast';
+import { Modal } from '@/components/Modal';
 import { OrganizationFormModal } from './OrganizationFormModal';
-import type { JulyOrganizationVo011 } from '../../../types/system011';
-import type { OrgDeptNode } from '../../../types/view';
+import type { JulyOrganizationVo011 } from '@/types/system011';
+import type { OrgDeptNode } from '@/types/view';
 
 function projectOrg(o: JulyOrganizationVo011, userNameById: Map<string, string>): OrgDeptNode {
   return {

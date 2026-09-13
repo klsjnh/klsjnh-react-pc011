@@ -4,8 +4,8 @@
  */
 import React, { useState, useEffect } from 'react';
 import { PageHeader } from '../components';
-import { selectRoleListByPage } from '../services/system011';
-import type { JulyRoleVo011 } from '../types/system011';
+import { selectRoleListByPage } from '@/services/system011';
+import type { JulyRoleVo011 } from '@/types/system011';
 
 interface RoleFormPageProps {
   roleId?: number;

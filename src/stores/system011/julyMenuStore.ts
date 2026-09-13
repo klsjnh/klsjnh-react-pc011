@@ -4,13 +4,15 @@
  * 状态基于 src/stores/createStore.ts（useSyncExternalStore）
  */
 import { useMemo } from 'react';
-import { type MenuConfig } from '../../mock/menuConfig';
-import { isMockMode } from '../../config/appConfig';
-import { resolveMenuRoute } from '../../config/routes';
-import { fireApi } from '../../api/request';
-import { selectUserMenuTree } from '../../services/system011';
+import { isMockMode } from '@/config/appConfig';
+import { resolveMenuRoute } from '@/config/routes';
+import { globalConfig, GLOBAL_MENUS } from '@/config/global';
+import { fireApi } from '@/api/request';
+import type { NavItem } from '@/types/view/layout';
+import type { MenuConfig, MenuState } from '@/types/view/julyMenu';
+import { selectUserMenuTree } from '@/services/system011';
 import { createStore, useStoreState } from '../createStore';
-import type { JulyMenuVo011 } from '../../types/system011';
+import type { JulyMenuVo011 } from '@/types/system011';
 
 /** 后端 JulyMenuVo011 → 前端 MenuConfig（菜单管理页消费的结构） */
 function mapJulyMenuToConfig(m: JulyMenuVo011): MenuConfig {
@@ -27,12 +29,6 @@ function mapJulyMenuToConfig(m: JulyMenuVo011): MenuConfig {
     visible: m.status === '1',
     children: m.children?.map(mapJulyMenuToConfig),
   };
-}
-
-interface MenuState {
-  menus: MenuConfig[];
-  loaded: boolean;
-  loading: boolean;
 }
 
 const base = createStore<MenuState>({ menus: [], loaded: false, loading: false });
@@ -217,6 +213,29 @@ export function useChildMenus(parentPath: string): MenuConfig[] {
     const parent = menus.find((m) => m.path === parentPath);
     return (parent?.children || []).filter((m) => m.visible).sort((a, b) => a.sort - b.sort);
   }, [menus, parentPath]);
+}
+
+/** MenuConfig → 侧边栏导航项 */
+function toNavItem(m: MenuConfig): NavItem {
+  return {
+    path: m.path,
+    label: m.title,
+    icon: m.icon,
+    children: (m.children || []).filter((c) => c.type !== 'button').map(toNavItem),
+  };
+}
+
+/**
+ * 侧边栏导航菜单：
+ *  - 全局配置 menuFromConfig（开发态默认 true）→ 取 GLOBAL_MENUS
+ *  - 否则 → 取接口菜单（menuStore，来自 selectUserMenuTree）并投影为 NavItem
+ */
+export function useNavMenus(): NavItem[] {
+  const { menus } = useMenuState();
+  return useMemo(
+    () => (globalConfig.menuFromConfig ? GLOBAL_MENUS : menus.map(toNavItem)),
+    [menus],
+  );
 }
 
 export type { MenuConfig };

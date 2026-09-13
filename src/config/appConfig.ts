@@ -3,11 +3,9 @@
  * 优先级：localStorage 运行时切换 > VITE_DATA_MODE 环境变量 > 默认 mock
  */
 import { useSyncExternalStore } from 'react';
+import type { DataMode, RunState } from '@/types/view/appConfig';
 
-export type DataMode = 'mock' | 'api';
-
-/** 运行态：development 可用免密登录（julyUser/v1/loginByUserName）；production 后端会拒绝免密登录 */
-export type RunState = 'development' | 'production';
+export type { DataMode, RunState };
 
 interface AppConfigState {
   dataMode: DataMode;

@@ -42,3 +42,13 @@ export interface JulyOrganizationQueryVo011 {
   pageSize: number;
   keyword?: string;
 }
+
+/** 组织保存入参（service 编排用：有 id = 编辑，无 id = 新增） */
+export interface SaveOrganizationParams {
+  id?: string;
+  orgCode?: string;
+  orgName: string;
+  pkUser?: string;
+  parentId?: string;
+  sortOrder?: number;
+}

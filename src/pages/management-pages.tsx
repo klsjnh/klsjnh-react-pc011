@@ -3,9 +3,9 @@
  * 角色管理 / 菜单管理 / 权限管理 / 审计日志 / 系统设置（组织管理已迁移至 system011/julyOrg）
  */
 import React, { useState, useEffect, useCallback } from 'react';
-import { selectUserAuditListByPage } from '../services/system011';
-import { toast } from '../utils/toast';
-import type { JulyUserAuditVo011 } from '../types/system011';
+import { selectUserAuditListByPage } from '@/services/system011';
+import { toast } from '@/utils/toast';
+import type { JulyUserAuditVo011 } from '@/types/system011';
 
 // ==================== 通用弹窗 ====================
 

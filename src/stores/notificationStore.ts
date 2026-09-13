@@ -5,27 +5,11 @@
  * mock / api 共用 request.ts 路由；读取失败保留本地 initialNotifications 兜底。
  */
 import { useSyncExternalStore } from 'react';
-import { isMockMode } from '../config/appConfig';
-import { api, fireApi } from '../api/request';
+import { isMockMode } from '@/config/appConfig';
+import { api, fireApi } from '@/api/request';
+import type { NotificationItem, NotificationVo, NotificationState } from '@/types/view/notification';
 
-export interface NotificationItem {
-  id: number;
-  title: string;
-  content: string;
-  time: string;
-  read: boolean;
-  type: 'system' | 'user' | 'order';
-}
-
-/** 真实后端 JulyNotificationVo011（mock 与 api 同形） */
-interface NotificationVo {
-  id: number;
-  title: string;
-  content: string;
-  type: 'system' | 'user' | 'order';
-  read: boolean;
-  createTime: string;
-}
+export type { NotificationItem };
 
 const initialNotifications: NotificationItem[] = [
   { id: 1, title: '系统更新通知', content: '系统将于今晚 22:00-22:30 进行维护升级，升级期间可能无法正常访问。升级内容：优化系统性能、修复已知问题、新增数据导出功能。请提前做好相关准备。', time: '2026-09-12 09:30:00', read: false, type: 'system' },
@@ -37,11 +21,6 @@ const initialNotifications: NotificationItem[] = [
   { id: 7, title: '用户反馈', content: '用户「王五」提交了新的反馈：系统登录页面加载速度较慢，建议优化。反馈时间：2026-09-11 16:20:00。', time: '2026-09-11 16:20:00', read: true, type: 'user' },
   { id: 8, title: '安全警告', content: '检测到异常登录尝试。IP：45.33.22.11，地点：美国加利福尼亚州，时间：2026-09-11 14:00:00。如非本人操作请立即修改密码。', time: '2026-09-11 14:00:00', read: false, type: 'system' },
 ];
-
-interface NotificationState {
-  notifications: NotificationItem[];
-  loaded: boolean;
-}
 
 let state: NotificationState = {
   notifications: JSON.parse(JSON.stringify(initialNotifications)),

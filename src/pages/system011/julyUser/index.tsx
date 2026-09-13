@@ -10,14 +10,14 @@
  *      因此角色列为前端关系数据（mockRelations.userRoles）展示。
  */
 import React, { useState, useEffect, useMemo } from 'react';
-import { roleStore, useRoleState } from '../../../stores/system011/julyRoleStore';
-import { useUserState } from '../../../stores/system011/julyUserStore';
-import { fetchUserPage } from '../../../services/system011';
-import { toast } from '../../../utils/toast';
-import { mockRelations } from '../../../mock/system011';
+import { roleStore, useRoleState } from '@/stores/system011/julyRoleStore';
+import { useUserState } from '@/stores/system011/julyUserStore';
+import { fetchUserPage } from '@/services/system011';
+import { toast } from '@/utils/toast';
+import { mockRelations } from '@/mock/system011';
 import { JulyUserFormModal } from './JulyUserFormModal';
-import type { JulyUserVo011 } from '../../../types/system011';
-import type { JulyUserView } from '../../../types/view';
+import type { JulyUserVo011 } from '@/types/system011';
+import type { JulyUserView } from '@/types/view';
 
 /** 后端 JulyUserVo011 → 页面 UI 视图（角色来自前端关系数据，组织名来自后端组织树） */
 function toUI(u: JulyUserVo011, orgNameById: Map<string, string>): JulyUserView {

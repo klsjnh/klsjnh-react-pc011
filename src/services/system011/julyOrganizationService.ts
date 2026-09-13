@@ -1,14 +1,14 @@
 /** 组织服务（julyOrganization/v1/*） */
-import { api } from '../../api/request';
+import { api } from '@/api/request';
 import { SYSTEM011_ACTIONS } from './actions';
-import { julyOrganizationStore } from '../../stores/system011/julyOrganizationStore';
+import { julyOrganizationStore } from '@/stores/system011/julyOrganizationStore';
 import type {
   JulyOrganizationVo011,
   JulyOrganizationInsertVo011,
   JulyOrganizationUpdateVo011,
   PageResult011,
   IdVo011,
-} from '../../types/system011';
+} from '@/types/system011';
 
 /** 组织分页查询（真实后端返回 PageResult011，rows 内为组织树） */
 export function selectOrganizationListByPage(body: object = {}): Promise<PageResult011<JulyOrganizationVo011>> {
