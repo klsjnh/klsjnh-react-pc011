@@ -13,7 +13,7 @@
  * 说明：用户→角色关系后端由 assignRoles 维护，列表接口不返回角色，
  *      因此角色列为前端关系数据（mockRelations.userRoles）展示。
  */
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { roleStore, useRoleState } from '../../stores/roleStore';
 import { OrgPickerModal } from '../../components/OrgPickerModal';
 import { RolePickerModal } from '../../components/RolePickerModal';
@@ -38,15 +38,15 @@ interface User {
   lastLoginTime: string;
 }
 
-/** 后端 JulyUserVo011 → 页面 UI User（角色/部门来自前端关系数据） */
-function toUI(u: JulyUserVo011): User {
+/** 后端 JulyUserVo011 → 页面 UI User（角色来自前端关系数据，组织名来自后端组织树） */
+function toUI(u: JulyUserVo011, orgNameById: Map<string, string>): User {
   return {
     id: u.id,
     username: u.userAccount,
     realName: u.userName,
     email: u.email || '',
     phone: u.mobile || '',
-    department: mockRelations.orgName(u.pkOrg || undefined),
+    department: u.pkOrg ? (orgNameById.get(u.pkOrg) || '') : '',
     departmentId: u.pkOrg || null,
     roles: mockRelations.userRoles(u.userAccount),
     status: u.status === '1' ? 'active' : 'inactive',
@@ -69,6 +69,16 @@ export const julyUser: React.FC<UserListPageProps> = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [serverMode, setServerMode] = useState(false);
   const pageSize = 10;
+
+  /** 组织 id → 名称（由后端组织树建立，用于「组织」列展示） */
+  const orgNameById = useMemo(() => {
+    const m = new Map<string, string>();
+    const walk = (list: typeof orgTree) => {
+      for (const o of list) { m.set(o.id, o.name); if (o.children) walk(o.children); }
+    };
+    walk(orgTree);
+    return m;
+  }, [orgTree]);
 
   // 新增/编辑弹窗
   const [formModal, setFormModal] = useState<{ visible: boolean; user: User | null }>({ visible: false, user: null });
@@ -104,7 +114,7 @@ export const julyUser: React.FC<UserListPageProps> = () => {
         pageSize: q.keyword ? 100 : pageSize,
         userAccount: q.keyword || undefined,
       });
-      setUsers(res.rows.map(toUI));
+      setUsers(res.rows.map((u) => toUI(u, orgNameById)));
       setTotal(res.total);
       setTotalPages(res.totalPages || 1);
       setServerMode(true);
@@ -113,7 +123,7 @@ export const julyUser: React.FC<UserListPageProps> = () => {
       setTotal(0);
       setTotalPages(1);
     }
-  }, [reloadFlag]);
+  }, [reloadFlag, orgNameById]);
 
   // 同步查询参数到 ref，并在参数变化时触发重新加载
   useEffect(() => {

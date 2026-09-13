@@ -106,6 +106,24 @@ export interface JulyOrganizationVo011 {
   updateTime?: string;
 }
 
+/** 新增组织（julyOrganization/v1/insert，层级由上级推导） */
+export interface JulyOrganizationInsertVo011 {
+  orgCode: string; // 组织编码（唯一）
+  orgName: string; // 组织名称
+  pkUser?: string; // 负责人（用户 id）
+  parentId?: string; // 上级组织 id（无可空/空串 = 顶级）
+  sortOrder?: number; // 同级排序
+}
+
+/** 修改组织（julyOrganization/v1/update，编码不可改，可移动上级并重排层级） */
+export interface JulyOrganizationUpdateVo011 {
+  id: string;
+  orgName: string;
+  pkUser?: string;
+  parentId?: string;
+  sortOrder?: number;
+}
+
 /** 用户查询参数（julyUser/v1/selectListByPage）
  *  注意：后端 userName 为「姓名」精确过滤（实测 'zhang' → 0 条），userAccount 为账号模糊 */
 export interface JulyUserQueryVo011 {

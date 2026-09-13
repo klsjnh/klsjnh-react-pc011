@@ -27,6 +27,8 @@ import type {
   JulyUserAuditVo011,
   JulyUserAuditQueryVo011,
   BatchDeleteResultVo011,
+  JulyOrganizationInsertVo011,
+  JulyOrganizationUpdateVo011,
 } from '../types/system011';
 
 /** 统一 action 路径常量（禁止在 store 里再写分散的 /menu、/role 等旧路径） */
@@ -54,6 +56,14 @@ export const SYSTEM011_ACTIONS = {
   },
   role: {
     selectListByPage: '/julyRole/v1/selectListByPage',
+  },
+  organization: {
+    selectListByPage: '/julyOrganization/v1/selectListByPage',
+    selectTree: '/julyOrganization/v1/selectTree',
+    getById: '/julyOrganization/v1/getById',
+    insert: '/julyOrganization/v1/insert',
+    update: '/julyOrganization/v1/update',
+    logicDelete: '/julyOrganization/v1/logicDelete',
   },
 } as const;
 
@@ -139,5 +149,30 @@ export function selectRoleListByPage(body: object = {}): Promise<PageResult011<J
 
 /** 组织分页查询（真实后端返回 PageResult011，rows 内为组织树） */
 export function selectOrganizationListByPage(body: object = {}): Promise<PageResult011<JulyOrganizationVo011>> {
-  return api.post<PageResult011<JulyOrganizationVo011>>('/julyOrganization/v1/selectListByPage', body);
+  return api.post<PageResult011<JulyOrganizationVo011>>(SYSTEM011_ACTIONS.organization.selectListByPage, body);
+}
+
+/** 组织树（含人数角标；返回数组，非分页） */
+export function selectOrganizationTree(): Promise<JulyOrganizationVo011[]> {
+  return api.post<JulyOrganizationVo011[]>(SYSTEM011_ACTIONS.organization.selectTree, {});
+}
+
+/** 组织详情（主键查询） */
+export function getOrganizationById(id: string): Promise<JulyOrganizationVo011> {
+  return api.post<JulyOrganizationVo011>(SYSTEM011_ACTIONS.organization.getById, { id } as IdVo011);
+}
+
+/** 新增组织（层级由上级推导；返回新组织 id） */
+export function insertOrganization(data: JulyOrganizationInsertVo011): Promise<IdVo011> {
+  return api.post<IdVo011>(SYSTEM011_ACTIONS.organization.insert, data);
+}
+
+/** 修改组织（编码不可改，可移动上级；返回 id） */
+export function updateOrganization(data: JulyOrganizationUpdateVo011): Promise<IdVo011> {
+  return api.post<IdVo011>(SYSTEM011_ACTIONS.organization.update, data);
+}
+
+/** 逻辑删除组织（有子组织或挂有用户会被后端拒绝；body 为 {id}） */
+export function deleteOrganization(id: string): Promise<IdVo011> {
+  return api.post<IdVo011>(SYSTEM011_ACTIONS.organization.logicDelete, { id } as IdVo011);
 }
