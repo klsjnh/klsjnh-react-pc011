@@ -1,61 +1,73 @@
 /**
- * 用户列表页 - PC 端（Mock 数据）
- * 新增/编辑：弹窗表单；组织：组织选择弹窗；角色：角色多选弹窗
+ * 用户列表页 - PC 端
+ * 数据来源：统一 mock 后端 /julyUser/v1/selectListByPage（真实 JulyUserVo011 形状）
+ * 角色/组织关系为前端专用（mockRelations），不在后端契约内。
  */
 import React, { useState, useEffect } from 'react';
-import { roleStore, useRoleState, orgTree } from '../../stores/roleStore';
+import { roleStore, useRoleState } from '../../stores/roleStore';
 import { OrgPickerModal } from '../../components/OrgPickerModal';
 import { RolePickerModal } from '../../components/RolePickerModal';
+import { selectUserListByPage } from '../../services/system011';
+import { mockRelations } from '../../mock/system011';
+import type { JulyUserVo011 } from '../../types/system011';
 
 interface User {
-  id: number;
+  id: string;
   username: string;
   realName: string;
   email: string;
   phone: string;
   department: string;
-  departmentId: number | null;
+  departmentId: string | null;
   roles: string[];
   status: 'active' | 'inactive';
   createdAt: string;
+}
+
+/** 后端 JulyUserVo011 → 页面 UI User（角色/部门来自前端关系数据） */
+function toUI(u: JulyUserVo011): User {
+  return {
+    id: u.id,
+    username: u.userAccount,
+    realName: u.userName,
+    email: u.email || '',
+    phone: u.mobile || '',
+    department: mockRelations.orgName(u.pkOrg || undefined),
+    departmentId: u.pkOrg || null,
+    roles: mockRelations.userRoles(u.userAccount),
+    status: u.status === '1' ? 'active' : 'inactive',
+    createdAt: (u.createTime || '').slice(0, 10),
+  };
 }
 
 interface UserListPageProps {
   onNavigate?: (path: string) => void;
 }
 
-const initialUsers: User[] = Array.from({ length: 20 }, (_, i) => ({
-  id: i + 1,
-  username: `user${String(i + 1).padStart(3, '0')}`,
-  realName: `用户${i + 1}`,
-  email: `user${i + 1}@example.com`,
-  phone: `138${String(10000000 + i * 137).slice(0, 8)}`,
-  department: ['技术中心', '产品部', '运营部', '市场部', '财务部'][i % 5],
-  departmentId: null,
-  roles: [['admin'], ['manager'], ['editor', 'auditor'], ['viewer']][i % 4],
-  status: (i % 5 === 4 ? 'inactive' : 'active') as User['status'],
-  createdAt: `2026-0${(i % 9) + 1}-15`,
-}));
-
 export const julyUser: React.FC<UserListPageProps> = () => {
-  const { roles } = useRoleState();
-  const [users, setUsers] = useState<User[]>(initialUsers);
+  const { roles, orgTree } = useRoleState();
+  const [users, setUsers] = useState<User[]>([]);
   const [keyword, setKeyword] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const pageSize = 10;
 
   // 新增/编辑弹窗
   const [formModal, setFormModal] = useState<{ visible: boolean; user: User | null }>({ visible: false, user: null });
   const [form, setForm] = useState({ username: '', realName: '', email: '', phone: '', password: '' });
-  const [formDept, setFormDept] = useState<{ id: number | null; name: string }>({ id: null, name: '' });
-  const [formRoleIds, setFormRoleIds] = useState<number[]>([]);
+  const [formDept, setFormDept] = useState<{ id: string | null; name: string }>({ id: null, name: '' });
+  const [formRoleIds, setFormRoleIds] = useState<string[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [orgPicker, setOrgPicker] = useState(false);
   const [rolePicker, setRolePicker] = useState(false);
 
-  useEffect(() => { roleStore.load(); }, []);
+  useEffect(() => {
+    roleStore.load();
+    selectUserListByPage({ pageIndex: 1, pageSize: 100 }).then((page) => {
+      setUsers(page.rows.map(toUI));
+    }).catch(() => setUsers([]));
+  }, []);
 
   const roleLabel = (name: string) => roles.find(r => r.name === name)?.label || name;
 
@@ -66,12 +78,12 @@ export const julyUser: React.FC<UserListPageProps> = () => {
   const totalPages = Math.ceil(filtered.length / pageSize) || 1;
   const pageData = filtered.slice((page - 1) * pageSize, page * pageSize);
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string) => {
     if (!window.confirm('确定删除该用户吗？')) return;
     setUsers(prev => prev.filter(u => u.id !== id));
   };
 
-  const toggleStatus = (id: number) => {
+  const toggleStatus = (id: string) => {
     setUsers(prev => prev.map(u => u.id === id ? { ...u, status: u.status === 'active' ? 'inactive' : 'active' } : u));
   };
 
@@ -88,7 +100,7 @@ export const julyUser: React.FC<UserListPageProps> = () => {
   const openEdit = (user: User) => {
     setForm({ username: user.username, realName: user.realName, email: user.email, phone: user.phone, password: '' });
     setFormDept({ id: user.departmentId, name: user.department });
-    setFormRoleIds(user.roles.map(name => roles.find(r => r.name === name)?.id).filter((id): id is number => id != null));
+    setFormRoleIds(user.roles.map(name => roles.find(r => r.name === name)?.id).filter((id): id is string => id != null));
     setErrors({});
     setFormModal({ visible: true, user });
   };
@@ -124,7 +136,7 @@ export const julyUser: React.FC<UserListPageProps> = () => {
       } : u));
     } else {
       const newUser: User = {
-        id: Date.now(), username: form.username, realName: form.realName, email: form.email, phone: form.phone,
+        id: 'tmp-user-' + Date.now(), username: form.username, realName: form.realName, email: form.email, phone: form.phone,
         department: formDept.name, departmentId: formDept.id, roles: roleNames,
         status: 'active', createdAt: new Date().toISOString().slice(0, 10),
       };

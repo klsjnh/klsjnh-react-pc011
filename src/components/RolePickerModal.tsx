@@ -8,17 +8,17 @@ interface RolePickerModalProps {
   title?: string;
   roles: RoleDetail[];
   /** 当前已选角色 ID（用于回显勾选） */
-  selectedIds: number[];
-  onConfirm: (ids: number[]) => void;
+  selectedIds: string[];
+  onConfirm: (ids: string[]) => void;
   onCancel: () => void;
 }
 
 export const RolePickerModal: React.FC<RolePickerModalProps> = ({
   title = '选择角色', roles, selectedIds, onConfirm, onCancel,
 }) => {
-  const [picked, setPicked] = useState<Set<number>>(new Set(selectedIds));
+  const [picked, setPicked] = useState<Set<string>>(new Set(selectedIds));
 
-  const toggle = (id: number) => {
+  const toggle = (id: string) => {
     setPicked(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   };
 

@@ -6,14 +6,19 @@ import { useSyncExternalStore } from 'react';
 
 export type DataMode = 'mock' | 'api';
 
+/** 运行态：development 可用免密登录（julyUser/v1/loginByUserName）；production 后端会拒绝免密登录 */
+export type RunState = 'development' | 'production';
+
 interface AppConfigState {
   dataMode: DataMode;
+  runState: RunState;
   apiBaseUrl: string;
   /** 最近一次 API 请求错误（模式切换下拉里展示） */
   lastApiError: string | null;
 }
 
 const MODE_KEY = 'pc011-data-mode';
+const RUN_KEY = 'pc011-run-state';
 const BASE_KEY = 'pc011-api-base-url';
 
 function initDataMode(): DataMode {
@@ -25,16 +30,29 @@ function initDataMode(): DataMode {
   return env === 'api' ? 'api' : 'mock';
 }
 
+function initRunState(): RunState {
+  try {
+    const stored = localStorage.getItem(RUN_KEY);
+    if (stored === 'development' || stored === 'production') return stored;
+  } catch { /* ignore */ }
+  // 跟随 Vite 运行态：vite dev 默认开发态（可用免密登录），vite build 默认生产态
+  const env = (import.meta as any).env?.VITE_RUN_STATE as string | undefined;
+  if (env === 'development' || env === 'production') return env;
+  return (import.meta as any).env?.DEV ? 'development' : 'production';
+}
+
 function initBaseUrl(): string {
   try {
     const stored = localStorage.getItem(BASE_KEY);
     if (stored) return stored;
   } catch { /* ignore */ }
-  return (import.meta as any).env?.VITE_API_BASE_URL || '/api/v1';
+  // 默认指向后端 java17-framework011（经 vite proxy /klsjnh 转发，免去 CORS）
+  return (import.meta as any).env?.VITE_API_BASE_URL || '/klsjnh/system011';
 }
 
 let state: AppConfigState = {
   dataMode: initDataMode(),
+  runState: initRunState(),
   apiBaseUrl: initBaseUrl(),
   lastApiError: null,
 };
@@ -54,6 +72,10 @@ export const appConfigStore = {
     try { localStorage.setItem(MODE_KEY, mode); } catch { /* ignore */ }
     setState({ dataMode: mode, lastApiError: null });
   },
+  setRunState: (runState: RunState) => {
+    try { localStorage.setItem(RUN_KEY, runState); } catch { /* ignore */ }
+    setState({ runState });
+  },
   setApiBaseUrl: (url: string) => {
     try { localStorage.setItem(BASE_KEY, url); } catch { /* ignore */ }
     setState({ apiBaseUrl: url });
@@ -63,6 +85,15 @@ export const appConfigStore = {
 
 /** 当前是否 mock 模式（非响应式，供 store 内部同步判断） */
 export const isMockMode = () => state.dataMode === 'mock';
+
+/** 当前数据模式（非响应式） */
+export const getDataMode = (): DataMode => state.dataMode;
+
+/** 当前运行态（非响应式） */
+export const getRunState = (): RunState => state.runState;
+
+/** 当前是否开发态（非响应式，供 store / 页面内部同步判断；开发态可用免密登录） */
+export const isDevelopment = () => state.runState === 'development';
 
 export function useAppConfig(): AppConfigState {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);

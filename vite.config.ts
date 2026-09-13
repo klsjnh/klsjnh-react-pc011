@@ -13,13 +13,23 @@ export default defineConfig({
     cssCodeSplit: false,
     rollupOptions: {
       output: {
-        manualChunks: undefined,
-        inlineDynamicImports: true,
+        // 取消 inlineDynamicImports（其会禁用代码分割，抵消 App.tsx 的 lazy 懒加载），改用手动分包
+        manualChunks: {
+          react: ['react', 'react-dom'],
+        },
+        inlineDynamicImports: false,
       },
     },
   },
   server: {
     port: 11181,
     host: true,
+    // 开发态跨域代理：前端 /klsjnh/* → 后端 java17-framework011（不动后端 CORS）
+    proxy: {
+      '/klsjnh': {
+        target: 'http://192.168.3.160:11610',
+        changeOrigin: true,
+      },
+    },
   },
 });

@@ -69,6 +69,11 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  // 登录态变化（未登录 → 已登录）时，API 模式下用新拿到的 token 重新拉菜单树
+  useEffect(() => {
+    if (isAuthenticated) menuStore.reload();
+  }, [isAuthenticated]);
+
   if (!isAuthenticated) {
     return <LoginPage />;
   }

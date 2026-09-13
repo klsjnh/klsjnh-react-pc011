@@ -8,8 +8,8 @@ interface OrgPickerModalProps {
   title?: string;
   tree: OrgTreeNode[];
   /** 当前已选组织 ID（用于回显高亮） */
-  selectedId: number | null;
-  onConfirm: (id: number, name: string) => void;
+  selectedId: string | null;
+  onConfirm: (id: string, name: string) => void;
   onCancel: () => void;
 }
 
@@ -17,11 +17,11 @@ const typeIcons: Record<string, string> = { group: '🏛', company: '🏢', depa
 
 const OrgTree: React.FC<{
   tree: OrgTreeNode[];
-  selectedId: number | null;
+  selectedId: string | null;
   onSelect: (node: OrgTreeNode) => void;
   depth?: number;
 }> = ({ tree, selectedId, onSelect, depth = 0 }) => {
-  const [expanded, setExpanded] = useState<Set<number>>(new Set(tree.map(n => n.id)));
+  const [expanded, setExpanded] = useState<Set<string>>(new Set(tree.map(n => n.id)));
   return (
     <div style={{ paddingLeft: depth > 0 ? `${depth * 16}px` : 0 }}>
       {tree.map(node => {

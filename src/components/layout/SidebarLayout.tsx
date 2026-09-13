@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { useCurrentUser, authStore } from '@/stores/authStore';
 import { useUnreadCount } from '@/stores/notificationStore';
 import { uiStore, useUiState } from '@/stores/uiStore';
-import { appConfigStore, useAppConfig, type DataMode } from '@/config/appConfig';
+import { appConfigStore, useAppConfig, isDevelopment, type DataMode, type RunState } from '@/config/appConfig';
 import { menuStore } from '@/stores/menuStore';
 import { roleStore } from '@/stores/roleStore';
 import { notificationStore } from '@/stores/notificationStore';
@@ -190,12 +190,30 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
                     </button>
                   ))}
 
+                  <div style={{ fontSize: '13px', fontWeight: 600, margin: '12px 0 6px' }}>运行态（登录方式）</div>
+                  {([['development', '开发态', '可用免密登录'], ['production', '生产态', '仅账号密码登录']] as const).map(([value, label, desc]) => (
+                    <button key={value}
+                      onClick={() => appConfigStore.setRunState(value as RunState)}
+                      style={{
+                        display: 'flex', width: '100%', alignItems: 'center', gap: '8px',
+                        padding: '8px 10px', marginBottom: '6px', cursor: 'pointer', textAlign: 'left',
+                        background: appCfg.runState === value ? '#f6ffed' : '#fafafa',
+                        border: '1px solid ' + (appCfg.runState === value ? '#52c41a' : 'var(--border)'),
+                        borderRadius: '6px', fontSize: '13px',
+                      }}
+                    >
+                      <span style={{ fontWeight: 600 }}>{label}</span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{desc}</span>
+                      {appCfg.runState === value && <span style={{ marginLeft: 'auto', color: '#52c41a', fontWeight: 700 }}>✓</span>}
+                    </button>
+                  ))}
+
                   <div style={{ fontSize: '13px', fontWeight: 600, margin: '12px 0 6px' }}>API 地址</div>
                   <div style={{ display: 'flex', gap: '6px' }}>
                     <input
                       value={apiBaseInput}
                       onChange={(e) => setApiBaseInput(e.target.value)}
-                      placeholder="http://localhost:18765/api/v1"
+                      placeholder="/klsjnh/system011（或 http://host:port/klsjnh/system011）"
                       style={{ flex: 1, height: '30px', padding: '0 8px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '12px', outline: 'none' }}
                     />
                     <button className="btn btn-primary btn-sm" onClick={() => appConfigStore.setApiBaseUrl(apiBaseInput.trim())}>保存</button>
