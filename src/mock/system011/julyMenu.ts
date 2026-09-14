@@ -32,6 +32,22 @@ export const mockMenus: JulyMenuVo011[] = [
       { id: 'menu0000000000000000000000000302', parentId: 'menu0000000000000000000000root3', menuCode: 'settings', menuName: '系统设置', menuType: '2', menuIcon: '⚙️', menuRoute: '/settings', permissionCode: null, component: null, sortOrder: 2, status: '1', children: [] },
     ],
   },
+  {
+    id: 'menu0000000000000000000000root4', parentId: '', menuCode: 'dataBaby', menuName: '数据宝宝', menuType: '1',
+    menuIcon: '👶', menuRoute: '/data-baby', permissionCode: null, component: null, sortOrder: 4, status: '1',
+    children: [
+      { id: 'menu0000000000000000000000000401', parentId: 'menu0000000000000000000000root4', menuCode: 'dataOverview', menuName: '数据概览', menuType: '2', menuIcon: '📊', menuRoute: '/data-baby/overview', permissionCode: null, component: null, sortOrder: 1, status: '1', children: [] },
+      { id: 'menu0000000000000000000000000402', parentId: 'menu0000000000000000000000root4', menuCode: 'dataQuery', menuName: '数据查询', menuType: '2', menuIcon: '🔍', menuRoute: '/data-baby/query', permissionCode: null, component: null, sortOrder: 2, status: '1', children: [] },
+    ],
+  },
+  {
+    id: 'menu0000000000000000000000root5', parentId: '', menuCode: 'personal', menuName: '个人中心', menuType: '1',
+    menuIcon: '👤', menuRoute: '/personal', permissionCode: null, component: null, sortOrder: 5, status: '1',
+    children: [
+      { id: 'menu0000000000000000000000000501', parentId: 'menu0000000000000000000000root5', menuCode: 'myProfile', menuName: '我的资料', menuType: '2', menuIcon: '📝', menuRoute: '/personal/profile', permissionCode: null, component: null, sortOrder: 1, status: '1', children: [] },
+      { id: 'menu0000000000000000000000000502', parentId: 'menu0000000000000000000000root5', menuCode: 'mySettings', menuName: '偏好设置', menuType: '2', menuIcon: '⚙️', menuRoute: '/personal/settings', permissionCode: null, component: null, sortOrder: 2, status: '1', children: [] },
+    ],
+  },
 ];
 
 export const handlers: Record<string, Handler> = {

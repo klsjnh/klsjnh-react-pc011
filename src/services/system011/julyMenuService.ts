@@ -5,20 +5,19 @@
  */
 import { isMockMode } from '@/config/appConfig';
 import { resolveMenuRoute } from '@/config/routes';
-import { fireApi } from '@/api/request';
-import { api } from '@/api/request';
+import { api, fireApi } from '@/api/request';
 import { SYSTEM011_ACTIONS } from './actions';
 import { menuStore } from '@/stores/system011/julyMenuStore';
 import type { JulyMenuVo011 } from '@/types/system011/julyMenu/vo';
 
 /** 当前登录人的菜单树（RBAC 侧边栏数据源；内置角色走全量旁路） */
 export function selectUserMenuTree(): Promise<JulyMenuVo011[]> {
-  return api.post<JulyMenuVo011[]>(SYSTEM011_ACTIONS.menu.selectUserMenuTree, {});
+  return api.get<JulyMenuVo011[]>(SYSTEM011_ACTIONS.menu.selectUserMenuTree);
 }
 
 /** 全量菜单树（权限配置用） */
 export function selectMenuTree(): Promise<JulyMenuVo011[]> {
-  return api.post<JulyMenuVo011[]>(SYSTEM011_ACTIONS.menu.selectTree, {});
+  return api.get<JulyMenuVo011[]>(SYSTEM011_ACTIONS.menu.selectTree);
 }
 
 // ==================== 业务编排（写 store 状态） ====================
@@ -84,7 +83,7 @@ export function addMenu(data: Omit<JulyMenuVo011, 'id' | 'children'>): void {
         : { ...item, children: item.children ? addToParent(item.children) : item.children });
     menuStore.setState({ menus: addToParent(menus) });
   }
-  if (!isMockMode()) fireApi('/julyMenu/v1/insert', created);
+  if (!isMockMode()) fireApi(SYSTEM011_ACTIONS.menu.insert, created);
 }
 
 /** 更新菜单 */
@@ -95,7 +94,7 @@ export function updateMenu(id: string, patch: Partial<JulyMenuVo011>): void {
       ? { ...item, ...patch }
       : { ...item, children: item.children ? updateRecursive(item.children) : item.children });
   menuStore.setState({ menus: updateRecursive(menus) });
-  if (!isMockMode()) fireApi('/julyMenu/v1/update', { id, ...patch });
+  if (!isMockMode()) fireApi(SYSTEM011_ACTIONS.menu.update, { id, ...patch });
 }
 
 /** 删除菜单 */
@@ -105,7 +104,7 @@ export function removeMenu(id: string): void {
     items.filter((item) => item.id !== id)
       .map((item) => ({ ...item, children: item.children ? removeRecursive(item.children) : undefined }));
   menuStore.setState({ menus: removeRecursive(menus) });
-  if (!isMockMode()) fireApi('/julyMenu/v1/logicDelete', { id });
+  if (!isMockMode()) fireApi(SYSTEM011_ACTIONS.menu.logicDelete, { id });
 }
 
 /** 移动菜单到新的上级（parentId 为空串表示顶级；不能移到自己或子孙下） */
@@ -128,7 +127,7 @@ export function moveMenu(id: string, newParentId: string): boolean {
         : { ...item, children: item.children ? addUnder(item.children) : item.children });
     menuStore.setState({ menus: addUnder(rest) });
   }
-  if (!isMockMode()) fireApi('/julyMenu/v1/update', { id, parentId: newParentId });
+  if (!isMockMode()) fireApi(SYSTEM011_ACTIONS.menu.update, { id, parentId: newParentId });
   return true;
 }
 

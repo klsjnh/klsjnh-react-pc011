@@ -39,6 +39,15 @@ export function logout(): Promise<void> {
   return api.post<void>(SYSTEM011_ACTIONS.user.logout, {});
 }
 
+/** 本人修改密码（验旧密） */
+export function changePassword(params: {
+  userAccount: string;
+  oldPassword: string;
+  newPassword: string;
+}): Promise<IdVo011> {
+  return api.post<IdVo011>(SYSTEM011_ACTIONS.user.changePassword, params);
+}
+
 /** 用户分页查询 */
 export function selectUserListByPage(body: object = {}): Promise<PageResult011<JulyUserVo011>> {
   return api.post<PageResult011<JulyUserVo011>>(SYSTEM011_ACTIONS.user.selectListByPage, body);

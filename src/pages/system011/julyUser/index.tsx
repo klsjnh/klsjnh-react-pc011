@@ -62,7 +62,7 @@ export const julyUser: React.FC<UserListPageProps> = () => {
       title: '操作', key: 'action', width: 90, fixed: 'right',
       render: (_, user) => (
         <Space size="small">
-          <Button type="link" size="small" onClick={() => { console.log('[julyUser] edit click:', user?.userAccount); setModal({ open: true, user }); }}>编辑</Button>
+          <Button type="link" size="small" onClick={() => setModal({ open: true, user })}>编辑</Button>
         </Space>
       ),
     },
@@ -126,7 +126,7 @@ export const julyUser: React.FC<UserListPageProps> = () => {
         roles={roles}
         orgTree={orgTree}
         onClose={() => setModal({ open: false, user: null })}
-        onSaved={() => { reloadRoles(); }}
+        onSaved={() => { fetchUserPage(); }}
       />
     </div>
   );

@@ -24,9 +24,20 @@ export const SYSTEM011_ACTIONS = {
     selectUserMenuTree: '/julyMenu/v1/selectUserMenuTree',
     selectTree: '/julyMenu/v1/selectTree',
     selectListByPage: '/julyMenu/v1/selectListByPage',
+    insert: '/julyMenu/v1/insert',
+    update: '/julyMenu/v1/update',
+    logicDelete: '/julyMenu/v1/logicDelete',
   },
   role: {
     selectListByPage: '/julyRole/v1/selectListByPage',
+    insert: '/julyRole/v1/insert',
+    update: '/julyRole/v1/update',
+    logicDelete: '/julyRole/v1/logicDelete',
+    assignMenus: '/julyRole/v1/assignMenus',
+  },
+  roleUser: {
+    insert: '/julyRoleUser/v1/insert',
+    logicDelete: '/julyRoleUser/v1/logicDelete',
   },
   organization: {
     selectListByPage: '/julyOrganization/v1/selectListByPage',

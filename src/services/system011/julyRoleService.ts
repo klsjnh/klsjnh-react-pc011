@@ -95,28 +95,28 @@ export function addRole(data: { roleCode: string; roleName: string; remark?: str
     userIds: [],
   };
   roleStore.setState({ roles: [...s.roles, created] });
-  if (!isMockMode()) fireApi('/julyRole/v1/insert', { roleCode: data.roleCode, roleName: data.roleName, remark: data.remark });
+  if (!isMockMode()) fireApi(SYSTEM011_ACTIONS.role.insert, { roleCode: data.roleCode, roleName: data.roleName, remark: data.remark });
 }
 
 /** 更新角色 */
 export function updateRole(id: string, data: Partial<Pick<RoleDetail, 'roleName' | 'remark' | 'status'>>): void {
   const s = roleStore.getSnapshot();
   roleStore.setState({ roles: s.roles.map((r) => (r.id === id ? { ...r, ...data } : r)) });
-  if (!isMockMode()) fireApi('/julyRole/v1/update', { id, ...data });
+  if (!isMockMode()) fireApi(SYSTEM011_ACTIONS.role.update, { id, ...data });
 }
 
 /** 删除角色 */
 export function removeRole(id: string): void {
   const s = roleStore.getSnapshot();
   roleStore.setState({ roles: s.roles.filter((r) => r.id !== id) });
-  if (!isMockMode()) fireApi('/julyRole/v1/logicDelete', { id });
+  if (!isMockMode()) fireApi(SYSTEM011_ACTIONS.role.logicDelete, { id });
 }
 
 /** 分配权限 */
 export function assignPermissions(roleId: string, keys: string[]): void {
   const s = roleStore.getSnapshot();
   roleStore.setState({ roles: s.roles.map((r) => (r.id === roleId ? { ...r, permissions: keys } : r)) });
-  if (!isMockMode()) fireApi('/julyRole/v1/updatePermission', { id: roleId, permissions: keys });
+  if (!isMockMode()) fireApi(SYSTEM011_ACTIONS.role.assignMenus, { id: roleId, pkMenus: keys });
 }
 
 /** 添加用户到角色 */
@@ -129,7 +129,7 @@ export function addUserToRole(roleId: string, userId: string): void {
       return { ...r, userIds: [...r.userIds, userId] };
     }),
   });
-  if (!isMockMode()) fireApi('/julyRoleUser/v1/insert', { roleId, userId });
+  if (!isMockMode()) fireApi(SYSTEM011_ACTIONS.roleUser.insert, { roleId, userId });
 }
 
 /** 从角色移除用户 */
@@ -138,5 +138,5 @@ export function removeUserFromRole(roleId: string, userId: string): void {
   roleStore.setState({
     roles: s.roles.map((r) => (r.id !== roleId ? r : { ...r, userIds: r.userIds.filter((id) => id !== userId) })),
   });
-  if (!isMockMode()) fireApi('/julyRoleUser/v1/logicDelete', { roleId, userId });
+  if (!isMockMode()) fireApi(SYSTEM011_ACTIONS.roleUser.logicDelete, { roleId, userId });
 }

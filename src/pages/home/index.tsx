@@ -47,6 +47,14 @@ const HelpPage = lazy(() => import('../HelpPage').then(m => ({ default: m.HelpPa
 const AboutPage = lazy(() => import('../AboutPage').then(m => ({ default: m.AboutPage })));
 const ProfilePage = lazy(() => import('../ProfilePage').then(m => ({ default: m.ProfilePage })));
 
+// 数据宝宝（暂用 BusinessPage 占位）
+const DataOverviewPage = lazy(() => import('../BusinessPage').then(m => ({ default: m.BusinessPage })));
+const DataQueryPage = lazy(() => import('../BusinessPage').then(m => ({ default: m.BusinessPage })));
+
+// 个人中心
+const MyProfilePage = lazy(() => import('../ProfilePage').then(m => ({ default: m.ProfilePage })));
+const MySettingsPage = lazy(() => import('../management-pages').then(m => ({ default: m.SettingsPage })));
+
 const BUSINESS_PAGES: Record<string, React.FC<any>> = {
   config: ConfigPage, scheduler: SchedulerPage, dict: DictPage,
   monitor: MonitorPage, online: OnlineUsersPage, cache: CachePage,
@@ -55,6 +63,16 @@ const BUSINESS_PAGES: Record<string, React.FC<any>> = {
   trend: TrendPage, charts: ChartsPage, export: ExportPage,
   dashboard: DashboardScreenPage, calc: CalcPage, query: QueryPage,
   servicelog: ServiceLogPage,
+};
+
+const DATA_BABY_PAGES: Record<string, React.FC<any>> = {
+  overview: DataOverviewPage,
+  query: DataQueryPage,
+};
+
+const PERSONAL_PAGES: Record<string, React.FC<any>> = {
+  profile: MyProfilePage,
+  settings: MySettingsPage,
 };
 
 const PAGE_MAP: Record<string, React.FC<any>> = {
@@ -88,6 +106,18 @@ export const Home: React.FC = () => {
     if (currentPath.startsWith('/business/')) {
       const action = currentPath.split('/')[2] || '';
       const RealPage = BUSINESS_PAGES[action];
+      return RealPage ? <RealPage /> : <DashboardPage />;
+    }
+    // 数据宝宝子路由
+    if (currentPath.startsWith('/data-baby/')) {
+      const action = currentPath.split('/')[2] || '';
+      const RealPage = DATA_BABY_PAGES[action];
+      return RealPage ? <RealPage /> : <DashboardPage />;
+    }
+    // 个人中心子路由
+    if (currentPath.startsWith('/personal/')) {
+      const action = currentPath.split('/')[2] || '';
+      const RealPage = PERSONAL_PAGES[action];
       return RealPage ? <RealPage /> : <DashboardPage />;
     }
     const PageComponent = PAGE_MAP[currentPath] || DashboardPage;

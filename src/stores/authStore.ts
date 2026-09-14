@@ -41,7 +41,7 @@ export const authStore = {
       id: 0,
       username: session.userAccount,
       realName: session.userName,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.userAccount}`,
+      avatar: '',
       roles: session.roles || [],
     };
     base.setState({ token: session.token, user });
@@ -58,7 +58,7 @@ export const authStore = {
       id: 0,
       username: session.userAccount,
       realName: session.userName,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.userAccount}`,
+      avatar: '',
       roles: session.roles || [],
     };
     base.setState({ token: session.token, user });
