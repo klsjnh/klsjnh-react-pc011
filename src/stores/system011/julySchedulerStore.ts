@@ -1,5 +1,5 @@
 /** 定时任务 store（system011 · julyScheduler）：只负责状态 */
-import { createStore, useStoreState } from '../createStore';
+import { createStore, useStoreState } from '@/stores/createStore';
 import type { SchedulerState, JulySchedulerQueryVo011 } from '@/types/system011/julyScheduler';
 
 export type { SchedulerState };

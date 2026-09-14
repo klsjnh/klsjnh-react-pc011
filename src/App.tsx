@@ -14,7 +14,7 @@ import { LoginPage } from '@/pages/home/login';
 import { useIsAuthenticated } from '@/stores/authStore';
 import { DEFAULT_ROUTE } from '@/config/routes';
 
-export const App: React.FC = () => {
+export const App = () => {
   const isAuthenticated = useIsAuthenticated();
   return (
     <ConfigProvider locale={zhCN} theme={antdTheme}>

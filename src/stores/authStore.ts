@@ -5,7 +5,7 @@
 import { useStore } from 'zustand';
 import { isMockMode } from '@/config/appConfig';
 import { login as apiLogin, loginByUserName as apiLoginByUserName, logout as apiLogout } from '@/services/system011';
-import { createStore, useStoreState } from './createStore';
+import { createStore } from '@/stores/createStore';
 import type { AuthState, CurrentUser } from '@/types/view/auth';
 
 export type { CurrentUser };

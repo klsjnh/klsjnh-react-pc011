@@ -10,9 +10,9 @@
 | [../Agent.md](../Agent.md) | **协作手册**（先读）：铁律、HTTP 规范、标准流程、红线 |
 | [../README.md](../README.md) | **项目总览**：快速开始、目录结构、路由表、架构要点、双数据模式 |
 | [011.agreements.md](011.agreements.md) | 文档体系与编号约定（本文档体系宪法） |
-| [013.project-info.md](013.project-info.md) | 项目信息：背景、前后端模块对应关系、技术栈 |
-| [015.coding-standards.md](015.coding-standards.md) | 前端编码标准（PC 页面统一写法 / store 模式 / 命名规范） |
-| [016.api-contract.md](016.api-contract.md) | API 契约（信封六键 + 状态码 + 前端请求行为） |
+| [015.project-info.md](015.project-info.md) | 项目信息：背景、前后端模块对应关系、技术栈 |
+| [016.coding-standards.md](016.coding-standards.md) | 前端编码标准（PC 页面统一写法 / store 模式 / 命名规范） |
+| [013.api-contract.md](013.api-contract.md) | API 契约（信封六键 + 状态码 + 前端请求行为） |
 
 ## 专题与知识库
 

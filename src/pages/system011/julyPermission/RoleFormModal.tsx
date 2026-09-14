@@ -4,7 +4,7 @@ import { Modal, Form, Input } from 'antd';
 import { updateRole, addRole } from '@/services/system011';
 import type { RoleFormModalProps } from '@/types/system011/julyRole';
 
-export const RoleFormModal: React.FC<RoleFormModalProps> = ({ open, role, onClose }) => {
+export const RoleFormModal = ({ open, role, onClose }: RoleFormModalProps) => {
   const [form] = Form.useForm();
   const isEdit = !!role;
 

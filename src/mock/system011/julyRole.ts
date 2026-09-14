@@ -1,5 +1,5 @@
 /** Mock：角色（julyRole） */
-import { ok, delay, pageResult, type Handler } from './common';
+import { ok, delay, pageResult, type Handler } from '@/mock/system011/common';
 import type { JulyRoleVo011 } from '@/types/system011';
 
 /** 与真实后端一致：仅一个内置角色 admin */

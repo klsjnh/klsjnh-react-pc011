@@ -3,10 +3,10 @@ import React from 'react';
 import { Layout } from 'antd';
 import { useNavMenus } from '@/stores/system011/julyMenuStore';
 import type { SidebarLayoutProps } from '@/types/view/layout';
-import { Top } from './top';
-import { Left } from './left';
+import { Top } from '@/components/layout/Top';
+import { Left } from '@/components/layout/Left';
 
-export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children, currentPath, onNavigate }) => {
+export const SidebarLayout = ({ children, currentPath, onNavigate }: SidebarLayoutProps) => {
   const menus = useNavMenus();
 
   const breadcrumb = (() => {

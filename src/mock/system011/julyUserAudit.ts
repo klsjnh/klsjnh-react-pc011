@@ -1,5 +1,5 @@
 /** Mock：用户审计（julyUserAudit） */
-import { ok, delay, pageResult, type Handler } from './common';
+import { ok, delay, pageResult, type Handler } from '@/mock/system011/common';
 import type { JulyUserAuditVo011 } from '@/types/system011';
 
 /** 与真实后端同形：auditType 取 LOGIN / LOGIN_FAILED / LOGOUT / CHANGE_PASSWORD / EXPORT */

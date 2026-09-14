@@ -7,55 +7,63 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { SidebarLayout } from '@/components/layout';
 import { reloadMenus } from '@/services/system011';
 import { SYSTEM011_ROUTES, DEFAULT_ROUTE } from '@/config/routes';
+import type { PageNavProps } from '@/types/view/page';
+
+/**
+ * 页面组件统一类型（懒加载组件，支持以字符串 key 索引）。
+ * 路由分发统一注入 PageNavProps（onNavigate 可选）：需要跳转的页面取用，其余页面无参即可，
+ * 因此无需 any 即可承载全部页面。
+ */
+type PageComponent = React.LazyExoticComponent<React.ComponentType<PageNavProps>>;
 
 // 懒加载页面
-const DashboardPage = lazy(() => import('../DashboardPage').then(m => ({ default: m.DashboardPage })));
+const DashboardPage = lazy(() => import('@/pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
 // 系统管理模块（system011/）
-const julyUser = lazy(() => import('../system011/julyUser').then(m => ({ default: m.julyUser })));
-const julyMenu = lazy(() => import('../system011/julyMenu').then(m => ({ default: m.julyMenu })));
-const julyPermission = lazy(() => import('../system011/julyPermission').then(m => ({ default: m.julyPermission })));
-const julyOrganization = lazy(() => import('../system011/julyOrganization').then(m => ({ default: m.julyOrganization })));
-const AuditPage = lazy(() => import('../management-pages').then(m => ({ default: m.AuditPage })));
-const SettingsPage = lazy(() => import('../management-pages').then(m => ({ default: m.SettingsPage })));
+const JulyUserPage = lazy(() => import('@/pages/system011/julyUser').then(m => ({ default: m.JulyUser })));
+const JulyMenuPage = lazy(() => import('@/pages/system011/julyMenu').then(m => ({ default: m.JulyMenu })));
+const JulyPermissionPage = lazy(() => import('@/pages/system011/julyPermission').then(m => ({ default: m.JulyPermission })));
+const JulyOrganizationPage = lazy(() => import('@/pages/system011/julyOrganization').then(m => ({ default: m.JulyOrganization })));
+const AuditPage = lazy(() => import('@/pages/management-pages').then(m => ({ default: m.AuditPage })));
+const SettingsPage = lazy(() => import('@/pages/management-pages').then(m => ({ default: m.SettingsPage })));
 
 // 业务功能页
-const BusinessPage = lazy(() => import('../BusinessPage').then(m => ({ default: m.BusinessPage })));
-const ConfigPage = lazy(() => import('../business-pages').then(m => ({ default: m.ConfigPage })));
-const SchedulerPage = lazy(() => import('../business-pages').then(m => ({ default: m.SchedulerPage })));
-const DictPage = lazy(() => import('../business-pages').then(m => ({ default: m.DictPage })));
-const MonitorPage = lazy(() => import('../business-pages').then(m => ({ default: m.MonitorPage })));
-const OnlineUsersPage = lazy(() => import('../business-pages').then(m => ({ default: m.OnlineUsersPage })));
-const CachePage = lazy(() => import('../business-pages').then(m => ({ default: m.CachePage })));
-const DataSourcePage = lazy(() => import('../business-pages').then(m => ({ default: m.DataSourcePage })));
-const StoragePage = lazy(() => import('../business-pages').then(m => ({ default: m.StoragePage })));
-const ParamsPage = lazy(() => import('../business-pages').then(m => ({ default: m.ParamsPage })));
-const TemplatePage = lazy(() => import('../business-pages').then(m => ({ default: m.TemplatePage })));
-const PushPage = lazy(() => import('../business-pages').then(m => ({ default: m.PushPage })));
-const StatsPage = lazy(() => import('../business-pages').then(m => ({ default: m.StatsPage })));
-const TrendPage = lazy(() => import('../business-pages').then(m => ({ default: m.TrendPage })));
-const ChartsPage = lazy(() => import('../business-pages').then(m => ({ default: m.ChartsPage })));
-const ExportPage = lazy(() => import('../business-pages').then(m => ({ default: m.ExportPage })));
-const DashboardScreenPage = lazy(() => import('../business-pages').then(m => ({ default: m.DashboardScreenPage })));
-const CalcPage = lazy(() => import('../business-pages').then(m => ({ default: m.CalcPage })));
-const QueryPage = lazy(() => import('../business-pages').then(m => ({ default: m.QueryPage })));
-const ServiceLogPage = lazy(() => import('../business-pages').then(m => ({ default: m.ServiceLogPage })));
+const BusinessPage = lazy(() => import('@/pages/BusinessPage').then(m => ({ default: m.BusinessPage })));
+const ConfigPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.ConfigPage })));
+const SchedulerPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.SchedulerPage })));
+const DictPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.DictPage })));
+const MonitorPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.MonitorPage })));
+const OnlineUsersPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.OnlineUsersPage })));
+const CachePage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.CachePage })));
+const DataSourcePage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.DataSourcePage })));
+const StoragePage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.StoragePage })));
+const ParamsPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.ParamsPage })));
+const TemplatePage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.TemplatePage })));
+const PushPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.PushPage })));
+const StatsPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.StatsPage })));
+const TrendPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.TrendPage })));
+const ChartsPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.ChartsPage })));
+const ExportPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.ExportPage })));
+const DashboardScreenPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.DashboardScreenPage })));
+const CalcPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.CalcPage })));
+const QueryPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.QueryPage })));
+const ServiceLogPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.ServiceLogPage })));
 
 // 其他页面
-const ReportsPage = lazy(() => import('../ReportsPage').then(m => ({ default: m.ReportsPage })));
-const NotificationsPage = lazy(() => import('../NotificationsPage').then(m => ({ default: m.NotificationsPage })));
-const HelpPage = lazy(() => import('../HelpPage').then(m => ({ default: m.HelpPage })));
-const AboutPage = lazy(() => import('../AboutPage').then(m => ({ default: m.AboutPage })));
-const ProfilePage = lazy(() => import('../ProfilePage').then(m => ({ default: m.ProfilePage })));
+const ReportsPage = lazy(() => import('@/pages/ReportsPage').then(m => ({ default: m.ReportsPage })));
+const NotificationsPage = lazy(() => import('@/pages/NotificationsPage').then(m => ({ default: m.NotificationsPage })));
+const HelpPage = lazy(() => import('@/pages/HelpPage').then(m => ({ default: m.HelpPage })));
+const AboutPage = lazy(() => import('@/pages/AboutPage').then(m => ({ default: m.AboutPage })));
+const ProfilePage = lazy(() => import('@/pages/ProfilePage').then(m => ({ default: m.ProfilePage })));
 
 // 数据宝宝（暂用 BusinessPage 占位）
-const DataOverviewPage = lazy(() => import('../BusinessPage').then(m => ({ default: m.BusinessPage })));
-const DataQueryPage = lazy(() => import('../BusinessPage').then(m => ({ default: m.BusinessPage })));
+const DataOverviewPage = lazy(() => import('@/pages/BusinessPage').then(m => ({ default: m.BusinessPage })));
+const DataQueryPage = lazy(() => import('@/pages/BusinessPage').then(m => ({ default: m.BusinessPage })));
 
 // 个人中心
-const MyProfilePage = lazy(() => import('../ProfilePage').then(m => ({ default: m.ProfilePage })));
-const MySettingsPage = lazy(() => import('../management-pages').then(m => ({ default: m.SettingsPage })));
+const MyProfilePage = lazy(() => import('@/pages/ProfilePage').then(m => ({ default: m.ProfilePage })));
+const MySettingsPage = lazy(() => import('@/pages/management-pages').then(m => ({ default: m.SettingsPage })));
 
-const BUSINESS_PAGES: Record<string, React.FC<any>> = {
+const BUSINESS_PAGES: Record<string, PageComponent> = {
   config: ConfigPage, scheduler: SchedulerPage, dict: DictPage,
   monitor: MonitorPage, online: OnlineUsersPage, cache: CachePage,
   datasource: DataSourcePage, storage: StoragePage, params: ParamsPage,
@@ -65,22 +73,22 @@ const BUSINESS_PAGES: Record<string, React.FC<any>> = {
   servicelog: ServiceLogPage,
 };
 
-const DATA_BABY_PAGES: Record<string, React.FC<any>> = {
+const DATA_BABY_PAGES: Record<string, PageComponent> = {
   overview: DataOverviewPage,
   query: DataQueryPage,
 };
 
-const PERSONAL_PAGES: Record<string, React.FC<any>> = {
+const PERSONAL_PAGES: Record<string, PageComponent> = {
   profile: MyProfilePage,
   settings: MySettingsPage,
 };
 
-const PAGE_MAP: Record<string, React.FC<any>> = {
+const PAGE_MAP: Record<string, PageComponent> = {
   '/dashboard': DashboardPage,
-  [SYSTEM011_ROUTES.julyUser]: julyUser,
-  [SYSTEM011_ROUTES.julyMenu]: julyMenu,
-  [SYSTEM011_ROUTES.julyPermission]: julyPermission,
-  [SYSTEM011_ROUTES.julyOrganization]: julyOrganization,
+  [SYSTEM011_ROUTES.julyUser]: JulyUserPage,
+  [SYSTEM011_ROUTES.julyMenu]: JulyMenuPage,
+  [SYSTEM011_ROUTES.julyPermission]: JulyPermissionPage,
+  [SYSTEM011_ROUTES.julyOrganization]: JulyOrganizationPage,
   '/audit': AuditPage,
   '/settings': SettingsPage,
   '/business': BusinessPage,
@@ -91,7 +99,7 @@ const PAGE_MAP: Record<string, React.FC<any>> = {
   '/profile': ProfilePage,
 };
 
-export const Home: React.FC = () => {
+export const Home = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname || DEFAULT_ROUTE;

@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* ==================== PC 端全局样式（antd 主题 + 布局辅助） ==================== */
 :root {
   --primary: #1890ff;
@@ -61,23 +65,11 @@ body {
   box-shadow: var(--shadow); overflow: hidden;
 }
 
-/* ==================== 通用工具类 ==================== */
+/* ==================== 通用工具类（仅保留 Tailwind 未覆盖的自定义类） ==================== */
 .text-muted { color: var(--text-muted); }
 .text-secondary { color: var(--text-secondary); }
-.text-center { text-align: center; }
-.text-right { text-align: right; }
-.text-sm { font-size: 12px; }
 .flex-between { display: flex; align-items: center; justify-content: space-between; }
 .flex-center { display: flex; align-items: center; }
-.gap-4 { gap: 4px; }
-.gap-8 { gap: 8px; }
-.gap-12 { gap: 12px; }
-.mt-8 { margin-top: 8px; }
-.mt-12 { margin-top: 12px; }
-.mt-16 { margin-top: 16px; }
-.mb-8 { margin-bottom: 8px; }
-.mb-16 { margin-bottom: 16px; }
-.w-full { width: 100%; }
 .search-input { width: 240px; }
 .filter-select { width: 140px; }
 

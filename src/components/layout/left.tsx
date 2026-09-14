@@ -1,5 +1,5 @@
 /** 布局左侧：antd Sider + Menu（菜单来自 useNavMenus：全局配置 / 接口） */
-import React, { useEffect, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Layout, Menu } from 'antd';
 import { uiStore, useUiState } from '@/stores/uiStore';
 import { useNavMenus } from '@/stores/system011/julyMenuStore';
@@ -28,16 +28,22 @@ function ancestorsOf(nodes: NavItem[], currentPath: string): string[] | null {
   return null;
 }
 
-export const Left: React.FC<LeftProps> = ({ currentPath, onNavigate }) => {
+export const Left = ({ currentPath, onNavigate }: LeftProps) => {
   const collapsed = useUiState().sidebarCollapsed;
   const menus = useNavMenus();
   const [openKeys, setOpenKeys] = useState<string[]>([]);
 
-  // 依据当前路由自动展开所属分组（同时覆盖配置菜单 / 接口菜单两种 key 形态）
-  useEffect(() => {
-    const anc = ancestorsOf(menus, currentPath);
-    if (anc?.length) setOpenKeys(anc);
-  }, [menus, currentPath]);
+  /** 当前路由所属分组（应自动展开），同时覆盖配置菜单 / 接口菜单两种 key 形态 */
+  const autoOpenKeys = useMemo(() => ancestorsOf(menus, currentPath) ?? [], [menus, currentPath]);
+  const autoSig = autoOpenKeys.join('|');
+  const [lastAutoSig, setLastAutoSig] = useState('');
+
+  // 路由或菜单变化时同步展开项：采用 React 官方的「渲染期调整 state」写法，
+  // 避免在 useEffect 内 setState 触发级联渲染（react-hooks/set-state-in-effect）。
+  if (autoSig && autoSig !== lastAutoSig) {
+    setLastAutoSig(autoSig);
+    setOpenKeys(autoOpenKeys);
+  }
 
   return (
     <Sider

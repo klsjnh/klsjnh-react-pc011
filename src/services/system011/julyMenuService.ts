@@ -4,9 +4,8 @@
  * 分层：page → service → store；store 不调用 service。
  */
 import { isMockMode } from '@/config/appConfig';
-import { resolveMenuRoute } from '@/config/routes';
 import { api, fireApi } from '@/api/request';
-import { SYSTEM011_ACTIONS } from './actions';
+import { SYSTEM011_ACTIONS } from '@/services/system011/actions';
 import { menuStore } from '@/stores/system011/julyMenuStore';
 import type { JulyMenuVo011 } from '@/types/system011/julyMenu/vo';
 
@@ -50,7 +49,7 @@ export async function loadMenus(): Promise<void> {
   try {
     const tree = await selectUserMenuTree();
     const mapRoute = (list: JulyMenuVo011[]): JulyMenuVo011[] =>
-      list.map((m) => ({ ...m, menuRoute: resolveMenuRoute(m.menuRoute), children: m.children ? mapRoute(m.children) : undefined }));
+      list.map((m) => ({ ...m, children: m.children ? mapRoute(m.children) : undefined }));
     menuStore.setState({ menus: mapRoute(tree), loaded: true, loading: false });
   } catch {
     menuStore.setState({ loading: false });

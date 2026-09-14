@@ -1,5 +1,5 @@
 /** Mock：菜单（julyMenu） */
-import { ok, delay, pageResult, type Handler } from './common';
+import { ok, delay, pageResult, type Handler } from '@/mock/system011/common';
 import type { JulyMenuVo011 } from '@/types/system011';
 
 /** 与真实后端 selectUserMenuTree 一致：三棵根树（系统管理/业务中心/系统工具） */

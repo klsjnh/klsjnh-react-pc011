@@ -1,5 +1,5 @@
 /** 页面级 Props / 局部数据类型 */
-import type { NodeId } from './common';
+import type { NodeId } from '@/types/view/common';
 
 export interface PageNavProps {
   onNavigate?: (path: string) => void;

@@ -9,12 +9,12 @@
  *   - view.ts：前端 UI 视图类型（表格行、store 状态、表单值等）
  *   - index.ts：出口
  */
-export * from '../common';
-export * from './julyUser';
-export * from './julyUserAudit';
-export * from './julyRole';
-export * from './julyMenu';
-export * from './julyOrganization';
-export * from './julyConfig';
-export * from './julyScheduler';
-export * from './export';
+export * from '@/types/common';
+export * from '@/types/system011/julyUser';
+export * from '@/types/system011/julyUserAudit';
+export * from '@/types/system011/julyRole';
+export * from '@/types/system011/julyMenu';
+export * from '@/types/system011/julyOrganization';
+export * from '@/types/system011/julyConfig';
+export * from '@/types/system011/julyScheduler';
+export * from '@/types/system011/export';

@@ -31,9 +31,9 @@ function toParentOptions(
   return out;
 }
 
-export const OrganizationFormModal: React.FC<OrganizationFormModalProps> = ({
+export const OrganizationFormModal = ({
   open, mode, node, departments, users, initialParentId, onClose, onSaved,
-}) => {
+}: OrganizationFormModalProps) => {
   const [form] = Form.useForm();
   const isEdit = mode === 'edit';
 

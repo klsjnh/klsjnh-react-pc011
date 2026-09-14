@@ -20,7 +20,7 @@ import type { DictItem, OnlineUser, CacheItem, DataSourceItem } from '@/types/vi
 
 // ==================== 配置管理（对接 julyConfig） ====================
 
-export const ConfigPage: React.FC = () => {
+export const ConfigPage = () => {
   const { list, total, loading, query } = useConfigState();
   const [modal, setModal] = useState<{ open: boolean; node: JulyConfigVo011 | null }>({ open: false, node: null });
   const [form] = Form.useForm();
@@ -94,7 +94,7 @@ export const ConfigPage: React.FC = () => {
 
 // ==================== 定时任务（对接 julyScheduler） ====================
 
-export const SchedulerPage: React.FC = () => {
+export const SchedulerPage = () => {
   const { list, total, loading, query } = useSchedulerState();
   const [modal, setModal] = useState<{ open: boolean; node: JulySchedulerVo011 | null }>({ open: false, node: null });
   const [form] = Form.useForm();
@@ -180,7 +180,7 @@ export const SchedulerPage: React.FC = () => {
 
 // ==================== 字典管理（演示） ====================
 
-export const DictPage: React.FC = () => {
+export const DictPage = () => {
   const [dicts] = useState<DictItem[]>([
     { id: 1, type: 'user_status', label: '用户状态', items: [{ value: 'active', label: '正常' }, { value: 'inactive', label: '停用' }, { value: 'locked', label: '锁定' }] },
     { id: 2, type: 'user_role', label: '用户角色', items: [{ value: 'admin', label: '管理员' }, { value: 'manager', label: '经理' }, { value: 'editor', label: '编辑' }, { value: 'viewer', label: '只读' }] },
@@ -205,7 +205,7 @@ export const DictPage: React.FC = () => {
 
 // ==================== 系统监控（演示） ====================
 
-export const MonitorPage: React.FC = () => {
+export const MonitorPage = () => {
   const [metrics, setMetrics] = useState({ cpu: 35, memory: 62, disk: 45, network: 28, qps: 156 });
   useEffect(() => {
     const timer = setInterval(() => {
@@ -234,7 +234,7 @@ export const MonitorPage: React.FC = () => {
         <Row gutter={24}>
           {gauges.map((g) => (
             <Col span={6} key={g.label}>
-              <div className="flex-between mb-8 text-sm text-muted"><span>{g.label}</span><span style={{ fontWeight: 600, color: g.color }}>{g.value}%</span></div>
+              <div className="flex-between mb-2 text-xs text-muted"><span>{g.label}</span><span style={{ fontWeight: 600, color: g.color }}>{g.value}%</span></div>
               <Progress percent={g.value} showInfo={false} strokeColor={g.color} size="small" />
             </Col>
           ))}
@@ -248,7 +248,7 @@ export const MonitorPage: React.FC = () => {
             { label: '连接数', value: 89 }, { label: '线程数', value: 45 },
             { label: '堆内存', value: '512MB' }, { label: '最大堆', value: '1GB' },
           ].map((s) => (
-            <Col span={6} key={s.label}><Card size="small"><Statistic title={s.label} value={s.value as any} /></Card></Col>
+            <Col span={6} key={s.label}><Card size="small"><Statistic title={s.label} value={s.value} /></Card></Col>
           ))}
         </Row>
       </Card>
@@ -258,7 +258,7 @@ export const MonitorPage: React.FC = () => {
 
 // ==================== 在线用户（演示） ====================
 
-export const OnlineUsersPage: React.FC = () => {
+export const OnlineUsersPage = () => {
   const [users, setUsers] = useState<OnlineUser[]>([
     { id: 1, username: 'admin', realName: '张三', ip: '192.168.1.100', location: '北京市', loginTime: '09:30', browser: 'Chrome' },
     { id: 2, username: 'manager', realName: '李四', ip: '192.168.1.101', location: '上海市', loginTime: '09:15', browser: 'Safari' },
@@ -295,7 +295,7 @@ export const OnlineUsersPage: React.FC = () => {
 
 // ==================== 缓存管理（演示） ====================
 
-export const CachePage: React.FC = () => {
+export const CachePage = () => {
   const [caches, setCaches] = useState<CacheItem[]>([
     { id: 1, name: '用户信息缓存', size: '2.5MB', items: 128, hitRate: '95.2%', ttl: '30分钟' },
     { id: 2, name: '菜单缓存', size: '0.3MB', items: 45, hitRate: '99.8%', ttl: '1小时' },
@@ -338,7 +338,7 @@ export const CachePage: React.FC = () => {
 
 // ==================== 数据源管理（演示） ====================
 
-export const DataSourcePage: React.FC = () => {
+export const DataSourcePage = () => {
   const [sources] = useState<DataSourceItem[]>([
     { id: 1, name: '主数据库', type: 'MySQL', host: '192.168.1.10:3306', database: 'enterprise_main', status: 'connected', latency: '2ms' },
     { id: 2, name: '缓存数据库', type: 'Redis', host: '192.168.1.12:6379', database: 'db0', status: 'connected', latency: '0.5ms' },
@@ -367,7 +367,7 @@ export const DataSourcePage: React.FC = () => {
 
 // ==================== 存储中心（演示） ====================
 
-export const StoragePage: React.FC = () => {
+export const StoragePage = () => {
   const [files] = useState([
     { id: 1, name: '报表_202609.pdf', size: '2.5MB', type: 'PDF', time: '2026-09-12', path: '/reports/' },
     { id: 2, name: '产品图.png', size: '1.2MB', type: '图片', time: '2026-09-11', path: '/images/' },
@@ -388,9 +388,9 @@ export const StoragePage: React.FC = () => {
   return (
     <div>
       <div className="page-header"><h2>存储中心</h2><p>{used}GB / {totalGb}GB</p></div>
-      <Card title="存储使用率" className="table-wrapper" style={{ marginBottom: 16 }} extra={<span className="text-muted text-sm">适配器: 本地存储 / MinIO</span>}>
+      <Card title="存储使用率" className="table-wrapper" style={{ marginBottom: 16 }} extra={<span className="text-muted text-xs">适配器: 本地存储 / MinIO</span>}>
         <Progress percent={usagePercent} strokeColor={usagePercent > 80 ? '#f5222d' : '#1890ff'} />
-        <div className="text-muted text-sm mt-8">已用 {used}GB / 总容量 {totalGb}GB · 使用率 {usagePercent}%</div>
+        <div className="text-muted text-xs mt-2">已用 {used}GB / 总容量 {totalGb}GB · 使用率 {usagePercent}%</div>
       </Card>
       <Card className="table-wrapper" styles={{ body: { padding: 0 } }}>
         <Table rowKey="id" columns={columns} dataSource={files} pagination={false} />
@@ -401,7 +401,7 @@ export const StoragePage: React.FC = () => {
 
 // ==================== 参数设置（演示） ====================
 
-export const ParamsPage: React.FC = () => {
+export const ParamsPage = () => {
   const [params, setParams] = useState([
     { id: 1, name: '消息推送', key: 'notify.push', enabled: true, desc: '接收系统推送通知' },
     { id: 2, name: '声音提醒', key: 'notify.sound', enabled: false, desc: '新消息播放提示音' },
@@ -433,7 +433,7 @@ export const ParamsPage: React.FC = () => {
 
 // ==================== 通知模板（演示） ====================
 
-export const TemplatePage: React.FC = () => {
+export const TemplatePage = () => {
   const [templates] = useState([
     { id: 1, name: '用户注册欢迎', channel: '站内信', content: '欢迎 {{realName}} 加入企业管理系统！', updatedAt: '2026-09-10' },
     { id: 2, name: '订单支付成功', channel: '短信', content: '您的订单 {{orderNo}} 已支付成功，金额 ¥{{amount}}。', updatedAt: '2026-09-08' },
@@ -459,7 +459,7 @@ export const TemplatePage: React.FC = () => {
 
 // ==================== 消息推送（演示） ====================
 
-export const PushPage: React.FC = () => {
+export const PushPage = () => {
   const [pushes, setPushes] = useState([
     { id: 1, title: '系统维护通知', channel: '企微', target: '全部用户', status: '已发送', time: '2026-09-12 09:00', opens: 45 },
     { id: 2, title: '新功能上线', channel: '站内信', target: 'VIP用户', status: '已发送', time: '2026-09-11 14:00', opens: 128 },
@@ -493,7 +493,7 @@ export const PushPage: React.FC = () => {
 
 // ==================== 数据统计（演示） ====================
 
-export const StatsPage: React.FC = () => {
+export const StatsPage = () => {
   const stats = [
     { label: '今日新增用户', value: '23', change: '+15%', up: true },
     { label: '今日活跃用户', value: '1,256', change: '+8%', up: true },
@@ -512,7 +512,7 @@ export const StatsPage: React.FC = () => {
         {stats.map((s) => (
           <Col span={6} key={s.label}>
             <Card><Statistic title={s.label} value={s.value} /></Card>
-            <div className="text-sm" style={{ color: s.up ? '#52c41a' : '#f5222d' }}>{s.up ? '↑' : '↓'} {s.change}</div>
+            <div className="text-xs" style={{ color: s.up ? '#52c41a' : '#f5222d' }}>{s.up ? '↑' : '↓'} {s.change}</div>
           </Col>
         ))}
       </Row>
@@ -522,7 +522,7 @@ export const StatsPage: React.FC = () => {
 
 // ==================== 趋势分析（演示） ====================
 
-export const TrendPage: React.FC = () => {
+export const TrendPage = () => {
   const data = [65, 78, 52, 91, 84, 45, 38, 72, 88, 95, 62, 75];
   const labels = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
   const maxValue = Math.max(...data);
@@ -556,7 +556,7 @@ export const TrendPage: React.FC = () => {
 
 // ==================== 图表展示（演示） ====================
 
-export const ChartsPage: React.FC = () => {
+export const ChartsPage = () => {
   const pieData = [
     { label: '电子产品', value: 35, color: '#1890ff' },
     { label: '服装配饰', value: 25, color: '#52c41a' },
@@ -603,7 +603,7 @@ export const ChartsPage: React.FC = () => {
 
 // ==================== 数据导出（对接 export） ====================
 
-export const ExportPage: React.FC = () => {
+export const ExportPage = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
 
@@ -620,8 +620,8 @@ export const ExportPage: React.FC = () => {
       a.click();
       URL.revokeObjectURL(url);
       toast.success('导出成功');
-    } catch (e: any) {
-      toast.error(e?.message || '导出失败');
+    } catch (e) {
+      toast.error((e as Error)?.message || '导出失败');
     } finally {
       setLoading(false);
     }
@@ -651,7 +651,7 @@ export const ExportPage: React.FC = () => {
 
 // ==================== 数据大屏（演示） ====================
 
-export const DashboardScreenPage: React.FC = () => {
+export const DashboardScreenPage = () => {
   const [time, setTime] = useState(new Date());
   useEffect(() => { const t = setInterval(() => setTime(new Date()), 1000); return () => clearInterval(t); }, []);
 
@@ -678,7 +678,7 @@ export const DashboardScreenPage: React.FC = () => {
           { time: '10:29:20', event: '系统缓存刷新完成', color: '#722ed1' },
         ].map((item, i) => (
           <div className="flex-center" style={{ gap: 12, fontSize: 13, padding: '5px 0' }} key={i}>
-            <span className="text-muted text-sm">{item.time}</span>
+            <span className="text-muted text-xs">{item.time}</span>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: item.color }} />
             <span>{item.event}</span>
           </div>
@@ -690,7 +690,7 @@ export const DashboardScreenPage: React.FC = () => {
 
 // ==================== 数据计算（演示） ====================
 
-export const CalcPage: React.FC = () => {
+export const CalcPage = () => {
   const [num1, setNum1] = useState('');
   const [num2, setNum2] = useState('');
   const [op, setOp] = useState('+');
@@ -713,7 +713,7 @@ export const CalcPage: React.FC = () => {
           <Input style={{ width: 140, textAlign: 'center' }} placeholder="数字" value={num2} onChange={(e) => setNum2(e.target.value)} />
           <Button type="primary" onClick={calculate}>= 计算</Button>
         </Space>
-        {result && <div className="text-center mt-16" style={{ fontSize: 20, fontWeight: 700, color: 'var(--primary)' }}>{result}</div>}
+        {result && <div className="text-center mt-4" style={{ fontSize: 20, fontWeight: 700, color: 'var(--primary)' }}>{result}</div>}
       </Card>
     </div>
   );
@@ -721,7 +721,7 @@ export const CalcPage: React.FC = () => {
 
 // ==================== 数据查询（演示） ====================
 
-export const QueryPage: React.FC = () => {
+export const QueryPage = () => {
   const [searched, setSearched] = useState(false);
   const results = [
     { id: 1, name: '用户001', type: '用户', detail: '正常 · 技术中心' },
@@ -755,7 +755,7 @@ export const QueryPage: React.FC = () => {
 
 // ==================== 服务日志（演示） ====================
 
-export const ServiceLogPage: React.FC = () => {
+export const ServiceLogPage = () => {
   const [level, setLevel] = useState('all');
   const logs = [
     { id: 1, time: '10:30:15', level: 'INFO', message: 'Server started on port 11170', source: 'Application' },

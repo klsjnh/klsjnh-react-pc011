@@ -1,7 +1,7 @@
 /** julyUser 模块 - 前端视图类型（表格行、store 状态、表单值等） */
-import type { JulyRoleVo011 } from '../julyRole/vo';
-import type { JulyOrganizationVo011 } from '../julyOrganization/vo';
-import type { JulyUserVo011, JulyUserQueryVo011 } from './vo';
+import type { JulyRoleVo011 } from '@/types/system011/julyRole/vo';
+import type { JulyOrganizationVo011 } from '@/types/system011/julyOrganization/vo';
+import type { JulyUserVo011, JulyUserQueryVo011 } from '@/types/system011/julyUser/vo';
 
 // ==================== 视图 ====================
 

@@ -7,7 +7,7 @@ import { useCurrentUser, authStore } from '@/stores/authStore';
 import { SYSTEM011_ROUTES } from '@/config/routes';
 import type { ProfilePageProps } from '@/types/view/page';
 
-export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
+export const ProfilePage = ({ onNavigate }: ProfilePageProps) => {
   const user = useCurrentUser();
   const [settings, setSettings] = useState({ notify: true, darkMode: false });
 
@@ -41,7 +41,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
 
       <Row gutter={16}>
         <Col span={8}>
-          <Card styles={{ body: { padding: 0 } }} className="mb-16">
+          <Card styles={{ body: { padding: 0 } }} className="mb-4">
             <div className="profile-hero">
               <Avatar src={user?.avatar} size={64} />
               <div>
@@ -56,7 +56,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
           </Card>
 
           <Card title="偏好设置">
-            <div className="flex-between mb-8">
+            <div className="flex-between mb-2">
               <span>🔔 消息通知</span>
               <Switch checked={settings.notify} onChange={(v) => setSettings((s) => ({ ...s, notify: v }))} />
             </div>
@@ -84,7 +84,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
         </Col>
       </Row>
 
-      <div className="text-center text-muted text-sm mt-16">
+      <div className="text-center text-muted text-xs mt-4">
         <Typography.Text type="secondary">Enterprise Admin Framework v1.0.0 (PC 端)</Typography.Text>
       </div>
     </div>

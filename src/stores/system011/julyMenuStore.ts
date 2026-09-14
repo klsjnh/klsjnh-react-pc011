@@ -5,7 +5,7 @@
  */
 import { useMemo } from 'react';
 import { globalConfig, GLOBAL_MENUS } from '@/config/global';
-import { createStore, useStoreState } from '../createStore';
+import { createStore, useStoreState } from '@/stores/createStore';
 import type { JulyMenuVo011 } from '@/types/system011/julyMenu/vo';
 import type { MenuState } from '@/types/system011/julyMenu/view';
 import type { NavItem } from '@/types/view/layout';

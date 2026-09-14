@@ -16,7 +16,7 @@ import type { LoginTab } from '@/types/view/page';
 
 const DEFAULT_USER_NAME = 'klsjnh';
 
-export const LoginPage: React.FC = () => {
+export const LoginPage = () => {
   const { dataMode, runState } = useAppConfig();
   const devMode = isDevelopment();
   const [activeTab, setActiveTab] = useState<LoginTab>('username');
@@ -31,20 +31,20 @@ export const LoginPage: React.FC = () => {
     setLoading(true);
     try {
       await authStore.loginByUserNameApi(String(userName).trim());
-    } catch (e: any) {
-      toast.error(e?.message || '免密登录失败（生产态不可用，请用「用户名密码」）');
+    } catch (e) {
+      toast.error((e as Error)?.message || '免密登录失败（生产态不可用，请用「用户名密码」）');
     } finally {
       setLoading(false);
     }
   };
 
   const handlePasswordLogin = async () => {
-    const { userName, passWord } = await form.validateFields();
+    const { userName, password } = await form.validateFields();
     setLoading(true);
     try {
-      await authStore.loginWithApi(String(userName).trim(), String(passWord));
-    } catch (e: any) {
-      toast.error(e?.message || '登录失败，请检查账号密码');
+      await authStore.loginWithApi(String(userName).trim(), String(password));
+    } catch (e) {
+      toast.error((e as Error)?.message || '登录失败，请检查账号密码');
     } finally {
       setLoading(false);
     }
@@ -55,7 +55,7 @@ export const LoginPage: React.FC = () => {
       <Card className="login-card" styles={{ body: { padding: 32 } }}>
         <div className="login-brand">
           <div className="login-brand-title">🏢 {globalConfig.appName}</div>
-          <Typography.Text type="secondary" className="text-sm">
+          <Typography.Text type="secondary" className="text-xs">
             {dataMode === 'mock' ? 'MOCK' : 'API'} · {runState === 'development' ? '开发态' : '生产态'}
           </Typography.Text>
         </div>
@@ -75,7 +75,7 @@ export const LoginPage: React.FC = () => {
             <Input prefix={<UserOutlined />} placeholder="用户名" size="large" autoComplete="username" />
           </Form.Item>
           {activeTab === 'password' && (
-            <Form.Item name="passWord" rules={[{ required: true, message: '请输入密码' }]}>
+            <Form.Item name="password" rules={[{ required: true, message: '请输入密码' }]}>
               <Input.Password prefix={<LockOutlined />} placeholder="密码" size="large" autoComplete="current-password" />
             </Form.Item>
           )}

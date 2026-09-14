@@ -1,5 +1,5 @@
 /** Mock：定时任务（julyScheduler） */
-import { ok, fail, delay, pageResult, type Handler } from './common';
+import { ok, fail, delay, pageResult, type Handler } from '@/mock/system011/common';
 import type { JulySchedulerVo011 } from '@/types/system011';
 
 export const mockSchedulers: JulySchedulerVo011[] = [

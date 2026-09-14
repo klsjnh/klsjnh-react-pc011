@@ -1,5 +1,5 @@
 /** Mock：配置（julyConfig） */
-import { ok, fail, delay, pageResult, type Handler } from './common';
+import { ok, fail, delay, pageResult, type Handler } from '@/mock/system011/common';
 import type { JulyConfigVo011 } from '@/types/system011';
 
 export const mockConfigs: JulyConfigVo011[] = [

@@ -4,17 +4,16 @@
  * 分层：page → service → store；store 不调用 service。
  */
 import { isMockMode } from '@/config/appConfig';
-import { fireApi } from '@/api/request';
-import { api } from '@/api/request';
-import { SYSTEM011_ACTIONS } from './actions';
+import { api, fireApi } from '@/api/request';
+import { SYSTEM011_ACTIONS } from '@/services/system011/actions';
 import { roleStore } from '@/stores/system011/julyRoleStore';
 import { julyOrganizationStore } from '@/stores/system011/julyOrganizationStore';
-import { selectUserListByPage } from './julyUserService';
-import { fetchOrganizationTree } from './julyOrganizationService';
+import { selectUserListByPage } from '@/services/system011/julyUserService';
+import { fetchOrganizationTree } from '@/services/system011/julyOrganizationService';
 import { mockRelations } from '@/mock/system011';
 import type { JulyRoleVo011 } from '@/types/system011/julyRole/vo';
 import type { JulyUserVo011, JulyUserView } from '@/types/system011/julyUser';
-import type { RoleDetail, RoleState } from '@/types/system011/julyRole/view';
+import type { RoleDetail } from '@/types/system011/julyRole/view';
 import type { PageResult011 } from '@/types/system011';
 
 /** 角色分页查询 */
@@ -139,4 +138,18 @@ export function removeUserFromRole(roleId: string, userId: string): void {
     roles: s.roles.map((r) => (r.id !== roleId ? r : { ...r, userIds: r.userIds.filter((id) => id !== userId) })),
   });
   if (!isMockMode()) fireApi(SYSTEM011_ACTIONS.roleUser.logicDelete, { roleId, userId });
+}
+
+/** 批量保存角色关联用户（与当前关联做 diff，仅下发增/删） */
+export function assignUsersToRole(roleId: string, userIds: string[]): void {
+  const s = roleStore.getSnapshot();
+  const role = s.roles.find((r) => r.id === roleId);
+  const current = role?.userIds ?? [];
+  const added = userIds.filter((id) => !current.includes(id));
+  const removed = current.filter((id) => !userIds.includes(id));
+  roleStore.setState({ roles: s.roles.map((r) => (r.id === roleId ? { ...r, userIds } : r)) });
+  if (!isMockMode()) {
+    added.forEach((id) => fireApi(SYSTEM011_ACTIONS.roleUser.insert, { roleId, userId: id }));
+    removed.forEach((id) => fireApi(SYSTEM011_ACTIONS.roleUser.logicDelete, { roleId, userId: id }));
+  }
 }

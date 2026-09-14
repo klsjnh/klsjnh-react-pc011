@@ -7,14 +7,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Card, Input, Select, Space, Button, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useRoleState } from '@/stores/system011/julyRoleStore';
-import { loadRoles, reloadRoles } from '@/services/system011';
+import { loadRoles } from '@/services/system011';
 import { useOrganizationState } from '@/stores/system011/julyOrganizationStore';
 import { useUserState } from '@/stores/system011/julyUserStore';
 import { fetchUserPage } from '@/services/system011';
 import { mockRelations } from '@/mock/system011';
-import { JulyUserFormModal } from './JulyUserFormModal';
+import { JulyUserFormModal } from '@/pages/system011/julyUser/JulyUserFormModal';
 import type { JulyUserVo011, JulyUserView } from '@/types/system011/julyUser';
-import type { UserListPageProps } from '@/types/view/page';
 
 /** 后端 JulyUserVo011 + 关联解析（组织名 / 角色编码） */
 function toView(u: JulyUserVo011, orgNameById: Map<string, string>): JulyUserView {
@@ -25,7 +24,7 @@ function toView(u: JulyUserVo011, orgNameById: Map<string, string>): JulyUserVie
   };
 }
 
-export const julyUser: React.FC<UserListPageProps> = () => {
+export const JulyUser = () => {
   const { roles } = useRoleState();
   const { orgNameById, tree: orgTree } = useOrganizationState();
   const { list, total, loading, query } = useUserState();

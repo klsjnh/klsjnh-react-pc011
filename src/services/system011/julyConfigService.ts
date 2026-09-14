@@ -1,6 +1,6 @@
 /** 配置服务（julyConfig/v1/*） */
 import { api } from '@/api/request';
-import { SYSTEM011_ACTIONS } from './actions';
+import { SYSTEM011_ACTIONS } from '@/services/system011/actions';
 import { julyConfigStore } from '@/stores/system011/julyConfigStore';
 import type {
   JulyConfigVo011, JulyConfigQueryVo011, JulyConfigUpdateVo011, JulyConfigUpsertVo,

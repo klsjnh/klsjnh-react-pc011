@@ -16,7 +16,7 @@ function initDataMode(): DataMode {
     const stored = localStorage.getItem(MODE_KEY);
     if (stored === 'mock' || stored === 'api') return stored;
   } catch { /* ignore */ }
-  const env = (import.meta as any).env?.VITE_DATA_MODE as string | undefined;
+  const env = import.meta.env?.VITE_DATA_MODE as string | undefined;
   return env === 'api' ? 'api' : 'mock';
 }
 
@@ -26,9 +26,9 @@ function initRunState(): RunState {
     if (stored === 'development' || stored === 'production') return stored;
   } catch { /* ignore */ }
   // 跟随 Vite 运行态：vite dev 默认开发态（可用免密登录），vite build 默认生产态
-  const env = (import.meta as any).env?.VITE_RUN_STATE as string | undefined;
+  const env = import.meta.env?.VITE_RUN_STATE as string | undefined;
   if (env === 'development' || env === 'production') return env;
-  return (import.meta as any).env?.DEV ? 'development' : 'production';
+  return import.meta.env?.DEV ? 'development' : 'production';
 }
 
 function initBaseUrl(): string {
@@ -37,7 +37,7 @@ function initBaseUrl(): string {
     if (stored) return stored;
   } catch { /* ignore */ }
   // 默认指向后端 java17-framework011（经 vite proxy /klsjnh 转发，免去 CORS）
-  return (import.meta as any).env?.VITE_API_BASE_URL || '/klsjnh/system011';
+  return import.meta.env?.VITE_API_BASE_URL || '/klsjnh/system011';
 }
 
 let state: AppConfigState = {

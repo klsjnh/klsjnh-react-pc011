@@ -1,6 +1,6 @@
 /** 组织服务（julyOrganization/v1/*） */
 import { api } from '@/api/request';
-import { SYSTEM011_ACTIONS } from './actions';
+import { SYSTEM011_ACTIONS } from '@/services/system011/actions';
 import { julyOrganizationStore } from '@/stores/system011/julyOrganizationStore';
 import type {
   JulyOrganizationVo011,

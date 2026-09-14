@@ -6,7 +6,7 @@ import { Card, Col, Row, Statistic, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { RecentLog } from '@/types/view/business';
 
-export const DashboardPage: React.FC = () => {
+export const DashboardPage = () => {
   const stats = [
     { label: '用户总数', value: '12,480', change: '+12.5%', up: true, color: '#1890ff' },
     { label: '今日活跃', value: '3,256', change: '+8.3%', up: true, color: '#52c41a' },
@@ -37,7 +37,7 @@ export const DashboardPage: React.FC = () => {
             <Card>
               <Statistic title={s.label} value={s.value} valueStyle={{ color: s.color }} />
               {s.change && (
-                <div className="text-sm mt-8" style={{ color: s.up ? '#52c41a' : '#f5222d' }}>
+                <div className="text-xs mt-2" style={{ color: s.up ? '#52c41a' : '#f5222d' }}>
                   {s.up ? '↑' : '↓'} {s.change} 较昨日
                 </div>
               )}

@@ -3,19 +3,19 @@
  * 各模块 handler 见同目录 julyUser / julyRole / julyOrganization / julyUserAudit / julyMenu / notification。
  * 按真实 action 路径分发；无对应 handler 时返回 null（调用方回退到真实请求）。
  */
-import type { MockEnvelope, Handler } from './common';
-import { handlers as julyUserHandlers } from './julyUser';
-import { handlers as julyRoleHandlers } from './julyRole';
-import { handlers as julyOrganizationHandlers } from './julyOrganization';
-import { handlers as julyUserAuditHandlers } from './julyUserAudit';
-import { handlers as julyMenuHandlers } from './julyMenu';
-import { handlers as julyConfigHandlers } from './julyConfig';
-import { handlers as julySchedulerHandlers } from './julyScheduler';
-import { handlers as exportHandlers } from './exportData';
-import { handlers as notificationHandlers } from './notification';
+import type { MockEnvelope, Handler } from '@/mock/system011/common';
+import { handlers as julyUserHandlers } from '@/mock/system011/julyUser';
+import { handlers as julyRoleHandlers } from '@/mock/system011/julyRole';
+import { handlers as julyOrganizationHandlers } from '@/mock/system011/julyOrganization';
+import { handlers as julyUserAuditHandlers } from '@/mock/system011/julyUserAudit';
+import { handlers as julyMenuHandlers } from '@/mock/system011/julyMenu';
+import { handlers as julyConfigHandlers } from '@/mock/system011/julyConfig';
+import { handlers as julySchedulerHandlers } from '@/mock/system011/julyScheduler';
+import { handlers as exportHandlers } from '@/mock/system011/exportData';
+import { handlers as notificationHandlers } from '@/mock/system011/notification';
 
-export type { MockEnvelope } from './common';
-export { mockRelations } from './relations';
+export type { MockEnvelope } from '@/mock/system011/common';
+export { mockRelations } from '@/mock/system011/relations';
 
 const handlers: Record<string, Handler> = {
   ...julyUserHandlers,

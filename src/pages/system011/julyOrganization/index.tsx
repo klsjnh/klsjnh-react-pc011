@@ -9,7 +9,7 @@ import { useOrganizationState } from '@/stores/system011/julyOrganizationStore';
 import { useRoleState } from '@/stores/system011/julyRoleStore';
 import { fetchOrganizationTree, removeOrganization, loadRoles } from '@/services/system011';
 import { toast } from '@/utils/toast';
-import { OrganizationFormModal } from './OrganizationFormModal';
+import { OrganizationFormModal } from '@/pages/system011/julyOrganization/OrganizationFormModal';
 import type { JulyOrganizationVo011 } from '@/types/system011/julyOrganization';
 
 /** 返回父节点 id；顶级返回空串 */
@@ -24,7 +24,7 @@ function findParentId(items: JulyOrganizationVo011[], id: string, parentId = '')
   return null;
 }
 
-export const julyOrganization: React.FC = () => {
+export const JulyOrganization = () => {
   const { users } = useRoleState();
   const { tree, loading } = useOrganizationState();
   const [modal, setModal] = useState<{ open: boolean; mode: 'create' | 'edit'; node: JulyOrganizationVo011 | null; parentId: string }>(
@@ -47,8 +47,8 @@ export const julyOrganization: React.FC = () => {
     try {
       const deleted = await removeOrganization(id);
       toast.success(`delete ${deleted} success ...`);
-    } catch (e: any) {
-      toast.error(e?.message || '删除失败');
+    } catch (e) {
+      toast.error((e as Error)?.message || '删除失败');
     }
   };
 
