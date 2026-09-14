@@ -3,10 +3,11 @@
  *
  * 数据源：统一 mock 后端 /notification/v1/*（真实 JulyNotificationVo011 形状，createTime 字段）
  * mock / api 共用 request.ts 路由；读取失败保留本地 initialNotifications 兜底。
+ * 迁移至 zustand，保留原有 API 表面。
  */
-import { useSyncExternalStore } from 'react';
 import { isMockMode } from '@/config/appConfig';
 import { api, fireApi } from '@/api/request';
+import { createStore, useStoreState } from './createStore';
 import type { NotificationItem, NotificationVo, NotificationState } from '@/types/view/notification';
 
 export type { NotificationItem };
@@ -22,16 +23,10 @@ const initialNotifications: NotificationItem[] = [
   { id: 8, title: '安全警告', content: '检测到异常登录尝试。IP：45.33.22.11，地点：美国加利福尼亚州，时间：2026-09-11 14:00:00。如非本人操作请立即修改密码。', time: '2026-09-11 14:00:00', read: false, type: 'system' },
 ];
 
-let state: NotificationState = {
+const base = createStore<NotificationState>({
   notifications: JSON.parse(JSON.stringify(initialNotifications)),
   loaded: false,
-};
-
-const listeners = new Set<() => void>();
-
-function getSnapshot(): NotificationState { return state; }
-function subscribe(l: () => void) { listeners.add(l); return () => { listeners.delete(l); }; }
-function emit() { state = { ...state }; listeners.forEach((l) => l()); }
+});
 
 /** 后端 JulyNotificationVo011 → UI NotificationItem */
 function mapVo(v: NotificationVo): NotificationItem {
@@ -39,55 +34,54 @@ function mapVo(v: NotificationVo): NotificationItem {
 }
 
 export const notificationStore = {
-  getSnapshot,
-  subscribe,
+  getSnapshot: base.getSnapshot,
+  subscribe: base.subscribe,
 
   /** 初始化（mock / api 共用 services 层，统一经 request.ts 路由） */
   load: async () => {
-    if (state.loaded) return;
+    const s = base.getSnapshot();
+    if (s.loaded) return;
     try {
       const data = await api.post<NotificationVo[]>('/notification/v1/selectListByPage', {});
-      state = { notifications: data.map(mapVo), loaded: true };
-      emit();
+      base.setState({ notifications: data.map(mapVo), loaded: true });
       return;
     } catch {
       // 请求失败保留本地兜底数据（按契约不白屏）
-      state = { ...state, loaded: true };
-      emit();
+      base.setState({ loaded: true });
     }
   },
 
   /** 重载（切换数据模式后调用） */
   reload: async () => {
-    state = { notifications: JSON.parse(JSON.stringify(initialNotifications)), loaded: false };
+    base.replace({ notifications: JSON.parse(JSON.stringify(initialNotifications)), loaded: false });
     await notificationStore.load();
   },
 
   /** 标记单条已读 */
   markAsRead: (id: number) => {
-    state.notifications = state.notifications.map((n) => (n.id === id ? { ...n, read: true } : n));
+    const { notifications } = base.getSnapshot();
+    base.setState({ notifications: notifications.map((n) => (n.id === id ? { ...n, read: true } : n)) });
     if (!isMockMode()) fireApi('/notification/v1/read', { id });
-    emit();
   },
 
   /** 全部已读 */
   markAllRead: () => {
-    state.notifications = state.notifications.map((n) => ({ ...n, read: true }));
+    const { notifications } = base.getSnapshot();
+    base.setState({ notifications: notifications.map((n) => ({ ...n, read: true })) });
     if (!isMockMode()) fireApi('/notification/v1/readAll');
-    emit();
   },
 
   /** 删除通知 */
   remove: (id: number) => {
-    state.notifications = state.notifications.filter((n) => n.id !== id);
+    const { notifications } = base.getSnapshot();
+    base.setState({ notifications: notifications.filter((n) => n.id !== id) });
     if (!isMockMode()) fireApi('/notification/v1/logicDelete', { id });
-    emit();
   },
 };
 
 /** 通知原始状态 */
 export function useNotificationState(): NotificationState {
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  return useStoreState(base);
 }
 
 /** 未读数量（顶栏红点用） */

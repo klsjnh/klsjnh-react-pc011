@@ -65,9 +65,9 @@ export async function fetchUserPage(patch: Partial<JulyUserQueryVo011> = {}): Pr
 
 /** 新增 / 修改用户 + 分配角色，成功后刷新列表（返回用户 id） */
 export async function saveUser(params: SaveUserParams): Promise<string> {
-  const { id, userAccount, userName, password, mobile, email, pkOrg, roleIds = [] } = params;
+  const { id, userAccount, userName, password, mobile, email, pkOrg, status, roleIds = [] } = params;
   const { id: savedId } = id
-    ? await api.post<IdVo011>(SYSTEM011_ACTIONS.user.update, { id, userName, mobile, email, pkOrg } as JulyUserUpdateVo011)
+    ? await api.post<IdVo011>(SYSTEM011_ACTIONS.user.update, { id, userName, mobile, email, pkOrg, status } as JulyUserUpdateVo011)
     : await api.post<IdVo011>(SYSTEM011_ACTIONS.user.insert, {
         userAccount,
         userName,
@@ -75,6 +75,7 @@ export async function saveUser(params: SaveUserParams): Promise<string> {
         mobile,
         email,
         pkOrg,
+        status,
       } as JulyUserInsertVo011);
 
   if (roleIds.length > 0) {

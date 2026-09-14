@@ -10,21 +10,6 @@ export type ProfilePageProps = PageNavProps;
 export type UserListPageProps = PageNavProps;
 export type MenuListPageProps = PageNavProps;
 
-export interface BusinessPlaceholderPageProps {
-  title: string;
-  path?: string;
-}
-
-/** 业务中心 - 配置管理项（页面本地 demo 数据） */
-export interface ConfigItem {
-  id: number;
-  key: string;
-  value: string;
-  group: string;
-  remark: string;
-  enabled: boolean;
-}
-
 /** 帮助反馈分类 */
 export type FeedbackCategory = 'bug' | 'feature' | 'other';
 

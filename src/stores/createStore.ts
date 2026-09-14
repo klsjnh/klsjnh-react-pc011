@@ -17,7 +17,7 @@ export function createStore<T extends object>(initial: T): StoreController<T> {
   return {
     api,
     getSnapshot: api.getState,
-    subscribe: (listener: () => void) => api.subscribe(listener),
+    subscribe: (listener) => api.subscribe(listener),
     setState: (patch) => api.setState(patch),
     replace: (next) => api.setState(next, true),
     emit: () => api.setState({} as Partial<T>),

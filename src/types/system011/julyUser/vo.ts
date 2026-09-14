@@ -1,7 +1,5 @@
-/** julyUser 模块类型（契约 + 视图，合并单文件） */
+/** julyUser 模块 - 后端契约类型（DTO/VO，与 swagger 一一对应） */
 import type { BaseVo011 } from '@/types/common';
-import type { JulyRoleVo011 } from './julyRole';
-import type { JulyOrganizationVo011 } from './julyOrganization';
 
 // ==================== 契约（/julyUser/v1/*） ====================
 
@@ -48,6 +46,7 @@ export interface JulyUserInsertVo011 {
   email?: string;
   avatar?: string;
   pkOrg?: string;
+  status?: string;
 }
 
 export interface JulyUserUpdateVo011 {
@@ -57,6 +56,7 @@ export interface JulyUserUpdateVo011 {
   email?: string;
   avatar?: string;
   pkOrg?: string;
+  status?: string;
 }
 
 export interface JulyUserAssignRolesVo011 {
@@ -73,30 +73,6 @@ export interface SaveUserParams {
   mobile?: string;
   email?: string;
   pkOrg?: string;
+  status?: string;
   roleIds?: string[];
-}
-
-// ==================== 视图 ====================
-
-/** 用户列表行视图：后端字段 + 关联解析（组织名 / 角色编码） */
-export interface JulyUserView extends JulyUserVo011 {
-  department: string;
-  roles: string[];
-}
-
-export interface UserState {
-  list: JulyUserVo011[];
-  total: number;
-  totalPages: number;
-  loading: boolean;
-  query: JulyUserQueryVo011;
-}
-
-export interface JulyUserFormModalProps {
-  open: boolean;
-  user: JulyUserView | null;
-  roles: JulyRoleVo011[];
-  orgTree: JulyOrganizationVo011[];
-  onClose: () => void;
-  onSaved: () => void;
 }

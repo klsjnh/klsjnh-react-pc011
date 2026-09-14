@@ -1,68 +1,60 @@
-# Agent.md — 协作手册（AI 助手 / 新开发者 · 跨语言通用）
+# Agent.md — AI 协作入口（跨项目 / 跨语言通用）
 
-> **定位**：本仓库的**协作铁律 · 标准工作流 · 架构原则**。
-> **体系**：PC 前端 + Java 17 DDD 后端，统一沟通机制。
+> **本文是【项目无关】的门牌层** —— 只回答一件事：**进门先看什么、按什么顺序看**。
+> 协议内容（协作铁律 / 标准开发流程 / 编号规则 / 归档规则）**一律不在本文展开**，全部归 `docs/011.agreements.md`。
+> 可原样复制到任意项目（Go / Vue / React / Java / Python …），**只换内容，不改结构**。
+> **首要原则**：文档的第一消费者是 AI —— 一个事实只有一个家，需要互引时用链接，**不复制正文**。
 
 ---
 
-## 011.项目速览
+## 1. 知识库地图（按顺序读）
 
-- **一句话**：企业级管理系统 —— PC 前端 + Java 17 DDD 后端
-- **技术栈**：React 18 + TypeScript + Vite（前端，本仓库 pc-admin）/ Java 17 + Spring Boot 3.4 + MyBatis-Plus（后端）
-- **沟通机制**：统一响应信封 + POST + JSON body + camelCase
+`docs/` 的**目录结构全项目恒定**，与语言无关。按以下顺序加载上下文 —— **从纪律到技术，再到业务**：
 
-### 011.文档地图（前端仓库）
-
-- 项目总览（启动 / 目录 / 路由 / 架构 / Mock-API 双模式）→ [`README.md`](README.md)
-- 文档体系与编号约定（编号序列 / 归档规则）→ [`docs/011.agreements.md`](docs/011.agreements.md)
-- 项目信息（背景 / 前后端模块对应关系）→ [`docs/013.project-info.md`](docs/013.project-info.md)
-- 前端编码标准（页面统一写法 / store 模式 / 命名规范）→ [`docs/015.coding-standards.md`](docs/015.coding-standards.md)
-- 接口契约（信封六键 / 状态码 / 前端请求行为）→ [`docs/016.api-contract.md`](docs/016.api-contract.md)
-- docs 索引与工作日志 → [`docs/README.md`](docs/README.md)、`docs/{YYYY-MM-DD}.md`
-- 后端框架仓库（权威契约源 / 业务设计 018 菜单 · 019 用户 · 022 角色）→ `klsjnh-java17-framework011` 的 `Agent.md` 与 `docs/`
-
-## 015.铁律
-
-### 011.提交时机
-- 只有用户明确发出「提交 / push」指令时才提交，禁止主动提交
-
-### 013.提交前置
-- 前端：`npm run build` 无报错
-- 后端：`mvn clean verify` 全绿
-- 接口经过自测
-
-### 017.HTTP 方法规范
-- 业务接口统一 **POST + JSON body**
-- GET 仅用于无参或简单参数的纯查询
-- 禁止 `@PathVariable`
-- URL 结构：`/api/v1/{模块}/{动作}`
-
-### 018.架构原则（DDD 四层）
-
-```
-server-interfaces     → REST 控制器、DTO、统一信封
-    ↓
-server-application    → 应用服务、命令、查询
-    ↓
-server-domain         → 聚合根、实体、值对象、仓储接口
-    ↓
-server-infrastructure → 持久化实现、配置、安全
+```text
+docs/
+├── 011.agreements.md          # Cooperation conventions (supreme rule) — read FIRST
+├── 013.api-contract.md        # API contract (URL / envelope / auth / paging)
+├── 015.project-info.md        # Project info (stack / build / run / capabilities)
+├── 016.coding-standards.md    # Coding standards for THIS language
+├── 017.tech-debt-redlines.md  # Tech-debt redlines (reference impl audit)
+├── 019.backend-api-review.md  # Backend API quality review (contract-level)
+├── infrastructure011/         # Architecture topics (project-specific) — 7 files
+├── requirement011/            # Raw requirements (business perspective)
+├── requirement013/            # High-level design (scheme & architecture)
+├── requirement015/            # Detailed design (API / data model / constraints)
+├── {YYYY-MM-DD}.md            # Daily work log & task list
+├── {YYYY-MM-DD}-chat.md       # Daily raw conversation log
+└── archive011/                # Historical archives (flat storage)
 ```
 
-- **依赖单向**：interfaces → application → domain ← infrastructure
-- **事务只在 application 层**
-- **PO 不出站**：interfaces 层只接收/返回 DTO
-- **构造器注入**，禁止字段注入
+> **注意**：本目录树中**根级文件**按**编号升序**排（回答「有哪些」），**目录**按其职能分组列于其后；下方**阅读顺序表**按「从纪律到技术，再到业务」排 —— **两处顺序不同是有意的，不是笔误**。
 
-## 017.标准开发流程
+**阅读顺序（不可颠倒）** —— **编号即定位**，与 `011.agreements` §015 目录语义一一对应：
 
-```
-需求 → docs/ 记录决策 → 拆任务 → 编码 → 构建验证 → 自测 → 汇报 → 提交
-```
+| 编号 | 位置（恒定） | 读什么 | 读它的目的 |
+|------|-------------|--------|-----------|
+| `011` | [011.agreements.md](docs/011.agreements.md) | 协作约定 · **最高准则** | **协议全集** —— 标准开发流程（七步）/ 协作铁律 / 编号规则 / 目录语义 / 归档规则 |
+| `016` | [016.coding-standards.md](docs/016.coding-standards.md) | 本项目编码标准 | 本语言怎么编（分层 / 命名 / 风格 / 门禁） |
+| `013` | [013.api-contract.md](docs/013.api-contract.md) | 接口契约 | 前后端怎么对话（信封 / 状态码 / 分页 / 鉴权） |
+| `019` | [019.backend-api-review.md](019.backend-api-review.md) | 后端接口质量评审 | 契约层的已知缺口（哪些不能信 Swagger） |
+| `017` | [017.tech-debt-redlines.md](docs/017.tech-debt-redlines.md) | 技术债红线 | 参考实现踩过的坑，**不要重蹈** |
+| `011→013→015` | [docs/requirement011/](docs/requirement011/) → [docs/requirement013/](docs/requirement013/) → [docs/requirement015/](docs/requirement015/) | 需求三档 | 这个需求要做什么（原始 → 概要 → 详细） |
+| `infrastructure011` | [docs/infrastructure011/](docs/infrastructure011/) | 架构专题 | 系统架构与技术体系（技术设计输入） |
+| `015` | [015.project-info.md](docs/015.project-info.md) | 项目事实卡 | 本项目事实（栈 / 构建 / 运行 / 能力）—— **具体命令在这里** |
 
-## 020.红线
+> **路径是协议，内容是实例**：上表每一项对应的**文件位置**在任意项目里一字不改（见上方目录树）；变的只是各文件里的文章。  
+> **日常动态文件**：每日工作日志 (`docs/{YYYY-MM-DD}.md`)、原始对话 (`docs/{YYYY-MM-DD}-chat.md`) 与历史归档 (`docs/archive011/`) 按需在处理具体任务或追溯历史上下文时加载。  
+> **`[PLANNED]` 标记与待建约束**：标注为 `[PLANNED]` 或（待建）的文件属规划态，禁止写成链接。若目标文件尚未落盘，AI 不得尝试强制读取该文件或报错，跳过并结合当前上下文补充即可。  
+> **编号即定位** —— 全文（含 `011.agreements`、`015.project-info` 等）一律用编号指路，**不使用「第 N 序」**。
+---
 
-- 堆栈/SQL 不出站
-- 凭证一律环境变量
-- PO 不出站（转 DTO）
-- 对外契约禁止破坏性变更
+## 2. 五条红线（最高频 · 完整条款见 `docs/011.agreements.md`）
+
+以下是**最高频、最易犯**的五条，故前置提示；**完整条款一律以 `docs/011.agreements.md` 为准** —— 前四条见 `§011.铁律`，第五条见 `§018.代码先行审查`。
+
+- **禁止主动提交** —— 只有用户明确发出「提交 / 推送 / push」指令才能执行；写操作只经提交脚本，禁直接用原生 `git` 提交
+- **只读可自主** —— `pull` / `status` / `diff` / `log` / `branch` / `checkout` / `switch` 等只读及本地状态操作可自主执行
+- **高危需授权** —— 执行提交脚本、删除文件 / 分支、数据库 Destructive 变更，必须经用户明确授权
+- **本机执行，禁沙箱** —— 长命令（编译 / 测试）脱钩执行：后台运行 + 输出写日志，再从文件读结果
+- **代码先行审查** —— 涉及底层公共库修改、多模块联动或破坏性重构时，**动手前**先汇报设计思路 / 关键路径 / 风险点，获认可再编码（条款见 `§018.代码先行审查`）

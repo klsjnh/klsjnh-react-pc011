@@ -36,4 +36,22 @@ export const SYSTEM011_ACTIONS = {
     update: '/julyOrganization/v1/update',
     logicDelete: '/julyOrganization/v1/logicDelete',
   },
+  config: {
+    selectListByPage: '/julyConfig/v1/selectListByPage',
+    getById: '/julyConfig/v1/getById',
+    insert: '/julyConfig/v1/insert',
+    update: '/julyConfig/v1/update',
+    logicDelete: '/julyConfig/v1/logicDelete',
+  },
+  scheduler: {
+    selectListByPage: '/julyScheduler/v1/selectListByPage',
+    getById: '/julyScheduler/v1/getById',
+    insert: '/julyScheduler/v1/insert',
+    update: '/julyScheduler/v1/update',
+    logicDelete: '/julyScheduler/v1/logicDelete',
+    start: '/julyScheduler/v1/start',
+    stop: '/julyScheduler/v1/stop',
+    runOnce: '/julyScheduler/v1/runOnce',
+  },
+  exportData: '/export/v1',
 } as const;
