@@ -1,6 +1,5 @@
-/** julyOrganization 模块类型（契约 + 视图，合并单文件） */
+/** julyOrganization 模块 - 后端契约类型（DTO/VO，与 swagger 一一对应） */
 import type { BaseVo011 } from '@/types/common';
-import type { JulyUserView } from './julyUser';
 
 // ==================== 契约（/julyOrganization/v1/*） ====================
 
@@ -47,24 +46,4 @@ export interface SaveOrganizationParams {
   pkUser?: string;
   parentId?: string;
   sortOrder?: number;
-}
-
-// ==================== 视图 ====================
-
-export interface OrgState {
-  tree: JulyOrganizationVo011[];
-  /** 组织 id → 名称（用户「所属组织」列解析用） */
-  orgNameById: Map<string, string>;
-  loading: boolean;
-}
-
-export interface OrganizationFormModalProps {
-  open: boolean;
-  mode: 'create' | 'edit';
-  node: JulyOrganizationVo011 | null;
-  departments: JulyOrganizationVo011[];
-  users: JulyUserView[];
-  initialParentId: string;
-  onClose: () => void;
-  onSaved: () => void;
 }

@@ -1,8 +1,9 @@
 /**
  * UI 状态持久化（localStorage）
  * 左侧导航收起状态、菜单管理树的展开/选中状态等
+ * 迁移至 zustand，保留 localStorage 持久化与原有 API 表面。
  */
-import { useSyncExternalStore } from 'react';
+import { createStore, useStoreState } from './createStore';
 import type { UiState } from '@/types/view/ui';
 
 export type { UiState };
@@ -23,25 +24,21 @@ function load(): UiState {
   return { ...defaultState };
 }
 
-let state: UiState = load();
-const listeners = new Set<() => void>();
+const base = createStore<UiState>(load());
 
-function getSnapshot(): UiState { return state; }
-function subscribe(l: () => void) { listeners.add(l); return () => { listeners.delete(l); }; }
-function setState(patch: Partial<UiState>) {
-  state = { ...state, ...patch };
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* 存储不可用时仅内存生效 */ }
-  listeners.forEach(l => l());
-}
+/** 订阅状态变化 → 写入 localStorage */
+base.subscribe(() => {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(base.getSnapshot())); } catch { /* 存储不可用时仅内存生效 */ }
+});
 
 export const uiStore = {
-  getSnapshot,
-  subscribe,
-  setSidebarCollapsed: (collapsed: boolean) => setState({ sidebarCollapsed: collapsed }),
-  setMenuTreeExpandedIds: (ids: string[]) => setState({ menuTreeExpandedIds: ids }),
-  setMenuTreeSelectedId: (id: string | null) => setState({ menuTreeSelectedId: id }),
+  getSnapshot: base.getSnapshot,
+  subscribe: base.subscribe,
+  setSidebarCollapsed: (collapsed: boolean) => base.setState({ sidebarCollapsed: collapsed }),
+  setMenuTreeExpandedIds: (ids: string[]) => base.setState({ menuTreeExpandedIds: ids }),
+  setMenuTreeSelectedId: (id: string | null) => base.setState({ menuTreeSelectedId: id }),
 };
 
 export function useUiState(): UiState {
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  return useStoreState(base);
 }

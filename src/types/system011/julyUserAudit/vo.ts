@@ -1,5 +1,7 @@
-/** julyUserAudit 模块类型（契约，合并单文件） */
+/** julyUserAudit 模块 - 后端契约类型（DTO/VO，与 swagger 一一对应） */
 import type { BaseVo011 } from '@/types/common';
+
+// ==================== 契约（/julyUserAudit/v1/*） ====================
 
 /** 审计事件类型 */
 export type JulyUserAuditType011 =

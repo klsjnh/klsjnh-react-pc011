@@ -5,8 +5,8 @@ import { BellOutlined, LogoutOutlined, UserOutlined, LockOutlined } from '@ant-d
 import { useCurrentUser, authStore } from '@/stores/authStore';
 import { useUnreadCount, notificationStore } from '@/stores/notificationStore';
 import { appConfigStore, useAppConfig, type DataMode } from '@/config/appConfig';
-import { menuStore } from '@/stores/system011/julyMenuStore';
-import { roleStore } from '@/stores/system011/julyRoleStore';
+import { reloadMenus } from '@/services/system011';
+import { reloadRoles } from '@/services/system011';
 import { globalConfig } from '@/config/global';
 import { toast } from '@/utils/toast';
 import type { TopProps } from '@/types/view/layout';
@@ -22,7 +22,7 @@ export const Top: React.FC<TopProps> = ({ onNavigate }) => {
 
   const switchMode = async (mode: DataMode) => {
     appConfigStore.setDataMode(mode);
-    await Promise.all([menuStore.reload(), roleStore.reload(), notificationStore.reload()]);
+    await Promise.all([reloadMenus(), reloadRoles(), notificationStore.reload()]);
   };
 
   const userMenu = {

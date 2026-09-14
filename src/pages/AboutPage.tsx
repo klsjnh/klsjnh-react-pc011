@@ -1,73 +1,58 @@
 /**
- * 关于我们页 - PC 端
+ * 关于我们页 - PC 端（antd）
  */
 import React from 'react';
+import { Card, Col, Row, Tag, Typography } from 'antd';
 
-export const AboutPage: React.FC = () => (
-  <div>
-    <div className="page-header">
-      <h2>关于我们</h2>
-      <p>Enterprise Admin Framework</p>
-    </div>
+export const AboutPage: React.FC = () => {
+  const features = [
+    { icon: '👥', label: '用户管理', desc: '完整的用户账号管理体系' },
+    { icon: '🔑', label: '权限管理', desc: '细粒度的角色与菜单权限控制' },
+    { icon: '📋', label: '菜单管理', desc: '灵活的导航菜单配置' },
+    { icon: '💼', label: '业务中心', desc: '配置、数据、工具一站式管理' },
+    { icon: '📈', label: '数据报表', desc: '多维度业务数据分析' },
+  ];
+  const techStack = ['React 19', 'TypeScript', 'Vite 6', 'React Router', 'Zustand', 'Ant Design'];
 
-    {/* Logo 和版本 */}
-    <div className="table-wrapper" style={{ padding: '32px', textAlign: 'center', marginBottom: '16px' }}>
-      <div style={{ fontSize: '56px', marginBottom: '12px' }}>🏢</div>
-      <div style={{ fontSize: '20px', fontWeight: 700 }}>企业管理系统</div>
-      <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>Enterprise Admin Framework v1.0.0 (PC 端)</div>
-    </div>
+  return (
+    <div>
+      <div className="page-header"><h2>关于我们</h2><p>Enterprise Admin Framework</p></div>
 
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-      {/* 功能特性 */}
-      <div className="table-wrapper" style={{ padding: '20px' }}>
-        <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '16px' }}>功能特性</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {[
-            { icon: '👥', label: '用户管理', desc: '完整的用户账号管理体系' },
-            { icon: '🔑', label: '权限管理', desc: '细粒度的角色与菜单权限控制' },
-            { icon: '📋', label: '菜单管理', desc: '灵活的导航菜单配置' },
-            { icon: '💼', label: '业务中心', desc: '配置、数据、工具一站式管理' },
-            { icon: '📈', label: '数据报表', desc: '多维度业务数据分析' },
-          ].map((item) => (
-            <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '22px' }}>{item.icon}</span>
-              <div>
-                <div style={{ fontSize: '14px', fontWeight: 500 }}>{item.label}</div>
-                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{item.desc}</div>
+      <Card className="table-wrapper text-center mb-16" styles={{ body: { padding: 32 } }}>
+        <div style={{ fontSize: 56 }}>🏢</div>
+        <div style={{ fontSize: 20, fontWeight: 700 }}>企业管理系统</div>
+        <Typography.Text type="secondary">Enterprise Admin Framework v1.0.0 (PC 端)</Typography.Text>
+      </Card>
+
+      <Row gutter={16}>
+        <Col span={12}>
+          <Card title="功能特性">
+            {features.map((item) => (
+              <div key={item.label} className="flex-center mb-16" style={{ gap: 12 }}>
+                <span style={{ fontSize: 22 }}>{item.icon}</span>
+                <div>
+                  <div style={{ fontWeight: 500 }}>{item.label}</div>
+                  <Typography.Text type="secondary" className="text-sm">{item.desc}</Typography.Text>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        {/* 技术栈 */}
-        <div className="table-wrapper" style={{ padding: '20px' }}>
-          <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '14px' }}>技术栈</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            {['React 18', 'TypeScript', 'Vite 6', 'React Router', 'Zustand'].map((tech) => (
-              <span key={tech} style={{ padding: '4px 12px', background: '#f0f5ff', color: '#597ef7', borderRadius: '12px', fontSize: '12px' }}>
-                {tech}
-              </span>
             ))}
-          </div>
-        </div>
+          </Card>
+        </Col>
+        <Col span={12}>
+          <Card title="技术栈" className="mb-16">
+            <div className="flex-center gap-8" style={{ flexWrap: 'wrap' }}>
+              {techStack.map((tech) => <Tag key={tech} color="blue">{tech}</Tag>)}
+            </div>
+          </Card>
+          <Card title="联系我们">
+            <div className="text-secondary">📧 support@enterprise.com</div>
+            <div className="text-secondary mt-8">📞 400-123-4567</div>
+            <div className="text-secondary mt-8">🌐 www.enterprise.com</div>
+          </Card>
+        </Col>
+      </Row>
 
-        {/* 联系方式 */}
-        <div className="table-wrapper" style={{ padding: '20px' }}>
-          <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '14px' }}>联系我们</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px', color: 'var(--text-secondary)' }}>
-            <div>📧 support@enterprise.com</div>
-            <div>📞 400-123-4567</div>
-            <div>🌐 www.enterprise.com</div>
-          </div>
-        </div>
-      </div>
+      <div className="text-center text-muted text-sm mt-16">© 2026 Enterprise Admin Framework. All rights reserved.</div>
     </div>
-
-    {/* 版权 */}
-    <div style={{ textAlign: 'center', fontSize: '12px', color: 'var(--text-muted)', marginTop: '24px' }}>
-      © 2026 Enterprise Admin Framework. All rights reserved.
-    </div>
-  </div>
-);
+  );
+};

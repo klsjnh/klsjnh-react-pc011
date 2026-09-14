@@ -1,7 +1,8 @@
 /**
- * 数据报表页 - PC 端
+ * 数据报表页 - PC 端（antd）
  */
 import React from 'react';
+import { Button, Card, Col, Row, Statistic } from 'antd';
 
 export const ReportsPage: React.FC = () => {
   const chartData = [
@@ -10,52 +11,46 @@ export const ReportsPage: React.FC = () => {
     { label: '周五', value: 84 }, { label: '周六', value: 45 },
     { label: '周日', value: 38 },
   ];
-  const maxValue = Math.max(...chartData.map(d => d.value));
+  const maxValue = Math.max(...chartData.map((d) => d.value));
+
+  const summary = [
+    { label: '今日访问', value: '3,256', change: '+12%', up: true },
+    { label: '今日订单', value: '186', change: '+8%', up: true },
+    { label: '今日收入', value: '¥4.2万', change: '-3%', up: false },
+    { label: '转化率', value: '5.7%', change: '+1.2%', up: true },
+  ];
 
   return (
     <div>
-      <div className="page-header"><h2>数据报表</h2><p>近7天业务数据趋势</p></div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px' }}>
-        {/* 柱状图 */}
-        <div className="table-wrapper" style={{ padding: '20px' }}>
-          <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '16px' }}>访问量趋势</div>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px', height: '200px' }}>
-            {chartData.map((item) => (
-              <div key={item.label} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{item.value}</div>
-                <div style={{ width: '100%', height: `${(item.value / maxValue) * 100}%`, background: 'linear-gradient(180deg, #1890ff 0%, #69c0ff 100%)', borderRadius: '4px 4px 0 0', minHeight: '8px' }} />
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{item.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* 数据汇总 */}
-        <div className="table-wrapper" style={{ padding: '20px' }}>
-          <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '16px' }}>数据汇总</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {[
-              { label: '今日访问', value: '3,256', change: '+12%', up: true },
-              { label: '今日订单', value: '186', change: '+8%', up: true },
-              { label: '今日收入', value: '¥4.2万', change: '-3%', up: false },
-              { label: '转化率', value: '5.7%', change: '+1.2%', up: true },
-            ].map(item => (
-              <div key={item.label} style={{ padding: '12px', background: '#f5f7fa', borderRadius: '8px' }}>
-                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{item.label}</div>
-                <div style={{ fontSize: '20px', fontWeight: 700, marginTop: '2px' }}>{item.value}</div>
-                <div style={{ fontSize: '11px', color: item.up ? '#52c41a' : '#f5222d' }}>
+      <div className="page-header"><h2>数据报表</h2><p>近 7 天业务数据趋势</p></div>
+      <Row gutter={16}>
+        <Col span={16}>
+          <Card title="访问量趋势">
+            <div className="bar-chart" style={{ height: 200 }}>
+              {chartData.map((item) => (
+                <div className="bar-col" key={item.label}>
+                  <div className="bar-label">{item.value}</div>
+                  <div className="bar-fill" style={{ height: `${(item.value / maxValue) * 100}%` }} />
+                  <div className="bar-label">{item.label}</div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </Col>
+        <Col span={8}>
+          <Card title="数据汇总">
+            {summary.map((item) => (
+              <div key={item.label} className="mb-16">
+                <Statistic title={item.label} value={item.value} />
+                <div className="text-sm" style={{ color: item.up ? '#52c41a' : '#f5222d' }}>
                   {item.up ? '↑' : '↓'} {item.change}
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-      </div>
-
-      <div style={{ marginTop: '16px' }}>
-        <button className="btn btn-primary">📥 导出报表</button>
-      </div>
+          </Card>
+        </Col>
+      </Row>
+      <Button type="primary" className="mt-16">导出报表</Button>
     </div>
   );
 };

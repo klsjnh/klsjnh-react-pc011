@@ -6,8 +6,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Button, Card, Popconfirm, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useOrganizationState } from '@/stores/system011/julyOrganizationStore';
-import { roleStore, useRoleState } from '@/stores/system011/julyRoleStore';
-import { fetchOrganizationTree, removeOrganization } from '@/services/system011';
+import { useRoleState } from '@/stores/system011/julyRoleStore';
+import { fetchOrganizationTree, removeOrganization, loadRoles } from '@/services/system011';
 import { toast } from '@/utils/toast';
 import { OrganizationFormModal } from './OrganizationFormModal';
 import type { JulyOrganizationVo011 } from '@/types/system011/julyOrganization';
@@ -31,7 +31,7 @@ export const julyOrganization: React.FC = () => {
     { open: false, mode: 'create', node: null, parentId: '' },
   );
 
-  useEffect(() => { roleStore.load(); fetchOrganizationTree(); }, []);
+  useEffect(() => { loadRoles(); fetchOrganizationTree(); }, []);
 
   const userNameById = useMemo(
     () => new Map(users.map((u) => [u.id, u.userName] as [string, string])),

@@ -1,14 +1,15 @@
 /**
- * 业务中心页 - PC 端（3 分组 × 8 项 = 24 个业务入口）
+ * 业务中心页 - PC 端（antd，分组宫格入口）
  */
 import React from 'react';
+import { Card, Col, Row } from 'antd';
 import type { BusinessPageProps } from '@/types/view/page';
+import type { BizEntry } from '@/types/view/business';
 
 export const BusinessPage: React.FC<BusinessPageProps> = ({ onNavigate }) => {
-  const groups = [
+  const groups: { title: string; items: BizEntry[] }[] = [
     {
       title: '📋 配置管理',
-      color: '#1890ff',
       items: [
         { icon: '⚙️', label: '配置管理', path: '/business/config', color: '#e6f7ff' },
         { icon: '⏰', label: '定时任务', path: '/business/scheduler', color: '#f6ffed' },
@@ -22,7 +23,6 @@ export const BusinessPage: React.FC<BusinessPageProps> = ({ onNavigate }) => {
     },
     {
       title: '📊 数据分析',
-      color: '#52c41a',
       items: [
         { icon: '📈', label: '数据报表', path: '/reports', color: '#f6ffed' },
         { icon: '📊', label: '数据统计', path: '/business/stats', color: '#e6f7ff' },
@@ -36,7 +36,6 @@ export const BusinessPage: React.FC<BusinessPageProps> = ({ onNavigate }) => {
     },
     {
       title: '🛠 系统工具',
-      color: '#faad14',
       items: [
         { icon: '🔔', label: '消息通知', path: '/notifications', color: '#fff7e6' },
         { icon: '📝', label: '审计日志', path: '/audit', color: '#f5f5f5' },
@@ -52,51 +51,20 @@ export const BusinessPage: React.FC<BusinessPageProps> = ({ onNavigate }) => {
 
   return (
     <div>
-      <div className="page-header">
-        <h2>业务中心</h2>
-        <p>配置 · 数据 · 工具</p>
-      </div>
-
+      <div className="page-header"><h2>业务中心</h2><p>配置 · 数据 · 工具</p></div>
       {groups.map((group) => (
-        <div key={group.title} style={{ marginBottom: '20px' }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '6px',
-            fontSize: '15px', fontWeight: 600,
-            marginBottom: '12px', color: group.color,
-          }}>
-            {group.title}
-            <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 400 }}>
-              ({group.items.length})
-            </span>
-          </div>
-          <div style={{
-            background: 'var(--bg-card)',
-            borderRadius: 'var(--radius)',
-            padding: '20px 16px',
-            boxShadow: 'var(--shadow)',
-            display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: '16px 8px',
-          }}>
+        <Card key={group.title} title={group.title} className="mb-16">
+          <Row gutter={[16, 16]}>
             {group.items.map((item) => (
-              <div
-                key={item.label}
-                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
-                onClick={() => onNavigate?.(item.path)}
-              >
-                <div style={{
-                  width: '52px', height: '52px', borderRadius: '12px',
-                  background: item.color,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '24px',
-                }}>
-                  {item.icon}
+              <Col span={3} key={item.label}>
+                <div className="biz-entry" onClick={() => onNavigate?.(item.path)}>
+                  <div className="biz-entry-icon" style={{ background: item.color }}>{item.icon}</div>
+                  <span className="text-secondary text-sm">{item.label}</span>
                 </div>
-                <span style={{ fontSize: '12px', color: 'var(--text-secondary)', textAlign: 'center' }}>
-                  {item.label}
-                </span>
-              </div>
+              </Col>
             ))}
-          </div>
-        </div>
+          </Row>
+        </Card>
       ))}
     </div>
   );

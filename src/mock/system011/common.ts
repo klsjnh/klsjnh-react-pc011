@@ -1,9 +1,9 @@
-/** Mock 公共：响应信封 / 工具 / handler 类型 */
-import type { MockEnvelope } from '@/types/view/mock';
+/** Mock 公共：响应信封 / 工具（handler 类型见 types/view/mock） */
+import type { MockEnvelope, MockHandler } from '@/types/view/mock';
 import type { PageResult011 } from '@/types/system011';
 
 export type { MockEnvelope };
-export type Handler = (body: any) => Promise<MockEnvelope<any>>;
+export type { MockHandler as Handler };
 
 export function ok<T>(data: T): MockEnvelope<T> {
   return {

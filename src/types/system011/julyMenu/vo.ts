@@ -1,5 +1,7 @@
-/** julyMenu 模块类型（契约 + 视图，合并单文件） */
+/** julyMenu 模块 - 后端契约类型（DTO/VO，与 swagger 一一对应） */
 import type { BaseVo011 } from '@/types/common';
+
+// ==================== 契约（/julyMenu/v1/*） ====================
 
 /**
  * 菜单节点（julyMenu 树）
@@ -25,19 +27,4 @@ export interface JulyMenuQueryVo011 {
   pageIndex: number;
   pageSize: number;
   keyword?: string;
-}
-
-/** 菜单 store 状态 */
-export interface MenuState {
-  menus: JulyMenuVo011[];
-  loaded: boolean;
-  loading: boolean;
-}
-
-/** 菜单权限勾选树 Props（julyPermission 用） */
-export interface MenuCheckTreeProps {
-  tree: JulyMenuVo011[];
-  checkedCodes: Set<string>;
-  onCheck: (code: string, checked: boolean) => void;
-  depth?: number;
 }

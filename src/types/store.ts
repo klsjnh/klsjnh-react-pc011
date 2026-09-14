@@ -5,7 +5,8 @@ export interface StoreController<T extends object> {
   /** 原始 zustand store（供 useStore 使用） */
   api: StoreApi<T>;
   getSnapshot(): T;
-  subscribe(listener: () => void): () => void;
+  /** 订阅状态变化（回调接收当前/上一次状态） */
+  subscribe(listener: (state: T, prevState: T) => void): () => void;
   /** 合并局部状态（浅合并并替换引用） */
   setState(patch: Partial<T>): void;
   /** 整体替换状态 */

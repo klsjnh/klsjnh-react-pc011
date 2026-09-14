@@ -6,8 +6,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Button, Card, Empty, List, Popconfirm, Space, Table, Tabs, Tag, Tree, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { DataNode } from 'antd/es/tree';
-import { roleStore, useRoleState, type RoleDetail } from '@/stores/system011/julyRoleStore';
-import { selectMenuTree } from '@/services/system011';
+import { useRoleState } from '@/stores/system011/julyRoleStore';
+import { selectMenuTree, loadRoles, assignPermissions, removeUserFromRole, removeRole, addUserToRole } from '@/services/system011';
+import type { RoleDetail } from '@/types/system011/julyRole/view';
 import { UserTransferModal } from '@/components/UserTransferModal';
 import { RoleFormModal } from './RoleFormModal';
 import type { JulyMenuVo011 } from '@/types/system011/julyMenu';
@@ -43,7 +44,7 @@ export const julyPermission: React.FC = () => {
   const [permissionDraft, setPermissionDraft] = useState<string[]>([]);
   const [addUserModal, setAddUserModal] = useState(false);
 
-  useEffect(() => { roleStore.load(); }, []);
+  useEffect(() => { loadRoles(); }, []);
   useEffect(() => {
     selectMenuTree().then(setMenuTree).catch(() => setMenuTree([]));
   }, []);
@@ -60,7 +61,7 @@ export const julyPermission: React.FC = () => {
   };
 
   const savePermissions = () => {
-    if (selectedRole) roleStore.assignPermissions(selectedRole.id, permissionDraft);
+    if (selectedRole) assignPermissions(selectedRole.id, permissionDraft);
   };
 
   const userColumns: ColumnsType<JulyUserView> = [
@@ -70,7 +71,7 @@ export const julyPermission: React.FC = () => {
     {
       title: '操作', key: 'action', width: 90,
       render: (_, u) => (
-        <Button type="link" size="small" danger onClick={() => selectedRole && roleStore.removeUserFromRole(selectedRole.id, u.id)}>
+        <Button type="link" size="small" danger onClick={() => selectedRole && removeUserFromRole(selectedRole.id, u.id)}>
           移除
         </Button>
       ),
@@ -98,7 +99,7 @@ export const julyPermission: React.FC = () => {
                 disabled={!selectedRole}
                 onConfirm={() => {
                   if (!selectedRole) return;
-                  roleStore.removeRole(selectedRole.id);
+                  removeRole(selectedRole.id);
                   setSelectedRoleId(null);
                 }}
               >
@@ -192,7 +193,7 @@ export const julyPermission: React.FC = () => {
           }))}
           excludedUserIds={selectedRole.userIds}
           onConfirm={(userIds) => {
-            userIds.forEach((id) => roleStore.addUserToRole(selectedRole.id, String(id)));
+            userIds.forEach((id) => addUserToRole(selectedRole.id, String(id)));
             setAddUserModal(false);
           }}
           onCancel={() => setAddUserModal(false)}

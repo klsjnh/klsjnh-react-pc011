@@ -9,6 +9,9 @@ import { handlers as julyRoleHandlers } from './julyRole';
 import { handlers as julyOrganizationHandlers } from './julyOrganization';
 import { handlers as julyUserAuditHandlers } from './julyUserAudit';
 import { handlers as julyMenuHandlers } from './julyMenu';
+import { handlers as julyConfigHandlers } from './julyConfig';
+import { handlers as julySchedulerHandlers } from './julyScheduler';
+import { handlers as exportHandlers } from './exportData';
 import { handlers as notificationHandlers } from './notification';
 
 export type { MockEnvelope } from './common';
@@ -20,6 +23,9 @@ const handlers: Record<string, Handler> = {
   ...julyOrganizationHandlers,
   ...julyUserAuditHandlers,
   ...julyMenuHandlers,
+  ...julyConfigHandlers,
+  ...julySchedulerHandlers,
+  ...exportHandlers,
   ...notificationHandlers,
 };
 

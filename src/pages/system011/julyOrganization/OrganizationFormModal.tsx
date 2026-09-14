@@ -1,9 +1,9 @@
 /**
  * 组织新增 / 编辑弹窗（antd Form + Modal）
  * 字段对齐后端：orgName / orgCode / pkUser / parentId / sortOrder。
- * 提交走 julyOrganizationService.saveOrganization。
+ * 新建子部门时上级默认父部门（initialParentId）。
  */
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Modal, Form, Input, InputNumber, Select } from 'antd';
 import { saveOrganization } from '@/services/system011';
 import { toast } from '@/utils/toast';
@@ -35,17 +35,7 @@ export const OrganizationFormModal: React.FC<OrganizationFormModalProps> = ({
   open, mode, node, departments, users, initialParentId, onClose, onSaved,
 }) => {
   const [form] = Form.useForm();
-
-  useEffect(() => {
-    if (!open) return;
-    form.setFieldsValue({
-      parentId: initialParentId || undefined,
-      orgName: node?.orgName || '',
-      orgCode: node?.orgCode || '',
-      pkUser: node?.pkUser || undefined,
-      sortOrder: node?.sortOrder ?? 0,
-    });
-  }, [open, node, initialParentId, form]);
+  const isEdit = mode === 'edit';
 
   const handleOk = async () => {
     const v = await form.validateFields();
@@ -57,14 +47,14 @@ export const OrganizationFormModal: React.FC<OrganizationFormModalProps> = ({
       parentId: v.parentId || undefined,
       sortOrder: v.sortOrder,
     });
-    toast.success(`${mode === 'edit' ? 'update' : 'insert'} ${id} success ...`);
+    toast.success(`${isEdit ? 'update' : 'insert'} ${id} success ...`);
     onSaved();
     onClose();
   };
 
   return (
     <Modal
-      title={mode === 'edit' ? '编辑组织' : '新建组织'}
+      title={isEdit ? '编辑组织' : initialParentId ? '新建子部门' : '新建集团'}
       open={open}
       onCancel={onClose}
       onOk={handleOk}
@@ -73,12 +63,24 @@ export const OrganizationFormModal: React.FC<OrganizationFormModalProps> = ({
       width={480}
       destroyOnClose
     >
-      <Form form={form} layout="vertical" preserve={false}>
+      <Form
+        key={`${mode}-${node?.id || 'new'}-${initialParentId}`}
+        form={form}
+        layout="vertical"
+        preserve={false}
+        initialValues={{
+          parentId: initialParentId || undefined,
+          orgName: node?.orgName || '',
+          orgCode: node?.orgCode || '',
+          pkUser: node?.pkUser || undefined,
+          sortOrder: node?.sortOrder ?? 0,
+        }}
+      >
         <Form.Item name="parentId" label="上级组织">
           <Select
             allowClear
             placeholder="（顶级组织）"
-            options={toParentOptions(departments, mode === 'edit' ? node : null)}
+            options={toParentOptions(departments, isEdit ? node : null)}
             showSearch
             optionFilterProp="label"
           />
@@ -91,7 +93,7 @@ export const OrganizationFormModal: React.FC<OrganizationFormModalProps> = ({
           label="编码"
           rules={mode === 'create' ? [{ required: true, message: '请输入组织编码' }] : []}
         >
-          <Input placeholder="请输入组织编码" disabled={mode === 'edit'} />
+          <Input placeholder="请输入组织编码" disabled={isEdit} />
         </Form.Item>
         <Form.Item name="pkUser" label="负责人">
           <Select

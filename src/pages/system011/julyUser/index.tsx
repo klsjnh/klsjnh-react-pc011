@@ -6,7 +6,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Card, Input, Select, Space, Button, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { roleStore, useRoleState } from '@/stores/system011/julyRoleStore';
+import { useRoleState } from '@/stores/system011/julyRoleStore';
+import { loadRoles, reloadRoles } from '@/services/system011';
 import { useOrganizationState } from '@/stores/system011/julyOrganizationStore';
 import { useUserState } from '@/stores/system011/julyUserStore';
 import { fetchUserPage } from '@/services/system011';
@@ -32,8 +33,8 @@ export const julyUser: React.FC<UserListPageProps> = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [modal, setModal] = useState<{ open: boolean; user: JulyUserView | null }>({ open: false, user: null });
 
-  // roleStore.load 内部会拉组织树（填充 orgNameById）；用户分页单独拉
-  useEffect(() => { roleStore.load(); }, []);
+  // loadRoles 内部会拉组织树（填充 orgNameById）；用户分页单独拉
+  useEffect(() => { loadRoles(); }, []);
   useEffect(() => { fetchUserPage({ pageIndex: 1, pageSize: 10 }); }, []);
 
   const users = useMemo(() => list.map((u) => toView(u, orgNameById)), [list, orgNameById]);
@@ -61,7 +62,7 @@ export const julyUser: React.FC<UserListPageProps> = () => {
       title: '操作', key: 'action', width: 90, fixed: 'right',
       render: (_, user) => (
         <Space size="small">
-          <Button type="link" size="small" onClick={() => setModal({ open: true, user })}>编辑</Button>
+          <Button type="link" size="small" onClick={() => { console.log('[julyUser] edit click:', user?.userAccount); setModal({ open: true, user }); }}>编辑</Button>
         </Space>
       ),
     },
@@ -125,7 +126,7 @@ export const julyUser: React.FC<UserListPageProps> = () => {
         roles={roles}
         orgTree={orgTree}
         onClose={() => setModal({ open: false, user: null })}
-        onSaved={() => { roleStore.reload(); }}
+        onSaved={() => { reloadRoles(); }}
       />
     </div>
   );

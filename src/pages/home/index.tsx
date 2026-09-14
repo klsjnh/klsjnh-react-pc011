@@ -5,7 +5,7 @@
 import React, { useEffect, Suspense, lazy } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { SidebarLayout } from '@/components/layout';
-import { menuStore } from '@/stores/system011/julyMenuStore';
+import { reloadMenus } from '@/services/system011';
 import { SYSTEM011_ROUTES, DEFAULT_ROUTE } from '@/config/routes';
 
 // 懒加载页面
@@ -46,17 +46,6 @@ const NotificationsPage = lazy(() => import('../NotificationsPage').then(m => ({
 const HelpPage = lazy(() => import('../HelpPage').then(m => ({ default: m.HelpPage })));
 const AboutPage = lazy(() => import('../AboutPage').then(m => ({ default: m.AboutPage })));
 const ProfilePage = lazy(() => import('../ProfilePage').then(m => ({ default: m.ProfilePage })));
-const BusinessPlaceholderPage = lazy(() => import('../BusinessPlaceholderPage').then(m => ({ default: m.BusinessPlaceholderPage })));
-
-const BUSINESS_TITLES: Record<string, string> = {
-  config: '配置管理', scheduler: '定时任务', datasource: '数据源管理',
-  storage: '存储中心', params: '参数设置', dict: '字典管理',
-  template: '通知模板', push: '消息推送', stats: '数据统计',
-  trend: '趋势分析', charts: '图表展示', export: '数据导出',
-  dashboard: '数据大屏', calc: '数据计算', query: '数据查询',
-  monitor: '系统监控', online: '在线用户', cache: '缓存管理',
-  servicelog: '服务日志',
-};
 
 const BUSINESS_PAGES: Record<string, React.FC<any>> = {
   config: ConfigPage, scheduler: SchedulerPage, dict: DictPage,
@@ -91,16 +80,15 @@ export const Home: React.FC = () => {
 
   useEffect(() => {
     // 登录后进入主界面：重新拉取菜单（清缓存，避免上次会话残留）
-    menuStore.reload();
+    reloadMenus();
   }, []);
 
   const renderPage = () => {
-    // 业务子路由（已实现 → 真实页面，未实现 → 占位页）
+    // 业务子路由：19 个子页均已实现，未知 action 回退仪表盘
     if (currentPath.startsWith('/business/')) {
       const action = currentPath.split('/')[2] || '';
       const RealPage = BUSINESS_PAGES[action];
-      if (RealPage) return <RealPage />;
-      return <BusinessPlaceholderPage title={BUSINESS_TITLES[action] || '业务功能'} path={currentPath} />;
+      return RealPage ? <RealPage /> : <DashboardPage />;
     }
     const PageComponent = PAGE_MAP[currentPath] || DashboardPage;
     return <PageComponent onNavigate={(p: string) => navigate(p)} />;

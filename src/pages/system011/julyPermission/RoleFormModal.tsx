@@ -1,7 +1,7 @@
 /** 角色新增 / 编辑弹窗（julyPermission 模块组件，antd Form） */
 import React, { useEffect } from 'react';
 import { Modal, Form, Input } from 'antd';
-import { roleStore } from '@/stores/system011/julyRoleStore';
+import { updateRole, addRole } from '@/services/system011';
 import type { RoleFormModalProps } from '@/types/system011/julyRole';
 
 export const RoleFormModal: React.FC<RoleFormModalProps> = ({ open, role, onClose }) => {
@@ -20,9 +20,9 @@ export const RoleFormModal: React.FC<RoleFormModalProps> = ({ open, role, onClos
   const handleSave = async () => {
     const v = await form.validateFields();
     if (role) {
-      roleStore.updateRole(role.id, { roleName: v.roleName, remark: v.remark });
+      updateRole(role.id, { roleName: v.roleName, remark: v.remark });
     } else {
-      roleStore.addRole({ roleCode: v.roleCode, roleName: v.roleName, remark: v.remark });
+      addRole({ roleCode: v.roleCode, roleName: v.roleName, remark: v.remark });
     }
     onClose();
   };

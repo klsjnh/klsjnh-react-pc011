@@ -6,7 +6,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button, Card, Col, Dropdown, Empty, Form, Input, InputNumber, Modal, Row, Select, Space, Tree } from 'antd';
 import type { DataNode, TreeProps } from 'antd/es/tree';
-import { menuStore, useMenuState } from '@/stores/system011/julyMenuStore';
+import { useMenuState } from '@/stores/system011/julyMenuStore';
+import { addMenu, updateMenu, removeMenu, moveMenu } from '@/services/system011';
 import { uiStore, useUiState } from '@/stores/uiStore';
 import type { JulyMenuVo011 } from '@/types/system011/julyMenu';
 import type { MenuListPageProps } from '@/types/view/page';
@@ -118,7 +119,7 @@ export const julyMenu: React.FC<MenuListPageProps> = () => {
 
   const handleCreate = async () => {
     const v = await createForm.validateFields();
-    menuStore.add({
+    addMenu({
       parentId: v.parentId || '',
       menuCode: v.menuCode,
       menuName: v.menuName,
@@ -137,14 +138,14 @@ export const julyMenu: React.FC<MenuListPageProps> = () => {
   const handleSaveEdit = async () => {
     if (!selectedNode) return;
     const v = await form.validateFields();
-    menuStore.update(selectedNode.id, {
+    updateMenu(selectedNode.id, {
       menuName: v.menuName,
       menuIcon: v.menuIcon,
       menuRoute: v.menuRoute,
       menuType: v.menuType,
       status: v.status,
     });
-    if (v.parentId !== selectedNode.parentId) menuStore.move(selectedNode.id, v.parentId || '');
+    if (v.parentId !== selectedNode.parentId) moveMenu(selectedNode.id, v.parentId || '');
   };
 
   const handleDelete = (menu: JulyMenuVo011) => {
@@ -159,7 +160,7 @@ export const julyMenu: React.FC<MenuListPageProps> = () => {
       okButtonProps: { danger: true },
       cancelText: '取消',
       onOk: () => {
-        menuStore.remove(menu.id);
+        removeMenu(menu.id);
         if (selectedId === menu.id) uiStore.setMenuTreeSelectedId(null);
       },
     });
@@ -171,7 +172,7 @@ export const julyMenu: React.FC<MenuListPageProps> = () => {
     if (dragId === dropId) return;
     const dragNode = findMenu(menus, dragId);
     if (!dragNode || containsId(dragNode, dropId)) return;
-    menuStore.move(dragId, dropId);
+    moveMenu(dragId, dropId);
     uiStore.setMenuTreeExpandedIds(Array.from(new Set([...expandedKeys, dropId])));
   };
 

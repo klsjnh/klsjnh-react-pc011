@@ -6,23 +6,15 @@ import type {
   JulyOrganizationVo011,
   JulyOrganizationInsertVo011,
   JulyOrganizationUpdateVo011,
-  PageResult011,
+  SaveOrganizationParams,
   IdVo011,
 } from '@/types/system011';
 
-/** 组织分页查询（真实后端返回 PageResult011，rows 内为组织树） */
-export function selectOrganizationListByPage(body: object = {}): Promise<PageResult011<JulyOrganizationVo011>> {
-  return api.post<PageResult011<JulyOrganizationVo011>>(SYSTEM011_ACTIONS.organization.selectListByPage, body);
-}
+export type { SaveOrganizationParams };
 
 /** 组织树（含人数角标；返回数组，非分页） */
 export function selectOrganizationTree(): Promise<JulyOrganizationVo011[]> {
   return api.post<JulyOrganizationVo011[]>(SYSTEM011_ACTIONS.organization.selectTree, {});
-}
-
-/** 组织详情（主键查询） */
-export function getOrganizationById(id: string): Promise<JulyOrganizationVo011> {
-  return api.post<JulyOrganizationVo011>(SYSTEM011_ACTIONS.organization.getById, { id } as IdVo011);
 }
 
 /** 新增组织（层级由上级推导；返回新组织 id） */
@@ -63,10 +55,6 @@ export async function fetchOrganizationTree(): Promise<void> {
     julyOrganizationStore.setState({ tree: [], orgNameById: new Map(), loading: false });
   }
 }
-
-import type { SaveOrganizationParams } from '@/types/system011';
-
-export type { SaveOrganizationParams };
 
 /** 新增 / 修改组织，成功后刷新组织树（返回 id） */
 export async function saveOrganization(params: SaveOrganizationParams): Promise<string> {
