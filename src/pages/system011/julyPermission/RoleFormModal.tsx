@@ -1,5 +1,5 @@
 /** 角色新增 / 编辑弹窗（julyPermission 模块组件，antd Form） */
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Modal, Form, Input } from 'antd';
 import { updateRole, addRole } from '@/services/system011';
 import type { RoleFormModalProps } from '@/types/system011/julyRole';
@@ -7,15 +7,6 @@ import type { RoleFormModalProps } from '@/types/system011/julyRole';
 export const RoleFormModal: React.FC<RoleFormModalProps> = ({ open, role, onClose }) => {
   const [form] = Form.useForm();
   const isEdit = !!role;
-
-  useEffect(() => {
-    if (!open) return;
-    if (role) {
-      form.setFieldsValue({ roleCode: role.roleCode, roleName: role.roleName, remark: role.remark || '' });
-    } else {
-      form.resetFields();
-    }
-  }, [open, role, form]);
 
   const handleSave = async () => {
     const v = await form.validateFields();
@@ -38,7 +29,17 @@ export const RoleFormModal: React.FC<RoleFormModalProps> = ({ open, role, onClos
       width={420}
       destroyOnClose
     >
-      <Form form={form} layout="vertical" preserve={false}>
+      <Form
+        key={role?.id ?? 'new'}
+        form={form}
+        layout="vertical"
+        preserve={false}
+        initialValues={{
+          roleCode: role?.roleCode || '',
+          roleName: role?.roleName || '',
+          remark: role?.remark || '',
+        }}
+      >
         <Form.Item name="roleCode" label="角色标识" rules={isEdit ? [] : [{ required: true, message: '请输入角色标识' }]}>
           <Input placeholder="如 manager" disabled={isEdit} />
         </Form.Item>

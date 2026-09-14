@@ -20,7 +20,7 @@ export function createStore<T extends object>(initial: T): StoreController<T> {
     subscribe: (listener) => api.subscribe(listener),
     setState: (patch) => api.setState(patch),
     replace: (next) => api.setState(next, true),
-    emit: () => api.setState({} as Partial<T>),
+    emit: () => api.setState((s) => ({ ...s })),
   };
 }
 

@@ -1,7 +1,7 @@
 /**
  * 统一 API 请求封装（API 模式使用）
  * 对齐 docs/016.api-contract.md：POST + JSON body + 统一响应信封
- * URL 结构：{apiBaseUrl}/{模块}/{动作}，apiBaseUrl 默认 /api/v1
+ * URL 结构：{apiBaseUrl}/{模块}/{动作}，apiBaseUrl 默认 /klsjnh/system011
  */
 import { appConfigStore, isMockMode } from '@/config/appConfig';
 import { authStore } from '@/stores/authStore';
@@ -25,7 +25,7 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(action: string, body?: object, timeoutMs = 8000): Promise<T> {
+async function request<T>(action: string, body?: object, timeoutMs = 8000, method: 'GET' | 'POST' = 'POST'): Promise<T> {
   // ===== Mock 模式：按真实 action 路径分发到统一 mock 后端 =====
   // mock 与 api 共用下方同一套信封解包逻辑，因此拿到的数据结构完全一致。
   if (isMockMode()) {
@@ -46,16 +46,25 @@ async function request<T>(action: string, body?: object, timeoutMs = 8000): Prom
   }
 
   const base = appConfigStore.getSnapshot().apiBaseUrl.replace(/\/$/, '');
-  const url = `${base}${action}`;
+  let url = `${base}${action}`;
+  // GET 查询：把 body 序列化为 query string（真实后端按 ?id=xxx 收参）
+  if (method === 'GET' && body) {
+    const qs = new URLSearchParams(body as Record<string, string>).toString();
+    if (qs) url += (url.includes('?') ? '&' : '?') + qs;
+  }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...authHeaders() },
-      body: JSON.stringify(body ?? {}),
+    const fetchInit: RequestInit = {
+      method,
+      headers: { ...authHeaders() },
       signal: controller.signal,
-    });
+    };
+    if (method === 'POST') {
+      fetchInit.headers = { ...fetchInit.headers, 'Content-Type': 'application/json' };
+      fetchInit.body = JSON.stringify(body ?? {});
+    }
+    const res = await fetch(url, fetchInit);
     if (!res.ok) throw new ApiError(`${action} 失败(${res.status})`, res.status);
     const envelope = (await res.json()) as ApiResponse<T>;
     if (envelope.statusCode !== 200) {
@@ -74,8 +83,10 @@ async function request<T>(action: string, body?: object, timeoutMs = 8000): Prom
 }
 
 export const api = {
-  /** 业务查询/操作：POST {apiBaseUrl}/{模块}/{动作}，成功返回信封 data */
-  post: <T>(action: string, body?: object) => request<T>(action, body),
+  /** POST 业务查询/操作 */
+  post: <T>(action: string, body?: object) => request<T>(action, body, 8000, 'POST'),
+  /** GET 业务查询（主键查、树查等无参/少参查询） */
+  get: <T>(action: string, body?: object) => request<T>(action, body, 8000, 'GET'),
 };
 
 /**

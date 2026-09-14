@@ -130,11 +130,12 @@ export const handlers: Record<string, Handler> = {
     return ok({ id: u.id });
   },
 
-  // ===== 本人修改密码（验旧密） =====
+  // ===== 本人修改密码（验旧密；mock 按 userAccount 匹配，兼容 id） =====
   '/julyUser/v1/changePassword': async (body) => {
     await delay(300);
-    const u = mockUsers.find((x) => x.id === body?.id);
-    if (!u) return fail(`record not found, id=${body?.id}`, 404);
+    const u = mockUsers.find((x) => x.userAccount === body?.userAccount)
+      || mockUsers.find((x) => x.id === body?.id);
+    if (!u) return fail('record not found', 404);
     if (mockCredentials[u.userAccount] !== body?.oldPassword) return fail('old password is incorrect', 400);
     mockCredentials[u.userAccount] = body?.newPassword || '';
     return ok({ id: u.id });

@@ -14,7 +14,7 @@ export type { SaveOrganizationParams };
 
 /** 组织树（含人数角标；返回数组，非分页） */
 export function selectOrganizationTree(): Promise<JulyOrganizationVo011[]> {
-  return api.post<JulyOrganizationVo011[]>(SYSTEM011_ACTIONS.organization.selectTree, {});
+  return api.get<JulyOrganizationVo011[]>(SYSTEM011_ACTIONS.organization.selectTree);
 }
 
 /** 新增组织（层级由上级推导；返回新组织 id） */

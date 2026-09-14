@@ -5,8 +5,7 @@ import { BellOutlined, LogoutOutlined, UserOutlined, LockOutlined } from '@ant-d
 import { useCurrentUser, authStore } from '@/stores/authStore';
 import { useUnreadCount, notificationStore } from '@/stores/notificationStore';
 import { appConfigStore, useAppConfig, type DataMode } from '@/config/appConfig';
-import { reloadMenus } from '@/services/system011';
-import { reloadRoles } from '@/services/system011';
+import { reloadMenus, reloadRoles, changePassword } from '@/services/system011';
 import { globalConfig } from '@/config/global';
 import { toast } from '@/utils/toast';
 import type { TopProps } from '@/types/view/layout';
@@ -50,8 +49,18 @@ export const Top: React.FC<TopProps> = ({ onNavigate }) => {
   const savePwd = async () => {
     const v = await form.validateFields();
     if (v.newPwd !== v.confirmPwd) { toast.error('两次输入的新密码不一致'); return; }
-    setPwdOpen(false);
-    toast.success('密码修改成功');
+    try {
+      await changePassword({
+        userAccount: user?.username || '',
+        oldPassword: v.oldPwd,
+        newPassword: v.newPwd,
+      });
+      setPwdOpen(false);
+      form.resetFields();
+      toast.success('密码修改成功');
+    } catch (e: any) {
+      toast.error(e?.message || '密码修改失败');
+    }
   };
 
   return (
@@ -74,7 +83,7 @@ export const Top: React.FC<TopProps> = ({ onNavigate }) => {
 
         <Dropdown menu={userMenu} trigger={['click']}>
           <span className="app-header-user">
-            <Avatar src={user?.avatar} icon={<UserOutlined />} size="small" />
+            <Avatar src={user?.avatar || undefined} icon={<UserOutlined />} size="small" />
             <span>{user?.realName || '未登录'}</span>
           </span>
         </Dropdown>
