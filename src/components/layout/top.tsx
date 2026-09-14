@@ -12,7 +12,7 @@ import type { TopProps } from '@/types/view/layout';
 
 const { Header } = Layout;
 
-export const Top: React.FC<TopProps> = ({ onNavigate }) => {
+export const Top = ({ onNavigate }: TopProps) => {
   const user = useCurrentUser();
   const unread = useUnreadCount();
   const appCfg = useAppConfig();
@@ -58,8 +58,8 @@ export const Top: React.FC<TopProps> = ({ onNavigate }) => {
       setPwdOpen(false);
       form.resetFields();
       toast.success('密码修改成功');
-    } catch (e: any) {
-      toast.error(e?.message || '密码修改失败');
+    } catch (e) {
+      toast.error((e as Error)?.message || '密码修改失败');
     }
   };
 

@@ -6,7 +6,7 @@
  *  - logout         登出（客户端清除 token）
  */
 import { api } from '@/api/request';
-import { SYSTEM011_ACTIONS } from './actions';
+import { SYSTEM011_ACTIONS } from '@/services/system011/actions';
 import { julyUserStore } from '@/stores/system011/julyUserStore';
 import type {
   JulyUserLoginVo011,

@@ -1,14 +1,14 @@
 /**
  * 统一 API 请求封装（API 模式使用）
- * 对齐 docs/016.api-contract.md：POST + JSON body + 统一响应信封
+ * 对齐 docs/013.api-contract.md：POST + JSON body + 统一响应信封
  * URL 结构：{apiBaseUrl}/{模块}/{动作}，apiBaseUrl 默认 /klsjnh/system011
  */
 import { appConfigStore, isMockMode } from '@/config/appConfig';
 import { authStore } from '@/stores/authStore';
 import { getMockResponse } from '@/mock/system011';
-import type { ApiResponse } from '@/types/api';
+import type { Response011 } from '@/types/api';
 
-export type { ApiResponse };
+export type { Response011 };
 
 /**
  * 鉴权头：登录后携带后端签发的 JWT（klsjnh 约定 Authorization: Bearer <token>）
@@ -66,17 +66,19 @@ async function request<T>(action: string, body?: object, timeoutMs = 8000, metho
     }
     const res = await fetch(url, fetchInit);
     if (!res.ok) throw new ApiError(`${action} 失败(${res.status})`, res.status);
-    const envelope = (await res.json()) as ApiResponse<T>;
+    const envelope = (await res.json()) as Response011<T>;
     if (envelope.statusCode !== 200) {
       throw new ApiError(envelope.errorMessage || envelope.message || `${action} 业务失败`, envelope.statusCode);
     }
     return envelope.data;
-  } catch (e: any) {
-    const msg = e?.name === 'AbortError'
+  } catch (e) {
+    if (e instanceof ApiError) throw e;
+    const err = e as Error;
+    const msg = err?.name === 'AbortError'
       ? `${action} 请求超时`
-      : (e?.message || '网络错误');
+      : (err?.message || '网络错误');
     appConfigStore.setLastApiError(msg);
-    throw e instanceof ApiError ? e : new ApiError(msg, e?.statusCode);
+    throw new ApiError(msg);
   } finally {
     clearTimeout(timer);
   }

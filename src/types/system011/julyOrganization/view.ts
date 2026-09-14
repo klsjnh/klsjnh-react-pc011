@@ -1,6 +1,6 @@
 /** julyOrganization 模块 - 前端视图类型（表格行、store 状态、表单值等） */
-import type { JulyUserView } from '../julyUser/view';
-import type { JulyOrganizationVo011 } from './vo';
+import type { JulyUserView } from '@/types/system011/julyUser/view';
+import type { JulyOrganizationVo011 } from '@/types/system011/julyOrganization/vo';
 
 // ==================== 视图 ====================
 

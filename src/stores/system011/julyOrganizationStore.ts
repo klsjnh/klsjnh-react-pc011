@@ -3,7 +3,7 @@
  * 只负责状态；树/增删改业务在 services/system011/julyOrganizationService。
  * 分层：page → service → store；page 只读写状态。
  */
-import { createStore, useStoreState } from '../createStore';
+import { createStore, useStoreState } from '@/stores/createStore';
 import type { OrgState } from '@/types/system011/julyOrganization';
 
 export type { OrgState };

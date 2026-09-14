@@ -4,7 +4,7 @@
 import React from 'react';
 import { Button, Card, Col, Row, Statistic } from 'antd';
 
-export const ReportsPage: React.FC = () => {
+export const ReportsPage = () => {
   const chartData = [
     { label: '周一', value: 65 }, { label: '周二', value: 78 },
     { label: '周三', value: 52 }, { label: '周四', value: 91 },
@@ -40,9 +40,9 @@ export const ReportsPage: React.FC = () => {
         <Col span={8}>
           <Card title="数据汇总">
             {summary.map((item) => (
-              <div key={item.label} className="mb-16">
+              <div key={item.label} className="mb-4">
                 <Statistic title={item.label} value={item.value} />
-                <div className="text-sm" style={{ color: item.up ? '#52c41a' : '#f5222d' }}>
+                <div className="text-xs" style={{ color: item.up ? '#52c41a' : '#f5222d' }}>
                   {item.up ? '↑' : '↓'} {item.change}
                 </div>
               </div>
@@ -50,7 +50,7 @@ export const ReportsPage: React.FC = () => {
           </Card>
         </Col>
       </Row>
-      <Button type="primary" className="mt-16">导出报表</Button>
+      <Button type="primary" className="mt-4">导出报表</Button>
     </div>
   );
 };

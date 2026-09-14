@@ -1,5 +1,5 @@
 /** 用户穿梭框 UI 类型 */
-import type { NodeId } from './common';
+import type { NodeId } from '@/types/view/common';
 
 export interface TransferUser {
   id: NodeId;

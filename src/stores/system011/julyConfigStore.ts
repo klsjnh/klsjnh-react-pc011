@@ -1,5 +1,5 @@
 /** 配置 store（system011 · julyConfig）：只负责状态 */
-import { createStore, useStoreState } from '../createStore';
+import { createStore, useStoreState } from '@/stores/createStore';
 import type { ConfigState, JulyConfigQueryVo011 } from '@/types/system011/julyConfig';
 
 export type { ConfigState };

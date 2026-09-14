@@ -3,7 +3,7 @@
  * 只负责状态；业务操作（含 CRUD 编排）在 services/system011/julyUserService。
  * 分层：page → service → store；page 只读写状态。
  */
-import { createStore, useStoreState } from '../createStore';
+import { createStore, useStoreState } from '@/stores/createStore';
 import type { JulyUserQueryVo011 } from '@/types/system011';
 import type { UserState } from '@/types/system011/julyUser';
 

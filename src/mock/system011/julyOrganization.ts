@@ -1,6 +1,6 @@
 /** Mock：组织（julyOrganization） */
-import { ok, fail, delay, pageResult, type Handler } from './common';
-import { mockUsers } from './julyUser';
+import { ok, fail, delay, pageResult, type Handler } from '@/mock/system011/common';
+import { mockUsers } from '@/mock/system011/julyUser';
 import type { JulyOrganizationVo011 } from '@/types/system011';
 
 /** 与真实后端一致：单根组织「华信集团」，id 为 UUID 风格字符串，pkUser/memberCount 可空 */

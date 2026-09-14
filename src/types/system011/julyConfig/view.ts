@@ -1,5 +1,5 @@
 /** julyConfig 模块 - 前端视图类型（表格行、store 状态、表单值等） */
-import type { JulyConfigVo011, JulyConfigQueryVo011 } from './vo';
+import type { JulyConfigVo011, JulyConfigQueryVo011 } from '@/types/system011/julyConfig/vo';
 
 // ==================== 视图 ====================
 

@@ -2,7 +2,7 @@
  * 管理页面集合 - PC 端（antd）
  * 审计日志（对接 julyUserAudit） / 系统设置
  */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Card, Input, Select, Switch, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { selectUserAuditListByPage } from '@/services/system011';
@@ -28,7 +28,7 @@ function auditColor(type: string): string {
   return 'blue';
 }
 
-export const AuditPage: React.FC = () => {
+export const AuditPage = () => {
   const [logs, setLogs] = useState<JulyUserAuditVo011[]>([]);
   const [loading, setLoading] = useState(false);
   const [keyword, setKeyword] = useState('');
@@ -37,27 +37,35 @@ export const AuditPage: React.FC = () => {
   const [total, setTotal] = useState(0);
   const pageSize = 10;
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await selectUserAuditListByPage({
-        pageIndex: page,
-        pageSize,
-        userAccount: keyword.trim() || undefined,
-        auditType: typeFilter || undefined,
-      });
-      setLogs(res.rows);
-      setTotal(res.total);
-    } catch (e: any) {
-      toast.error(e?.message || '加载审计日志失败');
-      setLogs([]);
-      setTotal(0);
-    } finally {
-      setLoading(false);
-    }
+  // 分页/筛选变化时拉取审计日志。
+  // 所有 setState 均发生在 await 之后（异步），避免在 effect 同步阶段 setState 触发级联渲染
+  // （react-hooks/set-state-in-effect）；同时用 cancelled 标记丢弃过期响应。
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      setLoading(true);
+      try {
+        const res = await selectUserAuditListByPage({
+          pageIndex: page,
+          pageSize,
+          userAccount: keyword.trim() || undefined,
+          auditType: typeFilter || undefined,
+        });
+        if (cancelled) return;
+        setLogs(res.rows);
+        setTotal(res.total);
+      } catch (e) {
+        if (cancelled) return;
+        toast.error((e as Error)?.message || '加载审计日志失败');
+        setLogs([]);
+        setTotal(0);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    void run();
+    return () => { cancelled = true; };
   }, [page, keyword, typeFilter]);
-
-  useEffect(() => { load(); }, [load]);
 
   /** 导出当前页为 CSV */
   const handleExport = () => {
@@ -137,7 +145,7 @@ export const AuditPage: React.FC = () => {
 
 // ==================== 系统设置 ====================
 
-export const SettingsPage: React.FC = () => {
+export const SettingsPage = () => {
   const [settings, setSettings] = useState<SettingItem[]>([
     { id: 1, name: '系统名称', value: '企业管理系统', type: 'text' },
     { id: 2, name: '系统描述', value: '企业级管理后台', type: 'text' },

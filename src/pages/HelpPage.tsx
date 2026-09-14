@@ -6,7 +6,7 @@ import { Button, Card, Col, Collapse, Form, Input, Modal, Row, Segmented, Table,
 import type { ColumnsType } from 'antd/es/table';
 import type { FeedbackItem } from '@/types/view/page';
 
-export const HelpPage: React.FC = () => {
+export const HelpPage = () => {
   const [category, setCategory] = useState('问题反馈');
   const [form] = Form.useForm();
   const [feedbackHistory, setFeedbackHistory] = useState<FeedbackItem[]>([
@@ -55,13 +55,13 @@ export const HelpPage: React.FC = () => {
           </Card>
         </Col>
         <Col span={10}>
-          <Card title="意见反馈" className="mb-16">
+          <Card title="意见反馈" className="mb-4">
             <Segmented
               block
               value={category}
               onChange={(v) => setCategory(String(v))}
               options={['问题反馈', '功能建议', '其他']}
-              className="mb-16"
+              className="mb-4"
             />
             <Form form={form} layout="vertical" onFinish={onFinish}>
               <Form.Item name="content" rules={[{ required: true, message: '请描述您的问题或建议' }]}>
@@ -74,15 +74,15 @@ export const HelpPage: React.FC = () => {
             </Form>
           </Card>
           <Card title="其他联系方式">
-            <div className="text-secondary mb-8">📧 support@enterprise.com</div>
-            <div className="text-secondary mb-8">📞 400-123-4567</div>
-            <div className="text-secondary mb-8">💬 EnterpriseAdmin</div>
+            <div className="text-secondary mb-2">📧 support@enterprise.com</div>
+            <div className="text-secondary mb-2">📞 400-123-4567</div>
+            <div className="text-secondary mb-2">💬 EnterpriseAdmin</div>
             <div className="text-secondary">🕐 工作日 9:00-18:00</div>
           </Card>
         </Col>
       </Row>
 
-      <Card title="反馈历史" className="table-wrapper mt-16" styles={{ body: { padding: 0 } }}>
+      <Card title="反馈历史" className="table-wrapper mt-4" styles={{ body: { padding: 0 } }}>
         <Table<FeedbackItem> rowKey="id" columns={columns} dataSource={feedbackHistory} pagination={false} />
       </Card>
     </div>

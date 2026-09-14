@@ -19,9 +19,9 @@ function toTreeData(list: OrgTreeNode[]): DataNode[] {
   }));
 }
 
-export const UserTransferModal: React.FC<UserTransferModalProps> = ({
+export const UserTransferModal = ({
   title, orgTree, allUsers, excludedUserIds, onConfirm, onCancel,
-}) => {
+}: UserTransferModalProps) => {
   const [selectedOrgId, setSelectedOrgId] = useState<NodeId | null>(null);
   const [keyword, setKeyword] = useState('');
   const [selectedUserIds, setSelectedUserIds] = useState<Set<NodeId>>(new Set());
@@ -105,8 +105,8 @@ export const UserTransferModal: React.FC<UserTransferModalProps> = ({
                 >
                   <Checkbox checked={selectedUserIds.has(u.id)} />
                   <span style={{ marginLeft: 8, fontWeight: 500 }}>{u.realName}</span>
-                  <Typography.Text type="secondary" className="text-sm">@{u.username}</Typography.Text>
-                  <span style={{ marginLeft: 'auto' }} className="text-muted text-sm">{u.department}</span>
+                  <Typography.Text type="secondary" className="text-xs">@{u.username}</Typography.Text>
+                  <span style={{ marginLeft: 'auto' }} className="text-muted text-xs">{u.department}</span>
                 </List.Item>
               )}
             />

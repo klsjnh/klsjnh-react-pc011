@@ -4,13 +4,13 @@
  * 字段直接使用后端名：menuCode/menuName/menuIcon/menuRoute/menuType/sortOrder/status
  */
 import React, { useState, useEffect, useMemo } from 'react';
-import { Button, Card, Col, Dropdown, Empty, Form, Input, InputNumber, Modal, Row, Select, Space, Tree } from 'antd';
+import { Button, Card, Col, Dropdown, Empty, Form, Input, Modal, Row, Select, Tree } from 'antd';
 import type { DataNode, TreeProps } from 'antd/es/tree';
 import { useMenuState } from '@/stores/system011/julyMenuStore';
-import { addMenu, updateMenu, removeMenu, moveMenu } from '@/services/system011';
+import { addMenu, updateMenu, removeMenu, moveMenu, loadMenus, reloadMenus } from '@/services/system011';
+import { isMockMode } from '@/config/appConfig';
 import { uiStore, useUiState } from '@/stores/uiStore';
 import type { JulyMenuVo011 } from '@/types/system011/julyMenu';
-import type { MenuListPageProps } from '@/types/view/page';
 
 const MENU_TYPE_OPTIONS = [
   { value: '1', label: '目录' },
@@ -33,7 +33,7 @@ function containsId(node: JulyMenuVo011, id: string): boolean {
   return node.id === id || (node.children || []).some((c) => containsId(c, id));
 }
 
-export const julyMenu: React.FC<MenuListPageProps> = () => {
+export const JulyMenu = () => {
   const { menus, loaded } = useMenuState();
   const ui = useUiState();
   const selectedId = ui.menuTreeSelectedId;
@@ -42,6 +42,11 @@ export const julyMenu: React.FC<MenuListPageProps> = () => {
   const [form] = Form.useForm();
   const [createForm] = Form.useForm();
   const [createModal, setCreateModal] = useState(false);
+
+  /** 进页面即拉菜单树（loadMenus 内部有 loaded/loading 守卫，重复调用安全） */
+  useEffect(() => {
+    loadMenus();
+  }, []);
 
   useEffect(() => {
     if (loaded && menus.length > 0 && ui.menuTreeExpandedIds === null) {
@@ -104,7 +109,7 @@ export const julyMenu: React.FC<MenuListPageProps> = () => {
         >
           <span className="menu-tree-title">
             {m.menuIcon} {m.menuName}
-            {m.status !== '1' && <span className="text-muted text-sm">（停用）</span>}
+            {m.status !== '1' && <span className="text-muted text-xs">（停用）</span>}
           </span>
         </Dropdown>
       ),
@@ -132,6 +137,7 @@ export const julyMenu: React.FC<MenuListPageProps> = () => {
       status: '1',
     });
     if (v.parentId) uiStore.setMenuTreeExpandedIds(Array.from(new Set([...expandedKeys, v.parentId])));
+    if (!isMockMode()) reloadMenus();
     setCreateModal(false);
   };
 
@@ -146,6 +152,7 @@ export const julyMenu: React.FC<MenuListPageProps> = () => {
       status: v.status,
     });
     if (v.parentId !== selectedNode.parentId) moveMenu(selectedNode.id, v.parentId || '');
+    if (!isMockMode()) reloadMenus();
   };
 
   const handleDelete = (menu: JulyMenuVo011) => {
@@ -162,6 +169,7 @@ export const julyMenu: React.FC<MenuListPageProps> = () => {
       onOk: () => {
         removeMenu(menu.id);
         if (selectedId === menu.id) uiStore.setMenuTreeSelectedId(null);
+        if (!isMockMode()) reloadMenus();
       },
     });
   };
@@ -174,6 +182,7 @@ export const julyMenu: React.FC<MenuListPageProps> = () => {
     if (!dragNode || containsId(dragNode, dropId)) return;
     moveMenu(dragId, dropId);
     uiStore.setMenuTreeExpandedIds(Array.from(new Set([...expandedKeys, dropId])));
+    if (!isMockMode()) reloadMenus();
   };
 
   return (

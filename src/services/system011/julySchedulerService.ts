@@ -1,6 +1,6 @@
 /** 定时任务服务（julyScheduler/v1/*） */
 import { api } from '@/api/request';
-import { SYSTEM011_ACTIONS } from './actions';
+import { SYSTEM011_ACTIONS } from '@/services/system011/actions';
 import { julySchedulerStore } from '@/stores/system011/julySchedulerStore';
 import type {
   JulySchedulerVo011, JulySchedulerQueryVo011, JulySchedulerInsertVo011, JulySchedulerUpdateVo011,

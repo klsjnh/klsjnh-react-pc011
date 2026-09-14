@@ -33,9 +33,9 @@ function toRoleIds(roleCodes: string[] | undefined, roles: JulyRoleVo011[]): str
     .filter((id): id is string => !!id);
 }
 
-export const JulyUserFormModal: React.FC<JulyUserFormModalProps> = ({
+export const JulyUserFormModal = ({
   open, user, roles, orgTree, onClose, onSaved,
-}) => {
+}: JulyUserFormModalProps) => {
   const [form] = Form.useForm();
   const isEdit = !!user;
 
@@ -62,7 +62,7 @@ export const JulyUserFormModal: React.FC<JulyUserFormModalProps> = ({
 
   const handleOk = async () => {
     const v = await form.validateFields();
-    const id = await saveUser({ ...v, id: user?.id });
+    await saveUser({ ...v, id: user?.id });
     toast.success(isEdit ? '更新成功' : '新增成功');
     onSaved();
     onClose();

@@ -1,5 +1,5 @@
 /** julyScheduler 模块 - 前端视图类型（表格行、store 状态、表单值等） */
-import type { JulySchedulerVo011, JulySchedulerQueryVo011 } from './vo';
+import type { JulySchedulerVo011, JulySchedulerQueryVo011 } from '@/types/system011/julyScheduler/vo';
 
 // ==================== 视图 ====================
 

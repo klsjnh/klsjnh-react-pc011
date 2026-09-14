@@ -3,7 +3,7 @@
  * 左侧导航收起状态、菜单管理树的展开/选中状态等
  * 迁移至 zustand，保留 localStorage 持久化与原有 API 表面。
  */
-import { createStore, useStoreState } from './createStore';
+import { createStore, useStoreState } from '@/stores/createStore';
 import type { UiState } from '@/types/view/ui';
 
 export type { UiState };

@@ -1,6 +1,6 @@
 /** 用户审计服务（julyUserAudit/v1/*） */
 import { api } from '@/api/request';
-import { SYSTEM011_ACTIONS } from './actions';
+import { SYSTEM011_ACTIONS } from '@/services/system011/actions';
 import type {
   JulyUserAuditVo011,
   JulyUserAuditQueryVo011,

@@ -6,7 +6,7 @@ import { Card, Col, Row } from 'antd';
 import type { BusinessPageProps } from '@/types/view/page';
 import type { BizEntry } from '@/types/view/business';
 
-export const BusinessPage: React.FC<BusinessPageProps> = ({ onNavigate }) => {
+export const BusinessPage = ({ onNavigate }: BusinessPageProps) => {
   const groups: { title: string; items: BizEntry[] }[] = [
     {
       title: '📋 配置管理',
@@ -53,13 +53,13 @@ export const BusinessPage: React.FC<BusinessPageProps> = ({ onNavigate }) => {
     <div>
       <div className="page-header"><h2>业务中心</h2><p>配置 · 数据 · 工具</p></div>
       {groups.map((group) => (
-        <Card key={group.title} title={group.title} className="mb-16">
+        <Card key={group.title} title={group.title} className="mb-4">
           <Row gutter={[16, 16]}>
             {group.items.map((item) => (
               <Col span={3} key={item.label}>
                 <div className="biz-entry" onClick={() => onNavigate?.(item.path)}>
                   <div className="biz-entry-icon" style={{ background: item.color }}>{item.icon}</div>
-                  <span className="text-secondary text-sm">{item.label}</span>
+                  <span className="text-secondary text-xs">{item.label}</span>
                 </div>
               </Col>
             ))}

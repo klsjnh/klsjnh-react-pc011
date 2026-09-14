@@ -1,5 +1,5 @@
 /** Mock：数据导出（/export/v1） */
-import { ok, delay, type Handler } from './common';
+import { ok, delay, type Handler } from '@/mock/system011/common';
 
 export const handlers: Record<string, Handler> = {
   '/export/v1': async (body) => {

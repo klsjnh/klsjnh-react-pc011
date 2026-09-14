@@ -7,7 +7,7 @@
  */
 import { isMockMode } from '@/config/appConfig';
 import { api, fireApi } from '@/api/request';
-import { createStore, useStoreState } from './createStore';
+import { createStore, useStoreState } from '@/stores/createStore';
 import type { NotificationItem, NotificationVo, NotificationState } from '@/types/view/notification';
 
 export type { NotificationItem };

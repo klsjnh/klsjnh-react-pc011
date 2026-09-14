@@ -1,6 +1,6 @@
 /** Mock：用户（julyUser） */
-import { ok, fail, delay, pageResult, type Handler } from './common';
-import { mockRoles, mockExtraRoles } from './julyRole';
+import { ok, fail, delay, pageResult, type Handler } from '@/mock/system011/common';
+import { mockRoles, mockExtraRoles } from '@/mock/system011/julyRole';
 import type { JulyUserVo011, JulyUserSessionVo011 } from '@/types/system011';
 
 export const ORG_ROOT = 'org0001root000000000000000001';

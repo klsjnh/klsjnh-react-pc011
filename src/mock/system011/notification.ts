@@ -1,5 +1,5 @@
 /** Mock：通知（/notification/v1/*，独立于 system011 模块） */
-import { ok, delay, type Handler } from './common';
+import { ok, delay, type Handler } from '@/mock/system011/common';
 
 export const mockNotifications = [
   { id: 1, title: '系统更新通知', content: '系统将于今晚 22:00-22:30 进行维护升级，升级期间可能无法正常访问。', type: 'system', read: false, createTime: '2026-09-12 09:30:00' },

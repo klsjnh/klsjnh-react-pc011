@@ -4,7 +4,7 @@
 import React from 'react';
 import { Card, Col, Row, Tag, Typography } from 'antd';
 
-export const AboutPage: React.FC = () => {
+export const AboutPage = () => {
   const features = [
     { icon: '👥', label: '用户管理', desc: '完整的用户账号管理体系' },
     { icon: '🔑', label: '权限管理', desc: '细粒度的角色与菜单权限控制' },
@@ -18,7 +18,7 @@ export const AboutPage: React.FC = () => {
     <div>
       <div className="page-header"><h2>关于我们</h2><p>Enterprise Admin Framework</p></div>
 
-      <Card className="table-wrapper text-center mb-16" styles={{ body: { padding: 32 } }}>
+      <Card className="table-wrapper text-center mb-4" styles={{ body: { padding: 32 } }}>
         <div style={{ fontSize: 56 }}>🏢</div>
         <div style={{ fontSize: 20, fontWeight: 700 }}>企业管理系统</div>
         <Typography.Text type="secondary">Enterprise Admin Framework v1.0.0 (PC 端)</Typography.Text>
@@ -28,31 +28,31 @@ export const AboutPage: React.FC = () => {
         <Col span={12}>
           <Card title="功能特性">
             {features.map((item) => (
-              <div key={item.label} className="flex-center mb-16" style={{ gap: 12 }}>
+              <div key={item.label} className="flex-center mb-4" style={{ gap: 12 }}>
                 <span style={{ fontSize: 22 }}>{item.icon}</span>
                 <div>
                   <div style={{ fontWeight: 500 }}>{item.label}</div>
-                  <Typography.Text type="secondary" className="text-sm">{item.desc}</Typography.Text>
+                  <Typography.Text type="secondary" className="text-xs">{item.desc}</Typography.Text>
                 </div>
               </div>
             ))}
           </Card>
         </Col>
         <Col span={12}>
-          <Card title="技术栈" className="mb-16">
-            <div className="flex-center gap-8" style={{ flexWrap: 'wrap' }}>
+          <Card title="技术栈" className="mb-4">
+            <div className="flex-center gap-2" style={{ flexWrap: 'wrap' }}>
               {techStack.map((tech) => <Tag key={tech} color="blue">{tech}</Tag>)}
             </div>
           </Card>
           <Card title="联系我们">
             <div className="text-secondary">📧 support@enterprise.com</div>
-            <div className="text-secondary mt-8">📞 400-123-4567</div>
-            <div className="text-secondary mt-8">🌐 www.enterprise.com</div>
+            <div className="text-secondary mt-2">📞 400-123-4567</div>
+            <div className="text-secondary mt-2">🌐 www.enterprise.com</div>
           </Card>
         </Col>
       </Row>
 
-      <div className="text-center text-muted text-sm mt-16">© 2026 Enterprise Admin Framework. All rights reserved.</div>
+      <div className="text-center text-muted text-xs mt-4">© 2026 Enterprise Admin Framework. All rights reserved.</div>
     </div>
   );
 };

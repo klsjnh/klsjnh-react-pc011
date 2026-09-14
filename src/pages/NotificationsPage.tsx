@@ -9,7 +9,7 @@ import type { FilterType } from '@/types/view/page';
 const TYPE_ICON: Record<string, string> = { system: '🔔', user: '👤', order: '📦' };
 const TYPE_LABEL: Record<string, string> = { system: '系统', user: '用户', order: '订单' };
 
-export const NotificationsPage: React.FC = () => {
+export const NotificationsPage = () => {
   const { notifications } = useNotificationState();
   const [filter, setFilter] = useState<FilterType>('all');
   const [selected, setSelected] = useState<(typeof notifications)[number] | null>(null);
@@ -64,7 +64,7 @@ export const NotificationsPage: React.FC = () => {
                 title={<span style={{ fontWeight: n.read ? 400 : 600 }}>{TYPE_ICON[n.type]} {n.title}</span>}
                 description={<Typography.Text type="secondary" ellipsis>{n.content}</Typography.Text>}
               />
-              <Typography.Text type="secondary" className="text-sm">{n.time}</Typography.Text>
+              <Typography.Text type="secondary" className="text-xs">{n.time}</Typography.Text>
             </List.Item>
           )}
         />
@@ -84,9 +84,9 @@ export const NotificationsPage: React.FC = () => {
             <div style={{ padding: 12, background: '#f5f7fa', borderRadius: 8, lineHeight: 1.8, color: 'var(--text-secondary)' }}>
               {selected.content}
             </div>
-            <div className="flex-center gap-8 mt-12">
+            <div className="flex-center gap-2 mt-3">
               <Tag color="blue">{TYPE_LABEL[selected.type]}</Tag>
-              <Typography.Text type="secondary" className="text-sm">{selected.time}</Typography.Text>
+              <Typography.Text type="secondary" className="text-xs">{selected.time}</Typography.Text>
             </div>
           </>
         )}

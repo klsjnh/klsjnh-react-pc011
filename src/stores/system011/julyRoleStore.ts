@@ -3,7 +3,7 @@
  * 只负责状态 + 本地持久化；业务操作（含 CRUD 编排）在 services/system011/julyRoleService。
  * 分层：page → service → store；store 不调用 service。
  */
-import { createStore, useStoreState } from '../createStore';
+import { createStore, useStoreState } from '@/stores/createStore';
 import type { RoleState } from '@/types/system011/julyRole/view';
 
 export type { RoleState };

@@ -7,7 +7,7 @@
  * 因此这里同时兼容 location.search 与 hash 内的 query。
  */
 export function readDevLoginUserName(search: string, hash?: string): string | null {
-  if (!(import.meta as any).env?.DEV) return null;
+  if (!import.meta.env?.DEV) return null;
   let name = new URLSearchParams(search).get('userName')?.trim() || '';
   if (!name && hash) {
     const q = hash.indexOf('?');
