@@ -9,8 +9,10 @@ import { KeyOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import type { DataNode } from 'antd/es/tree';
 import { useRoleState } from '@/stores/system011/julyRoleStore';
-import { selectMenuTree, loadRoles, assignPermissions, assignUsersToRole, getMenusByRole } from '@/services/system011';
+import { useMenuState } from '@/stores/system011/julyMenuStore';
+import { loadMenus, loadRoles, assignPermissions, assignUsersToRole, getMenusByRole } from '@/services/system011';
 import { isMockMode } from '@/config/appConfig';
+import { resolveMenuIcon } from '@/components/layout/MenuIcons';
 import { toast } from '@/utils/toast';
 import type { RoleDetail } from '@/types/system011/julyRole/view';
 import { UserTransferModal } from '@/components/UserTransferModal';
@@ -27,7 +29,13 @@ import type { OrgTreeNode } from '@/types/view/common';
  */
 function toTreeData(nodes: JulyMenuVo011[]): DataNode[] {
   return nodes.map((n) => ({
-    title: `${n.menuIcon} ${n.menuName}`,
+    title: (
+      <span>
+        {React.createElement(resolveMenuIcon(n.menuIcon))}
+        {' '}
+        {n.menuName}
+      </span>
+    ),
     key: n.id,
     children: n.children?.length ? toTreeData(n.children) : undefined,
   }));
@@ -45,7 +53,7 @@ function toOrgTree(list: JulyOrganizationVo011[]): OrgTreeNode[] {
 
 export const JulyPermission = () => {
   const { roles, users, orgTree, loaded } = useRoleState();
-  const [menuTree, setMenuTree] = useState<JulyMenuVo011[]>([]);
+  const { menus: menuTree } = useMenuState();
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'perms' | 'users'>('perms');
   const [editModal, setEditModal] = useState<{ open: boolean; role: RoleDetail | null }>({ open: false, role: null });
@@ -55,7 +63,7 @@ export const JulyPermission = () => {
 
   useEffect(() => { loadRoles(); }, []);
   useEffect(() => {
-    selectMenuTree().then(setMenuTree).catch(() => setMenuTree([]));
+    loadMenus();
   }, []);
 
   const selectedRole = roles.find((r) => r.id === selectedRoleId) || null;

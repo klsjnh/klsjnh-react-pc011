@@ -7,9 +7,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Button, Card, Col, Dropdown, Empty, Form, Input, Modal, Row, Select, Tree } from 'antd';
 import type { DataNode, TreeProps } from 'antd/es/tree';
 import { useMenuState } from '@/stores/system011/julyMenuStore';
-import { addMenu, updateMenu, removeMenu, moveMenu, loadMenus, reloadMenus } from '@/services/system011';
+import { addMenu, updateMenu, removeMenu, moveMenu, reorderMenu, loadMenus, reloadMenus } from '@/services/system011';
 import { isMockMode } from '@/config/appConfig';
 import { resolveMenuIcon } from '@/components/layout/MenuIcons';
+import { IconPicker } from '@/components/layout/IconPicker';
 import { uiStore, useUiState } from '@/stores/uiStore';
 import type { JulyMenuVo011 } from '@/types/system011/julyMenu';
 import { MENU_TYPE_OPTIONS } from '@/config/constants';
@@ -52,6 +53,53 @@ export const JulyMenu = () => {
   const [createForm] = Form.useForm();
   const [createModal, setCreateModal] = useState(false);
 
+  /** 计算节点深度 */
+  function getNodeDepth(nodes: JulyMenuVo011[], id: string, depth: number): number {
+    for (const n of nodes) {
+      if (n.id === id) return depth;
+      if (n.children?.length) {
+        const d = getNodeDepth(n.children, id, depth + 1);
+        if (d !== -1) return d;
+      }
+    }
+    return -1;
+  }
+
+  /** 找出一级节点的父节点 id（用于判断子项归属） */
+  function findParentId(nodes: JulyMenuVo011[], id: string): string | null {
+    for (const n of nodes) {
+      if (n.id === id) return null; // 自身是一级节点
+      if (n.children?.length) {
+        if (n.children.some(c => c.id === id)) return n.id;
+        const p = findParentId(n.children, id);
+        if (p) return p;
+      }
+    }
+    return null;
+  }
+
+  /** 展开控制：最多同时展开 2 个一级节点 */
+  const handleTreeExpand = (keys: React.Key[]) => {
+    const stringKeys = keys.map(String);
+    // 找出一级节点（depth === 0）已展开的项
+    const prevKeys = (ui.menuTreeExpandedIds ?? []).map(String);
+    const allKeys = Array.from(new Set([...prevKeys, ...stringKeys]));
+    const topLevelOpened = allKeys.filter(k => getNodeDepth(menus, k, 0) === 0);
+
+    if (topLevelOpened.length > 2) {
+      const [first, ...rest] = topLevelOpened;
+      const filtered = allKeys.filter(k => {
+        if (k === first) return false;
+        const parent = findParentId(menus, k);
+        if (parent === first) return false;
+        return true;
+      });
+      uiStore.setMenuTreeExpandedIds(filtered);
+    } else {
+      uiStore.setMenuTreeExpandedIds(stringKeys);
+    }
+  };
+
   /** 进页面即拉菜单树（loadMenus 内部有 loaded/loading 守卫，重复调用安全） */
   useEffect(() => {
     loadMenus();
@@ -75,6 +123,7 @@ export const JulyMenu = () => {
         menuType: selectedNode.menuType,
         parentId: selectedNode.parentId || '',
         status: selectedNode.status,
+        sortOrder: selectedNode.sortOrder,
       });
     }
   }, [selectedId, menus, selectedNode, form]);
@@ -164,6 +213,7 @@ export const JulyMenu = () => {
         menuRoute: v.menuRoute,
         menuType: v.menuType,
         status: v.status,
+        sortOrder: v.sortOrder,
       });
       if (v.parentId !== selectedNode.parentId) await moveMenu(selectedNode.id, v.parentId || '');
       if (!isMockMode()) await reloadMenus();
@@ -203,7 +253,11 @@ export const JulyMenu = () => {
     if (dragId === dropId) return;
     const dragNode = findMenu(menus, dragId);
     if (!dragNode || containsId(dragNode, dropId)) return;
-    await moveMenu(dragId, dropId);
+    if (info.dropToGap) {
+      await reorderMenu(dragId, dropId, info.dropPosition);
+    } else {
+      await moveMenu(dragId, dropId);
+    }
     uiStore.setMenuTreeExpandedIds(Array.from(new Set([...expandedKeys, dropId])));
     if (!isMockMode()) await reloadMenus();
   };
@@ -218,9 +272,8 @@ export const JulyMenu = () => {
       <div className="menu-layout">
         <Card
           className="menu-sider"
-          title="菜单结构"
+          title="菜单"
           styles={{ body: { padding: 8, maxHeight: 560, overflowY: 'auto' } }}
-          extra={<Button type="link" size="small" onClick={() => openCreate('')}>+ 新建顶级菜单</Button>}
         >
           {menus.length === 0
             ? <Empty description="暂无菜单" />
@@ -232,7 +285,7 @@ export const JulyMenu = () => {
                 treeData={toTreeData(menus)}
                 expandedKeys={expandedKeys}
                 selectedKeys={selectedId != null ? [selectedId] : []}
-                onExpand={(keys) => uiStore.setMenuTreeExpandedIds(keys as string[])}
+                onExpand={handleTreeExpand}
                 onSelect={(keys) => uiStore.setMenuTreeSelectedId((keys[0] as string) ?? null)}
                 onDrop={onDrop}
               />
@@ -277,8 +330,15 @@ export const JulyMenu = () => {
                       <Select options={[{ value: '1', label: '启用' }, { value: '0', label: '停用' }]} />
                     </Form.Item>
                   </Col>
-                  <Col span={24}>
-                    <Form.Item name="menuIcon" label="图标（antd 图标名）"><Input /></Form.Item>
+                  <Col span={12}>
+                    <Form.Item name="menuIcon" label="图标">
+                      <IconPicker value={selectedNode?.menuIcon} onChange={(v) => form.setFieldsValue({ menuIcon: v })} />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item name="sortOrder" label="排序" rules={[{ required: true, message: '请输入排序值' }]}>
+                      <Input type="number" placeholder="越小越靠前" />
+                    </Form.Item>
                   </Col>
                 </Row>
               </Form>
@@ -326,9 +386,18 @@ export const JulyMenu = () => {
               </Form.Item>
             </Col>
           </Row>
-          <Form.Item name="menuIcon" label="图标（antd 图标名）" rules={[{ required: true, message: '请输入图标名' }]}>
-            <Input placeholder="如 SettingOutlined" />
-          </Form.Item>
+          <Row gutter={12}>
+            <Col span={12}>
+              <Form.Item name="menuIcon" label="图标" rules={[{ required: true, message: '请选择图标' }]}>
+                <IconPicker />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="sortOrder" label="排序" rules={[{ required: true, message: '请输入排序值' }]}>
+                <Input type="number" placeholder="越小越靠前" />
+              </Form.Item>
+            </Col>
+          </Row>
           <Form.Item name="status" label="状态" initialValue="1" rules={[{ required: true, message: '请选择状态' }]}>
             <Select options={[{ value: '1', label: '启用' }, { value: '0', label: '停用' }]} />
           </Form.Item>

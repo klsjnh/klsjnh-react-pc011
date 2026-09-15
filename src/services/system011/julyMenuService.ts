@@ -7,6 +7,7 @@ import { isMockMode } from '@/config/appConfig';
 import { api, fireApi } from '@/api/request';
 import { SYSTEM011_ACTIONS } from '@/services/system011/actions';
 import { menuStore } from '@/stores/system011/julyMenuStore';
+import { uiStore } from '@/stores/uiStore';
 import type { JulyMenuVo011 } from '@/types/system011/julyMenu/vo';
 
 /** 当前登录人的菜单树（RBAC 侧边栏数据源；内置角色走全量旁路） */
@@ -85,6 +86,7 @@ export async function loadNavMenus(): Promise<void> {
 /** 清空缓存重新加载（切换数据模式 / 登录后进主界面时调用）：全量树 + 导航树一起重拉 */
 export async function reloadMenus(): Promise<void> {
   menuStore.replace({ menus: [], navMenus: [], loaded: false, loading: false });
+  uiStore.setMenuTreeSelectedId(null);
   await Promise.all([loadMenus(), loadNavMenus()]);
 }
 
@@ -163,8 +165,6 @@ export async function moveMenu(id: string, newParentId: string): Promise<boolean
     menuStore.setState({ menus: addUnder(rest) });
   }
   if (!isMockMode()) {
-    // 后端 /update 要求 menuName/menuType 等必填，只传 parentId 会 500；
-    // 这里携带节点现有全量字段，仅 parentId 为本次变更。
     await fireApi(SYSTEM011_ACTIONS.menu.update, {
       id,
       menuName: node.menuName,
@@ -178,6 +178,43 @@ export async function moveMenu(id: string, newParentId: string): Promise<boolean
     });
   }
   return true;
+}
+
+/** 同级排序重排（更新 sortOrder；仅前端 store 编排，不改父级） */
+export async function reorderMenu(dragId: string, targetId: string, position: number): Promise<void> {
+  const { menus } = menuStore.getSnapshot();
+  const dragNode = findMenu(menus, dragId);
+  const targetNode = findMenu(menus, targetId);
+  if (!dragNode || !targetNode) return;
+
+  const parentId = targetNode.parentId || '';
+  const siblings = parentId
+    ? findMenu(menus, parentId)?.children || []
+    : menus;
+
+  const sorted = [...siblings].sort((a, b) => a.sortOrder - b.sortOrder);
+  const dragIndex = sorted.findIndex((x) => x.id === dragId);
+  const targetIndex = sorted.findIndex((x) => x.id === targetId);
+  if (dragIndex === -1 || targetIndex === -1) return;
+
+  sorted.splice(dragIndex, 1);
+  const insertIndex = targetIndex > dragIndex ? targetIndex - 1 : targetIndex;
+  sorted.splice(position === -1 ? insertIndex : insertIndex + 1, 0, dragNode);
+
+  const reordered = sorted.map((item, idx) => ({ ...item, sortOrder: idx + 1 }));
+
+  const apply = (items: JulyMenuVo011[]): JulyMenuVo011[] =>
+    items.map((item) => {
+      if (item.id === parentId && item.children) {
+        return { ...item, children: reordered };
+      }
+      if (item.children) {
+        return { ...item, children: apply(item.children) };
+      }
+      return item;
+    });
+
+  menuStore.setState({ menus: apply(menus) });
 }
 
 /** 切换启用/停用 */

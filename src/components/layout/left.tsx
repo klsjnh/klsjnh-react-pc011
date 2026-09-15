@@ -48,6 +48,56 @@ export const Left = ({ currentPath, onNavigate }: LeftProps) => {
     setOpenKeys(autoOpenKeys);
   }
 
+  /**
+   * 侧边栏菜单展开控制：最多同时展开 2 个一级主菜单。
+   * 当展开第三个主菜单时，自动关闭最早展开的主菜单及其子项。
+   */
+  const handleOpenChange = (keys: string[]) => {
+    // 计算 key 的层级深度（0 = 一级主菜单）
+    function getDepth(nodes: NavItem[], key: string, depth: number): number {
+      for (const n of nodes) {
+        if (n.path === key) return depth;
+        if (n.children?.length) {
+          const d = getDepth(n.children, key, depth + 1);
+          if (d !== -1) return d;
+        }
+      }
+      return -1;
+    }
+
+    // 找出一级主菜单的父节点路径（用于判断子项归属）
+    function findParentPath(nodes: NavItem[], key: string): string | null {
+      for (const n of nodes) {
+        if (n.path === key) return null; // 自身是一级菜单
+        if (n.children?.length) {
+          if (n.children.some(c => c.path === key)) return n.path;
+          const p = findParentPath(n.children, key);
+          if (p) return p;
+        }
+      }
+      return null;
+    }
+
+    // 合并新旧 keys，找出一级主菜单（depth === 0）已展开的项
+    const allKeys = Array.from(new Set([...openKeys, ...keys]));
+    const topLevelOpened = allKeys.filter(k => getDepth(menus, k, 0) === 0);
+
+    let finalKeys = allKeys;
+    // 一级主菜单超过 2 个时，关闭最早展开的
+    if (topLevelOpened.length > 2) {
+      const [first, ...rest] = topLevelOpened;
+      const keepSet = new Set(rest);
+      finalKeys = allKeys.filter(k => {
+        if (k === first) return false; // 关闭最早的一级菜单
+        const parent = findParentPath(menus, k);
+        if (parent === first) return false; // 关闭该菜单的子项
+        return true;
+      });
+    }
+
+    setOpenKeys(finalKeys);
+  };
+
   return (
     <Sider
       className="app-sider"
@@ -64,7 +114,7 @@ export const Left = ({ currentPath, onNavigate }: LeftProps) => {
         items={toItems(menus)}
         selectedKeys={[currentPath]}
         openKeys={openKeys}
-        onOpenChange={setOpenKeys}
+        onOpenChange={handleOpenChange}
         onClick={({ key }) => onNavigate(String(key))}
       />
     </Sider>

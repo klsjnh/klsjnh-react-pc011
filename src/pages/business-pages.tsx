@@ -2,21 +2,20 @@
  * 业务功能页面集合 - PC 端（antd）
  * 配置管理 / 定时任务 / 数据导出 对接后端；其余为无后端模块的展示页（演示数据）。
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Button, Card, Col, Empty, Form, Input, Modal, Popconfirm, Progress, Row, Select, Space, Statistic, Switch, Table, Tag,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useConfigState } from '@/stores/system011/julyConfigStore';
-import { useSchedulerState } from '@/stores/system011/julySchedulerStore';
 import {
   fetchConfigPage, saveConfig, removeConfig,
-  fetchSchedulerPage, saveScheduler, startScheduler, stopScheduler, runSchedulerOnce, removeSchedulers,
   exportData,
 } from '@/services/system011';
 import { toast } from '@/utils/toast';
-import type { JulyConfigVo011, JulySchedulerVo011 } from '@/types/system011';
-import type { OnlineUser, CacheItem, DataSourceItem } from '@/types/view/business';
+import { KlsjnhSql011, KlsjnhMarkdown011 } from '@/components/system011';
+import type { JulyConfigVo011 } from '@/types/system011';
+import type { OnlineUser, CacheItem } from '@/types/view/business';
 import type { DictTypeVo011, DictItemVo011 } from '@/types/view/dict';
 import { STATUS_OPTIONS } from '@/config/constants';
 
@@ -88,92 +87,6 @@ export const ConfigPage = () => {
           <Form.Item name="data" label="配置值" rules={[{ required: true, message: '请输入配置值' }]}>
             <Input placeholder="请输入配置值" />
           </Form.Item>
-        </Form>
-      </Modal>
-    </div>
-  );
-};
-
-// ==================== 定时任务（对接 julyScheduler） ====================
-
-export const SchedulerPage = () => {
-  const { list, total, loading, query } = useSchedulerState();
-  const [modal, setModal] = useState<{ open: boolean; node: JulySchedulerVo011 | null }>({ open: false, node: null });
-  const [form] = Form.useForm();
-
-  useEffect(() => { fetchSchedulerPage({ pageIndex: 1, pageSize: 10 }); }, []);
-  useEffect(() => {
-    if (!modal.open) return;
-    form.setFieldsValue({
-      schedulerCode: modal.node?.schedulerCode || '',
-      schedulerName: modal.node?.schedulerName || '',
-      schedulerHandler: modal.node?.schedulerHandler || '',
-      schedulerCron: modal.node?.schedulerCron || '',
-    });
-  }, [modal, form]);
-
-  const handleSave = async () => {
-    const v = await form.validateFields();
-    await saveScheduler({ id: modal.node?.id, ...v, status: modal.node?.status || '0' });
-    toast.success('保存成功');
-    setModal({ open: false, node: null });
-  };
-
-  const columns: ColumnsType<JulySchedulerVo011> = [
-    { title: '任务编码', dataIndex: 'schedulerCode', width: 140 },
-    { title: '任务名称', dataIndex: 'schedulerName', width: 140 },
-    { title: '处理器', dataIndex: 'schedulerHandler' },
-    { title: 'Cron', dataIndex: 'schedulerCron', width: 160, render: (v) => <code>{v}</code> },
-    { title: '执行次数', dataIndex: 'executeTimes', width: 90 },
-    { title: '状态', dataIndex: 'status', width: 90, render: (s) => <Tag color={s === '1' ? 'green' : 'default'}>{s === '1' ? '运行中' : '已停止'}</Tag> },
-    {
-      title: '操作', key: 'action', width: 240,
-      render: (_, r) => (
-        <Space size="small">
-          <Button type="link" size="small" onClick={() => setModal({ open: true, node: r })}>编辑</Button>
-          {r.status === '1'
-            ? <Button type="link" size="small" onClick={() => stopScheduler(r.id)}>停止</Button>
-            : <Button type="link" size="small" onClick={() => startScheduler(r.id)}>启动</Button>}
-          <Button type="link" size="small" onClick={() => runSchedulerOnce(r.id)}>执行一次</Button>
-          <Popconfirm title="确定删除这个定时任务吗？" okText="删除" cancelText="取消" okButtonProps={{ danger: true }} onConfirm={() => removeSchedulers([r.id])}>
-            <Button type="link" size="small" danger>删除</Button>
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ];
-
-  return (
-    <div>
-      <div className="page-header"><h2>定时任务</h2><p>共 {total} 个任务</p></div>
-      <div className="page-toolbar">
-        <div className="toolbar-left">
-          <Input.Search allowClear placeholder="搜索编码 / 名称" className="search-input"
-            onSearch={(v) => fetchSchedulerPage({ pageIndex: 1, schedulerName: v || undefined })} />
-        </div>
-        <div className="toolbar-right">
-          <Button type="primary" onClick={() => { form.resetFields(); setModal({ open: true, node: null }); }}>+ 新建任务</Button>
-        </div>
-      </div>
-      <Card className="table-wrapper" styles={{ body: { padding: 0 } }}>
-        <Table<JulySchedulerVo011>
-          rowKey="id" columns={columns} dataSource={list} loading={loading} scroll={{ x: 1100 }}
-          pagination={{
-            current: query.pageIndex, pageSize: query.pageSize, total,
-            showSizeChanger: true, pageSizeOptions: [10, 50, 100], showTotal: (t) => `共 ${t} 条`,
-            onChange: (pageIndex, pageSize) => fetchSchedulerPage({ pageIndex, pageSize }),
-          }}
-        />
-      </Card>
-      <Modal title={modal.node ? '编辑任务' : '新建任务'} open={modal.open} onCancel={() => setModal({ open: false, node: null })}
-        onOk={handleSave} okText="保存" cancelText="取消" destroyOnClose>
-        <Form form={form} layout="vertical" preserve={false}>
-          <Form.Item name="schedulerCode" label="任务编码" rules={modal.node ? [] : [{ required: true, message: '请输入任务编码' }]}>
-            <Input disabled={!!modal.node} placeholder="如 dataBackup" />
-          </Form.Item>
-          <Form.Item name="schedulerName" label="任务名称" rules={[{ required: true, message: '请输入任务名称' }]}><Input /></Form.Item>
-          <Form.Item name="schedulerHandler" label="处理器" rules={[{ required: true, message: '请输入处理器' }]}><Input placeholder="后端 bean/方法名" /></Form.Item>
-          <Form.Item name="schedulerCron" label="Cron 表达式" rules={[{ required: true, message: '请输入 Cron' }]}><Input placeholder="如 0 2 * * *" /></Form.Item>
         </Form>
       </Modal>
     </div>
@@ -306,7 +219,6 @@ export const DictPage = () => {
     { title: '字典项值', dataIndex: 'itemValue', render: (v) => <code>{v}</code> },
     { title: '字典项标签', dataIndex: 'itemLabel' },
     { title: '描述', dataIndex: 'description', ellipsis: true },
-    { title: '排序', dataIndex: 'sort', width: 80 },
     { title: '状态', dataIndex: 'status', width: 90, render: (s) => <Tag color={s === '1' ? 'green' : 'red'}>{s === '1' ? '启用' : '停用'}</Tag> },
     {
       title: '操作', key: 'action', width: 160,
@@ -534,35 +446,6 @@ export const CachePage = () => {
       </Row>
       <Card className="table-wrapper" styles={{ body: { padding: 0 } }}>
         <Table<CacheItem> rowKey="id" columns={columns} dataSource={caches} pagination={false} />
-      </Card>
-    </div>
-  );
-};
-
-// ==================== 数据源管理（演示） ====================
-
-export const DataSourcePage = () => {
-  const [sources] = useState<DataSourceItem[]>([
-    { id: 1, name: '主数据库', type: 'MySQL', host: '192.168.1.10:3306', database: 'enterprise_main', status: 'connected', latency: '2ms' },
-    { id: 2, name: '缓存数据库', type: 'Redis', host: '192.168.1.12:6379', database: 'db0', status: 'connected', latency: '0.5ms' },
-    { id: 3, name: '测试数据库', type: 'MySQL', host: '10.0.0.20:3306', database: 'test_db', status: 'disconnected', latency: '-' },
-  ]);
-
-  const columns: ColumnsType<DataSourceItem> = [
-    { title: '数据源', dataIndex: 'name' },
-    { title: '类型', dataIndex: 'type', render: (v) => <Tag color="blue">{v}</Tag> },
-    { title: '主机地址', dataIndex: 'host', render: (v) => <code>{v}</code> },
-    { title: '数据库', dataIndex: 'database', render: (v) => <code>{v}</code> },
-    { title: '延迟', dataIndex: 'latency', render: (v) => <span style={{ color: '#52c41a' }}>{v}</span> },
-    { title: '状态', dataIndex: 'status', render: (s) => <Tag color={s === 'connected' ? 'green' : 'red'}>{s === 'connected' ? '已连接' : '未连接'}</Tag> },
-    { title: '操作', key: 'action', width: 120, render: () => <Button type="link" size="small">测试连接</Button> },
-  ];
-
-  return (
-    <div>
-      <div className="page-header"><h2>数据源管理</h2><p>{sources.filter((s) => s.status === 'connected').length}/{sources.length} 已连接</p></div>
-      <Card className="table-wrapper" styles={{ body: { padding: 0 } }}>
-        <Table<DataSourceItem> rowKey="id" columns={columns} dataSource={sources} pagination={false} />
       </Card>
     </div>
   );
@@ -950,6 +833,95 @@ export const QueryPage = () => {
       {searched && (
         <Card className="table-wrapper" styles={{ body: { padding: 0 } }}>
           <Table rowKey="id" columns={columns} dataSource={results} pagination={false} />
+        </Card>
+      )}
+    </div>
+  );
+};
+
+// ==================== Markdown 编辑器（演示） ====================
+
+export const MarkdownEditorPage = () => {
+  const [markdown, setMarkdown] = useState(`# Markdown 编辑器演示
+
+## 功能特性
+- **粗体**、*斜体*、\`代码\` 等基础格式
+- 表格、列表、引用、分割线
+- Mermaid 流程图支持
+- Word HTML 粘贴自动转换
+- 编辑 / 预览 双模式切换
+
+## 示例表格
+| 功能 | 状态 | 说明 |
+|------|------|------|
+| SQL 格式化 | ✅ | 支持多种数据库方言 |
+| SQL 压缩 | ✅ | 去除多余空白 |
+| Markdown 编辑 | ✅ | 所见即所得 |
+| Word 转换 | ✅ | HTML 转 Markdown |
+
+## 代码示例
+\`\`\`javascript
+const greeting = 'Hello, World!';
+console.log(greeting);
+\`\`\`
+`);
+
+  return (
+    <div>
+      <div className="page-header"><h2>Markdown 编辑器</h2><p>支持 Word HTML 粘贴转换 · 编辑 / 预览双模式</p></div>
+      <KlsjnhMarkdown011
+        value={markdown}
+        onChange={setMarkdown}
+        height={500}
+      />
+    </div>
+  );
+};
+
+// ==================== SQL 编辑器（演示） ====================
+
+export const SqlEditorPage = () => {
+  const [sql, setSql] = useState(`SELECT
+  u.user_account,
+  u.user_name,
+  u.email,
+  u.status,
+  o.org_name
+FROM july_user u
+LEFT JOIN july_organization o ON u.pk_org = o.pk_org
+WHERE u.status = 1
+ORDER BY u.created_time DESC
+LIMIT 10;`);
+
+  const [result, setResult] = useState<string | null>(null);
+
+  const handleExecute = useCallback(async () => {
+    setResult(`查询执行成功！
+
+执行 SQL: ${sql.slice(0, 100)}...
+
+返回 2 行数据：
+| user_account | user_name | email | status | org_name |
+|------|------|------|------|------|
+| admin | 管理员 | admin@klsjnh.com | 1 | 技术中心 |
+| zhangsan | 张三 | zhangsan@klsjnh.com | 1 | 产品部 |`);
+  }, [sql]);
+
+  return (
+    <div>
+      <div className="page-header"><h2>SQL 编辑器</h2><p>支持多方言格式化、压缩、自动补全</p></div>
+      <Card title="SQL 编辑器" style={{ marginBottom: 16 }} extra={<span className="text-muted text-xs">支持 MySQL / Oracle / SQL Server / PostgreSQL</span>}>
+        <KlsjnhSql011
+          value={sql}
+          onChange={setSql}
+          onExecute={handleExecute}
+          height={260}
+          cacheKey="sql-editor-demo"
+        />
+      </Card>
+      {result && (
+        <Card title="执行结果" extra={<Button size="small" onClick={() => setResult(null)}>清空</Button>}>
+          <pre style={{ background: '#f5f5f5', padding: 12, borderRadius: 4, fontSize: 13, whiteSpace: 'pre-wrap' }}>{result}</pre>
         </Card>
       )}
     </div>
