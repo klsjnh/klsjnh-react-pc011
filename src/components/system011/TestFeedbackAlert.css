@@ -1,0 +1,20 @@
+/* 测试连接反馈（TestFeedbackAlert）多行结构：
+   第1行 message / 第2行 耗时 / 数据库与版本各独占一行 */
+.test-feedback-lines .tf-msg {
+  font-weight: 500;
+}
+.test-feedback-lines .tf-timing {
+  margin-top: 2px;
+  color: rgba(0, 0, 0, 0.65);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.test-feedback-lines .tf-db {
+  margin-top: 2px;
+  color: rgba(0, 0, 0, 0.65);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.test-feedback-lines .tf-db-line {
+  line-height: 1.6;
+}
