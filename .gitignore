@@ -32,6 +32,9 @@ npm-debug.log*
 .eslintcache
 *.tsbuildinfo
 
+# WorkBuddy agent workspace (local memory/scripts, not for version control)
+.workbuddy/
+
 # OS
 Thumbs.db
 
