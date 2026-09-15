@@ -40,7 +40,7 @@ import {
   UserOutlined,
   UserSwitchOutlined,
 } from '@ant-design/icons';
-import { SYSTEM011_ROUTES } from '@/config/routes';
+import { SYSTEM011_ROUTES, DATASERVICE011_ROUTES } from '@/config/routes';
 import type { NavItem } from '@/types/view/layout';
 
 /** 菜单类型 */
@@ -89,14 +89,12 @@ export const GLOBAL_MENUS: NavItem[] = [
     icon: AppstoreOutlined,
     children: [
       { path: '/business/config', label: '配置管理', icon: SettingOutlined },
-      { path: '/business/scheduler', label: '定时任务', icon: FieldTimeOutlined },
+      { path: SYSTEM011_ROUTES.julyScheduler, label: '定时任务', icon: FieldTimeOutlined },
       { path: '/business/dict', label: '字典管理', icon: BookOutlined },
       { path: '/business/monitor', label: '系统监控', icon: MonitorOutlined },
       { path: '/business/online', label: '在线用户', icon: UserSwitchOutlined },
       { path: '/business/cache', label: '缓存管理', icon: ThunderboltOutlined },
-      { path: '/business/datasource', label: '数据源', icon: DatabaseOutlined },
       { path: '/business/storage', label: '存储中心', icon: HddOutlined },
-      { path: '/business/params', label: '参数设置', icon: ControlOutlined },
       { path: '/business/template', label: '通知模板', icon: FormOutlined },
       { path: '/business/push', label: '消息推送', icon: NotificationOutlined },
       { path: '/business/stats', label: '数据统计', icon: BarChartOutlined },
@@ -107,6 +105,16 @@ export const GLOBAL_MENUS: NavItem[] = [
       { path: '/business/calc', label: '数据计算', icon: CalculatorOutlined },
       { path: '/business/query', label: '数据查询', icon: SearchOutlined },
       { path: '/business/servicelog', label: '服务日志', icon: FileTextOutlined },
+      { path: '/business/markdown', label: 'Markdown 编辑器', icon: BookOutlined },
+      { path: '/business/sql', label: 'SQL 编辑器', icon: FileSearchOutlined },
+    ],
+  },
+  {
+    path: '/dataService011',
+    label: '数据管理',
+    icon: DatabaseOutlined,
+    children: [
+      { path: DATASERVICE011_ROUTES.julyDatasource, label: '数据源', icon: DatabaseOutlined },
     ],
   },
   {
@@ -126,6 +134,7 @@ export const GLOBAL_MENUS: NavItem[] = [
       { path: '/notifications', label: '消息通知', icon: BellOutlined },
       { path: '/audit', label: '审计日志', icon: FileSearchOutlined },
       { path: '/settings', label: '系统设置', icon: SettingOutlined },
+      { path: '/settings/params', label: '参数设置', icon: ControlOutlined },
       { path: '/help', label: '帮助反馈', icon: QuestionCircleOutlined },
       { path: '/about', label: '关于系统', icon: InfoCircleOutlined },
     ],
@@ -134,6 +143,6 @@ export const GLOBAL_MENUS: NavItem[] = [
 
 export const globalConfig = {
   appName: '企业管理系统',
-  /** true：菜单取自 GLOBAL_MENUS；false：走接口（menuStore → selectUserMenuTree） */
-  menuFromConfig: !!import.meta.env?.DEV,
+  /** false：菜单统一走接口（menuStore → selectUserMenuTree / selectTree） */
+  menuFromConfig: false,
 };

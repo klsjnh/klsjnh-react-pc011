@@ -1,0 +1,12 @@
+const fs = require('fs');
+console.log('Starting...');
+const data = fs.readFileSync('docs/swagger-live.json', 'utf8');
+console.log('File read, length:', data.length);
+const json = JSON.parse(data);
+console.log('JSON parsed');
+const paths = Object.keys(json.paths);
+console.log('Total paths:', paths.length);
+const menuPaths = paths.filter(p => p.toLowerCase().includes('menu'));
+console.log('Menu paths:', menuPaths.length);
+fs.writeFileSync('menu-paths.json', JSON.stringify(menuPaths, null, 2));
+console.log('File written');

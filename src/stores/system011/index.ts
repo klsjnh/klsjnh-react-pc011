@@ -6,3 +6,5 @@ export * from '@/stores/system011/julyUserStore';
 export * from '@/stores/system011/julyMenuStore';
 export * from '@/stores/system011/julyRoleStore';
 export * from '@/stores/system011/julyOrganizationStore';
+export * from '@/stores/system011/julyConfigStore';
+export * from '@/stores/system011/julySchedulerStore';

@@ -96,7 +96,7 @@ export const handlers: Record<string, Handler> = {
   },
 
   // ===== 组织树（含人数角标；返回数组） =====
-  '/julyOrganization/v1/selectTree': async () => {
+  '/julyOrganization/v1/getTree': async () => {
     await delay(300);
     refreshMemberCounts();
     return ok(structuredClone(mockOrgs));

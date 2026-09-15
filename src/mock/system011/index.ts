@@ -13,6 +13,7 @@ import { handlers as julyConfigHandlers } from '@/mock/system011/julyConfig';
 import { handlers as julySchedulerHandlers } from '@/mock/system011/julyScheduler';
 import { handlers as exportHandlers } from '@/mock/system011/exportData';
 import { handlers as notificationHandlers } from '@/mock/system011/notification';
+import { handlers as julyDatasourceHandlers } from '@/mock/dataservice011/julyDatasource';
 
 export type { MockEnvelope } from '@/mock/system011/common';
 export { mockRelations } from '@/mock/system011/relations';
@@ -27,6 +28,7 @@ const handlers: Record<string, Handler> = {
   ...julySchedulerHandlers,
   ...exportHandlers,
   ...notificationHandlers,
+  ...julyDatasourceHandlers,
 };
 
 export function getMockResponse(action: string, body?: any): Promise<MockEnvelope<any>> | null {

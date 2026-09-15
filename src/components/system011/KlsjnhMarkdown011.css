@@ -1,0 +1,119 @@
+/* Klsjnh Markdown 011 - Editor Styles */
+
+.klsjnh-markdown011-body h1,
+.klsjnh-markdown011-body h2,
+.klsjnh-markdown011-body h3,
+.klsjnh-markdown011-body h4,
+.klsjnh-markdown011-body h5,
+.klsjnh-markdown011-body h6 {
+  margin-top: 24px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.klsjnh-markdown011-body h1 {
+  font-size: 2em;
+  border-bottom: 1px solid #eaecef;
+  padding-bottom: 0.3em;
+}
+
+.klsjnh-markdown011-body h2 {
+  font-size: 1.5em;
+  border-bottom: 1px solid #eaecef;
+  padding-bottom: 0.3em;
+}
+
+.klsjnh-markdown011-body h3 { font-size: 1.25em; }
+.klsjnh-markdown011-body h4 { font-size: 1em; }
+.klsjnh-markdown011-body h5 { font-size: 0.875em; }
+.klsjnh-markdown011-body h6 { font-size: 0.85em; color: #6a737d; }
+
+.klsjnh-markdown011-body p {
+  margin-top: 0;
+  margin-bottom: 16px;
+  line-height: 1.8;
+}
+
+.klsjnh-markdown011-body a {
+  color: #aa3bff;
+  text-decoration: none;
+}
+
+.klsjnh-markdown011-body a:hover {
+  text-decoration: underline;
+}
+
+.klsjnh-markdown011-body ul,
+.klsjnh-markdown011-body ol {
+  padding-left: 2em;
+  margin-bottom: 16px;
+}
+
+.klsjnh-markdown011-body li {
+  margin-bottom: 4px;
+  line-height: 1.6;
+}
+
+.klsjnh-markdown011-body code {
+  padding: 0.2em 0.4em;
+  font-size: 85%;
+  background-color: rgba(170, 58, 255, 0.08);
+  border-radius: 3px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+}
+
+.klsjnh-markdown011-body pre {
+  padding: 16px;
+  overflow: auto;
+  font-size: 85%;
+  line-height: 1.45;
+  background-color: #f6f8fa;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.klsjnh-markdown011-body pre code {
+  padding: 0;
+  background-color: transparent;
+}
+
+.klsjnh-markdown011-body blockquote {
+  padding: 0 1em;
+  color: #6a737d;
+  border-left: 0.25em solid #aa3bff;
+  margin-bottom: 16px;
+}
+
+.klsjnh-markdown011-body table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.klsjnh-markdown011-body th,
+.klsjnh-markdown011-body td {
+  border: 1px solid #dfe2e5;
+  padding: 8px 12px;
+}
+
+.klsjnh-markdown011-body th {
+  background-color: #f6f8fa;
+  font-weight: 600;
+}
+
+.klsjnh-sql011-textarea,
+.klsjnh-markdown011-textarea {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  border: none !important;
+  border-radius: 0 !important;
+  resize: none;
+  box-shadow: none !important;
+}
+
+.klsjnh-sql011-textarea:focus,
+.klsjnh-markdown011-textarea:focus {
+  box-shadow: none !important;
+}

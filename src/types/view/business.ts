@@ -27,15 +27,7 @@ export interface CacheItem {
   ttl: string;
 }
 
-export interface DataSourceItem {
-  id: number;
-  name: string;
-  type: string;
-  host: string;
-  database: string;
-  status: string;
-  latency: string;
-}
+// ⚠️ DataSourceItem 已迁移到 @/types/dataservice011/datasource，此处不再重复定义
 
 /** 仪表盘最近操作日志 */
 export interface RecentLog {

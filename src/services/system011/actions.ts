@@ -1,7 +1,8 @@
 /**
  * system011 各模块 action 路径常量
- * 统一 action 路径 = 后端真实路径：/klsjnh/system011/{julyXxx}/v1/{动作}
- * 禁止在 store / 页面里再写分散的旧路径。
+ * 统一 action 路径 = 相对路径：{julyXxx}/v1/{动作}
+ * 前端请求 URL = apiBaseUrl（默认 /klsjnh/system011）+ action
+ * 禁止在 action 中重复写 /klsjnh/system011 前缀，否则 URL 会重复。
  */
 export const SYSTEM011_ACTIONS = {
   user: {
@@ -13,20 +14,28 @@ export const SYSTEM011_ACTIONS = {
     insert: '/julyUser/v1/insert',
     update: '/julyUser/v1/update',
     logicDelete: '/julyUser/v1/logicDelete',
+    logicDeleteBatch: '/julyUser/v1/logicDeleteBatch',
     resetPassword: '/julyUser/v1/resetPassword',
     changePassword: '/julyUser/v1/changePassword',
     assignRoles: '/julyUser/v1/assignRoles',
+    export: '/julyUser/v1/export',
+    backup011: '/julyUser/v1/backup011',
   },
   userAudit: {
     selectListByPage: '/julyUserAudit/v1/selectListByPage',
   },
   menu: {
-    selectUserMenuTree: '/julyMenu/v1/selectUserMenuTree',
-    selectTree: '/julyMenu/v1/selectTree',
+    // 注意：接口名已变（后端新版本）selectUserMenuTree→getUserMenuTree、selectTree→getTree
+    selectUserMenuTree: '/julyMenu/v1/getUserMenuTree',
+    selectTree: '/julyMenu/v1/getTree',
     selectListByPage: '/julyMenu/v1/selectListByPage',
     insert: '/julyMenu/v1/insert',
     update: '/julyMenu/v1/update',
     logicDelete: '/julyMenu/v1/logicDelete',
+    logicDeleteBatch: '/julyMenu/v1/logicDeleteBatch',
+    export: '/julyMenu/v1/export',
+    backup011: '/julyMenu/v1/backup011',
+    getById: '/julyMenu/v1/getById',
   },
   role: {
     selectListByPage: '/julyRole/v1/selectListByPage',
@@ -37,16 +46,20 @@ export const SYSTEM011_ACTIONS = {
     getById: '/julyRole/v1/getById',
     getMenusByRole: '/julyRole/v1/getMenusByRole',
     getUsersByRole: '/julyRole/v1/getUsersByRole',
+    export: '/julyRole/v1/export',
+    backup011: '/julyRole/v1/backup011',
   },
   // ⚠️ 无 julyRoleUser 资源：后端（java17-web011）没有 JulyRoleUserController，
   // 角色↔用户的关联只能通过 julyUser/v1/assignRoles（用户 → 角色，整存替换）维护。
   organization: {
     selectListByPage: '/julyOrganization/v1/selectListByPage',
-    selectTree: '/julyOrganization/v1/selectTree',
+    selectTree: '/julyOrganization/v1/getTree',
     getById: '/julyOrganization/v1/getById',
     insert: '/julyOrganization/v1/insert',
     update: '/julyOrganization/v1/update',
     logicDelete: '/julyOrganization/v1/logicDelete',
+    export: '/julyOrganization/v1/export',
+    backup011: '/julyOrganization/v1/backup011',
   },
   config: {
     selectListByPage: '/julyConfig/v1/selectListByPage',
@@ -54,6 +67,8 @@ export const SYSTEM011_ACTIONS = {
     insert: '/julyConfig/v1/insert',
     update: '/julyConfig/v1/update',
     logicDelete: '/julyConfig/v1/logicDelete',
+    export: '/julyConfig/v1/export',
+    backup011: '/julyConfig/v1/backup011',
   },
   scheduler: {
     selectListByPage: '/julyScheduler/v1/selectListByPage',
@@ -61,6 +76,7 @@ export const SYSTEM011_ACTIONS = {
     insert: '/julyScheduler/v1/insert',
     update: '/julyScheduler/v1/update',
     logicDelete: '/julyScheduler/v1/logicDelete',
+    logicDeleteBatch: '/julyScheduler/v1/logicDeleteBatch',
     start: '/julyScheduler/v1/start',
     stop: '/julyScheduler/v1/stop',
     runOnce: '/julyScheduler/v1/runOnce',
