@@ -48,7 +48,7 @@ export const MENU_TYPE_OPTIONS = [
   { value: '1', label: '目录' },
   { value: '2', label: '菜单' },
   { value: '3', label: '按钮' },
-] as const;
+];
 
 /** 菜单类型文本映射（用于展示） */
 export const MENU_TYPE_LABEL: Record<string, string> = {
@@ -61,7 +61,7 @@ export const MENU_TYPE_LABEL: Record<string, string> = {
 export const STATUS_OPTIONS = [
   { value: '1', label: '启用' },
   { value: '0', label: '停用' },
-] as const;
+];
 
 /** 通用状态文本映射 */
 export const STATUS_LABEL: Record<string, string> = {

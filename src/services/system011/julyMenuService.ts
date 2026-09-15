@@ -35,6 +35,7 @@ export interface CreateMenuData {
   menuIcon?: string;
   menuRoute: string;
   menuType: string;
+  status?: string;
 }
 
 /** 深度优先查找 */

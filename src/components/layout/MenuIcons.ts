@@ -12,8 +12,11 @@
  */
 import {
   ApartmentOutlined,
+  AppstoreAddOutlined,
   AppstoreOutlined,
+  AreaChartOutlined,
   BarChartOutlined,
+  BellOutlined,
   BookOutlined,
   CalculatorOutlined,
   ClockCircleOutlined,
@@ -22,6 +25,7 @@ import {
   DatabaseOutlined,
   DesktopOutlined,
   ExportOutlined,
+  FieldTimeOutlined,
   FileSearchOutlined,
   FileTextOutlined,
   FormOutlined,

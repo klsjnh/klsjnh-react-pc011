@@ -99,6 +99,13 @@ body {
 .menu-empty { display: flex; align-items: center; justify-content: center; min-height: 460px; }
 .menu-tree-title { display: inline-flex; align-items: center; gap: 4px; }
 
+/* ==================== 字典管理（上下结构） ==================== */
+.dict-vertical { display: flex; flex-direction: column; gap: 16px; }
+.dict-type-card { }
+.dict-empty { display: flex; align-items: center; justify-content: center; min-height: 400px; }
+.dict-type-row-active { background: #e6f7ff; cursor: pointer; }
+.dict-type-row-active td { font-weight: 600; }
+
 /* ==================== 简易条形图 ==================== */
 .bar-chart { display: flex; align-items: flex-end; gap: 10px; height: 240px; }
 .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
