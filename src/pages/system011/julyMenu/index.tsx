@@ -68,6 +68,7 @@ export const JulyMenu = () => {
   useEffect(() => {
     if (selectedNode) {
       form.setFieldsValue({
+        menuCode: selectedNode.menuCode,
         menuName: selectedNode.menuName,
         menuIcon: selectedNode.menuIcon,
         menuRoute: selectedNode.menuRoute,
@@ -127,7 +128,7 @@ export const JulyMenu = () => {
 
   const openCreate = (parentId: string) => {
     createForm.resetFields();
-    createForm.setFieldsValue({ parentId, menuType: '2', menuIcon: DEFAULT_MENU_ICON });
+    createForm.setFieldsValue({ parentId, menuCode: '', menuType: '2', menuIcon: DEFAULT_MENU_ICON, status: '1' });
     setCreateModal(true);
   };
 
@@ -141,6 +142,7 @@ export const JulyMenu = () => {
         menuIcon: v.menuIcon,
         menuRoute: v.menuRoute,
         menuType: v.menuType,
+        status: v.status || '1',
       });
       if (v.parentId) uiStore.setMenuTreeExpandedIds(Array.from(new Set([...expandedKeys, v.parentId])));
       if (!isMockMode()) await reloadMenus();
@@ -156,6 +158,7 @@ export const JulyMenu = () => {
     try {
       const v = await form.validateFields();
       await updateMenu(selectedNode.id, {
+        menuCode: v.menuCode,
         menuName: v.menuName,
         menuIcon: v.menuIcon,
         menuRoute: v.menuRoute,
@@ -245,21 +248,23 @@ export const JulyMenu = () => {
               <Form form={form} layout="vertical">
                 <Row gutter={24}>
                   <Col span={12}>
-                    <Form.Item name="menuName" label="菜单名称" rules={[{ required: true, message: '请输入菜单名称' }]}>
+                    <Form.Item name="menuCode" label="菜单编码" rules={[{ required: true, message: '请输入菜单编码' }]}>
                       <Input />
                     </Form.Item>
                   </Col>
                   <Col span={12}>
-                    <Form.Item name="menuIcon" label="图标（antd 图标名）"><Input /></Form.Item>
-                  </Col>
-                  <Col span={12}>
-                    <Form.Item name="menuRoute" label="路由路径" rules={[{ required: true, message: '请输入路由路径' }]}>
+                    <Form.Item name="menuName" label="菜单名称" rules={[{ required: true, message: '请输入菜单名称' }]}>
                       <Input />
                     </Form.Item>
                   </Col>
                   <Col span={12}>
                     <Form.Item name="menuType" label="类型">
                       <Select options={MENU_TYPE_OPTIONS} />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item name="menuRoute" label="路由路径" rules={[{ required: true, message: '请输入路由路径' }]}>
+                      <Input />
                     </Form.Item>
                   </Col>
                   <Col span={12}>
@@ -271,6 +276,9 @@ export const JulyMenu = () => {
                     <Form.Item name="status" label="状态">
                       <Select options={[{ value: '1', label: '启用' }, { value: '0', label: '停用' }]} />
                     </Form.Item>
+                  </Col>
+                  <Col span={24}>
+                    <Form.Item name="menuIcon" label="图标（antd 图标名）"><Input /></Form.Item>
                   </Col>
                 </Row>
               </Form>
@@ -294,25 +302,36 @@ export const JulyMenu = () => {
           <Form.Item name="parentId" label="上级菜单">
             <Select allowClear placeholder="（顶级菜单）" options={buildParentOptions(null)} />
           </Form.Item>
-          <Form.Item name="menuCode" label="菜单编码" rules={[{ required: true, message: '请输入菜单编码' }]}>
-            <Input placeholder="如 config" />
-          </Form.Item>
-          <Form.Item name="menuName" label="菜单名称" rules={[{ required: true, message: '请输入菜单名称' }]}>
-            <Input placeholder="请输入菜单名称" />
-          </Form.Item>
-          <Form.Item name="menuRoute" label="路由路径" rules={[{ required: true, message: '请输入路由路径' }]}>
-            <Input placeholder="如 /business/newpage" />
-          </Form.Item>
           <Row gutter={12}>
             <Col span={12}>
-              <Form.Item name="menuIcon" label="图标（antd 图标名）"><Input /></Form.Item>
+              <Form.Item name="menuCode" label="菜单编码" rules={[{ required: true, message: '请输入菜单编码' }]}>
+                <Input placeholder="如 config" />
+              </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="menuType" label="类型">
-                <Select options={MENU_TYPE_OPTIONS} />
+              <Form.Item name="menuName" label="菜单名称" rules={[{ required: true, message: '请输入菜单名称' }]}>
+                <Input placeholder="请输入菜单名称" />
               </Form.Item>
             </Col>
           </Row>
+          <Row gutter={12}>
+            <Col span={12}>
+              <Form.Item name="menuType" label="类型" rules={[{ required: true, message: '请选择类型' }]}>
+                <Select options={MENU_TYPE_OPTIONS} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="menuRoute" label="路由路径" rules={[{ required: true, message: '请输入路由路径' }]}>
+                <Input placeholder="如 /business/newpage" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Form.Item name="menuIcon" label="图标（antd 图标名）" rules={[{ required: true, message: '请输入图标名' }]}>
+            <Input placeholder="如 SettingOutlined" />
+          </Form.Item>
+          <Form.Item name="status" label="状态" initialValue="1" rules={[{ required: true, message: '请选择状态' }]}>
+            <Select options={[{ value: '1', label: '启用' }, { value: '0', label: '停用' }]} />
+          </Form.Item>
         </Form>
       </Modal>
     </div>

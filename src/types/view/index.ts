@@ -10,3 +10,4 @@ export * from '@/types/view/transfer';
 export * from '@/types/view/components';
 export * from '@/types/view/page';
 export * from '@/types/view/business';
+export * from '@/types/view/dict';

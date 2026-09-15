@@ -4,7 +4,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import {
-  Button, Card, Col, Form, Input, Modal, Popconfirm, Progress, Row, Select, Space, Statistic, Switch, Table, Tag,
+  Button, Card, Col, Empty, Form, Input, Modal, Popconfirm, Progress, Row, Select, Space, Statistic, Switch, Table, Tag,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useConfigState } from '@/stores/system011/julyConfigStore';
@@ -16,7 +16,9 @@ import {
 } from '@/services/system011';
 import { toast } from '@/utils/toast';
 import type { JulyConfigVo011, JulySchedulerVo011 } from '@/types/system011';
-import type { DictItem, OnlineUser, CacheItem, DataSourceItem } from '@/types/view/business';
+import type { OnlineUser, CacheItem, DataSourceItem } from '@/types/view/business';
+import type { DictTypeVo011, DictItemVo011 } from '@/types/view/dict';
+import { STATUS_OPTIONS } from '@/config/constants';
 
 // ==================== 配置管理（对接 julyConfig） ====================
 
@@ -178,30 +180,231 @@ export const SchedulerPage = () => {
   );
 };
 
-// ==================== 字典管理（演示） ====================
+// ==================== 字典管理（主子表：字典类型 + 字典项） ====================
+
+type DictType = DictTypeVo011;
+type DictItem = DictItemVo011;
+
+const genId = () => `${Date.now()}${Math.random().toString(36).slice(2, 6)}`;
+
+const INITIAL_DICT_TYPES: DictType[] = [
+  { id: 'dict-type-1', typeCode: 'menu_type', typeName: '菜单类型', description: '菜单的类型分类', status: '1', sort: 1, createdAt: '2026-09-15 10:00:00', updatedAt: '2026-09-15 10:00:00' },
+  { id: 'dict-type-2', typeCode: 'status', typeName: '通用状态', description: '启用/停用状态', status: '1', sort: 2, createdAt: '2026-09-15 10:00:00', updatedAt: '2026-09-15 10:00:00' },
+  { id: 'dict-type-3', typeCode: 'user_status', typeName: '用户状态', description: '用户账号状态', status: '1', sort: 3, createdAt: '2026-09-15 10:00:00', updatedAt: '2026-09-15 10:00:00' },
+];
+
+const INITIAL_DICT_ITEMS: DictItem[] = [
+  // 菜单类型
+  { id: 'dict-item-1', dictTypeId: 'dict-type-1', itemValue: '1', itemLabel: '目录', description: '一级分组', sort: 1, status: '1', createdAt: '2026-09-15 10:00:00', updatedAt: '2026-09-15 10:00:00' },
+  { id: 'dict-item-2', dictTypeId: 'dict-type-1', itemValue: '2', itemLabel: '菜单', description: '页面菜单', sort: 2, status: '1', createdAt: '2026-09-15 10:00:00', updatedAt: '2026-09-15 10:00:00' },
+  { id: 'dict-item-3', dictTypeId: 'dict-type-1', itemValue: '3', itemLabel: '按钮', description: '功能按钮', sort: 3, status: '1', createdAt: '2026-09-15 10:00:00', updatedAt: '2026-09-15 10:00:00' },
+  // 通用状态
+  { id: 'dict-item-4', dictTypeId: 'dict-type-2', itemValue: '1', itemLabel: '启用', description: '正常启用', sort: 1, status: '1', createdAt: '2026-09-15 10:00:00', updatedAt: '2026-09-15 10:00:00' },
+  { id: 'dict-item-5', dictTypeId: 'dict-type-2', itemValue: '0', itemLabel: '停用', description: '禁用状态', sort: 2, status: '1', createdAt: '2026-09-15 10:00:00', updatedAt: '2026-09-15 10:00:00' },
+  // 用户状态
+  { id: 'dict-item-6', dictTypeId: 'dict-type-3', itemValue: '1', itemLabel: '正常', description: '账号正常', sort: 1, status: '1', createdAt: '2026-09-15 10:00:00', updatedAt: '2026-09-15 10:00:00' },
+  { id: 'dict-item-7', dictTypeId: 'dict-type-3', itemValue: '0', itemLabel: '禁用', description: '账号禁用', sort: 2, status: '1', createdAt: '2026-09-15 10:00:00', updatedAt: '2026-09-15 10:00:00' },
+  { id: 'dict-item-8', dictTypeId: 'dict-type-3', itemValue: '2', itemLabel: '锁定', description: '账号锁定', sort: 3, status: '1', createdAt: '2026-09-15 10:00:00', updatedAt: '2026-09-15 10:00:00' },
+];
 
 export const DictPage = () => {
-  const [dicts] = useState<DictItem[]>([
-    { id: 1, type: 'user_status', label: '用户状态', items: [{ value: 'active', label: '正常' }, { value: 'inactive', label: '停用' }, { value: 'locked', label: '锁定' }] },
-    { id: 2, type: 'user_role', label: '用户角色', items: [{ value: 'admin', label: '管理员' }, { value: 'manager', label: '经理' }, { value: 'editor', label: '编辑' }, { value: 'viewer', label: '只读' }] },
-    { id: 3, type: 'order_status', label: '订单状态', items: [{ value: 'pending', label: '待支付' }, { value: 'paid', label: '已支付' }, { value: 'shipped', label: '已发货' }, { value: 'done', label: '已完成' }] },
-  ]);
+  const [dictTypes, setDictTypes] = useState<DictType[]>(INITIAL_DICT_TYPES);
+  const [dictItems, setDictItems] = useState<DictItem[]>(INITIAL_DICT_ITEMS);
+  const [selectedTypeId, setSelectedTypeId] = useState<string>(dictTypes[0]?.id || '');
+  const [typeModal, setTypeModal] = useState<{ open: boolean; node: DictType | null }>({ open: false, node: null });
+  const [itemModal, setItemModal] = useState<{ open: boolean; node: DictItem | null }>({ open: false, node: null });
+  const [typeForm] = Form.useForm();
+  const [itemForm] = Form.useForm();
 
-  const columns: ColumnsType<DictItem> = [
-    { title: '字典类型', dataIndex: 'type', render: (v) => <Tag color="blue">{v}</Tag> },
-    { title: '字典名称', dataIndex: 'label' },
-    { title: '字典项', dataIndex: 'items', render: (items: DictItem['items']) => items.map((i) => <Tag key={i.value}>{i.label}</Tag>) },
+  const selectedType = dictTypes.find((t) => t.id === selectedTypeId) || null;
+  const filteredItems = dictItems
+    .filter((i) => i.dictTypeId === selectedTypeId)
+    .sort((a, b) => a.sort - b.sort);
+
+  // ==================== 字典类型 CRUD ====================
+
+  const handleSaveType = async () => {
+    const v = await typeForm.validateFields();
+    if (typeModal.node) {
+      setDictTypes((prev) => prev.map((t) => t.id === typeModal.node!.id ? { ...t, ...v, updatedAt: new Date().toLocaleString('zh-CN') } : t));
+      toast.success('字典类型已更新');
+    } else {
+      const newType: DictType = { id: genId(), ...v, createdAt: new Date().toLocaleString('zh-CN'), updatedAt: new Date().toLocaleString('zh-CN') };
+      setDictTypes((prev) => [...prev, newType]);
+      setSelectedTypeId(newType.id);
+      toast.success('字典类型已创建');
+    }
+    setTypeModal({ open: false, node: null });
+  };
+
+  const handleDeleteType = (id: string) => {
+    Modal.confirm({
+      title: '删除字典类型',
+      content: '删除后将同时删除该类型下的所有字典项，确定继续吗？',
+      okText: '删除',
+      okButtonProps: { danger: true },
+      cancelText: '取消',
+      onOk: () => {
+        setDictTypes((prev) => prev.filter((t) => t.id !== id));
+        setDictItems((prev) => prev.filter((i) => i.dictTypeId !== id));
+        setSelectedTypeId((prev) => (prev === id ? '' : prev));
+        toast.success('字典类型已删除');
+      },
+    });
+  };
+
+  // ==================== 字典项 CRUD ====================
+
+  const handleSaveItem = async () => {
+    const v = await itemForm.validateFields();
+    if (itemModal.node) {
+      setDictItems((prev) => prev.map((i) => i.id === itemModal.node!.id ? { ...i, ...v, updatedAt: new Date().toLocaleString('zh-CN') } : i));
+      toast.success('字典项已更新');
+    } else {
+      const newItem: DictItem = { id: genId(), dictTypeId: selectedTypeId, ...v, createdAt: new Date().toLocaleString('zh-CN'), updatedAt: new Date().toLocaleString('zh-CN') };
+      setDictItems((prev) => [...prev, newItem]);
+      toast.success('字典项已创建');
+    }
+    setItemModal({ open: false, node: null });
+  };
+
+  const handleDeleteItem = (id: string) => {
+    Modal.confirm({
+      title: '删除字典项',
+      content: '确定删除这个字典项吗？',
+      okText: '删除',
+      okButtonProps: { danger: true },
+      cancelText: '取消',
+      onOk: () => {
+        setDictItems((prev) => prev.filter((i) => i.id !== id));
+        toast.success('字典项已删除');
+      },
+    });
+  };
+
+  // ==================== 表格列定义 ====================
+
+  const typeColumns: ColumnsType<DictType> = [
+    { title: '字典编码', dataIndex: 'typeCode', render: (v) => <code>{v}</code> },
+    { title: '字典名称', dataIndex: 'typeName' },
+    { title: '描述', dataIndex: 'description', ellipsis: true },
+    { title: '状态', dataIndex: 'status', width: 90, render: (s) => <Tag color={s === '1' ? 'green' : 'red'}>{s === '1' ? '启用' : '停用'}</Tag> },
+    {
+      title: '操作', key: 'action', width: 160,
+      render: (_, r) => (
+        <Space size="small">
+          <Button type="link" size="small" onClick={() => { typeForm.setFieldsValue(r); setTypeModal({ open: true, node: r }); }}>编辑</Button>
+          <Popconfirm title="确定删除这个字典类型吗？" okText="删除" cancelText="取消" okButtonProps={{ danger: true }} onConfirm={() => handleDeleteType(r.id)}>
+            <Button type="link" size="small" danger>删除</Button>
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
+
+  const itemColumns: ColumnsType<DictItem> = [
+    { title: '字典项值', dataIndex: 'itemValue', render: (v) => <code>{v}</code> },
+    { title: '字典项标签', dataIndex: 'itemLabel' },
+    { title: '描述', dataIndex: 'description', ellipsis: true },
+    { title: '排序', dataIndex: 'sort', width: 80 },
+    { title: '状态', dataIndex: 'status', width: 90, render: (s) => <Tag color={s === '1' ? 'green' : 'red'}>{s === '1' ? '启用' : '停用'}</Tag> },
+    {
+      title: '操作', key: 'action', width: 160,
+      render: (_, r) => (
+        <Space size="small">
+          <Button type="link" size="small" onClick={() => { itemForm.setFieldsValue(r); setItemModal({ open: true, node: r }); }}>编辑</Button>
+          <Popconfirm title="确定删除这个字典项吗？" okText="删除" cancelText="取消" okButtonProps={{ danger: true }} onConfirm={() => handleDeleteItem(r.id)}>
+            <Button type="link" size="small" danger>删除</Button>
+          </Popconfirm>
+        </Space>
+      ),
+    },
   ];
 
   return (
     <div>
-      <div className="page-header"><h2>字典管理</h2><p>{dicts.length} 个字典类型</p></div>
-      <Card className="table-wrapper" styles={{ body: { padding: 0 } }}>
-        <Table<DictItem> rowKey="id" columns={columns} dataSource={dicts} pagination={false} />
-      </Card>
+      <div className="page-header"><h2>字典管理</h2><p>字典类型 + 字典项（上下结构）</p></div>
+      <div className="dict-vertical">
+        {/* 上部：字典类型 */}
+        <Card className="dict-type-card" title="字典类型" styles={{ body: { padding: 8 } }}
+          extra={<Button type="primary" size="small" onClick={() => { typeForm.resetFields(); setTypeModal({ open: true, node: null }); }}>+ 新建字典类型</Button>}>
+          <Table<DictType>
+            rowKey="id" size="small" columns={typeColumns} dataSource={dictTypes}
+            pagination={false}
+            onRow={(r) => ({ onClick: () => setSelectedTypeId(r.id) })}
+            rowClassName={(r) => r.id === selectedTypeId ? 'dict-type-row-active' : ''}
+          />
+        </Card>
+
+        {/* 下部：字典项 */}
+        <Card
+          title={selectedType ? `字典项 - ${selectedType.typeName}` : '请选择字典类型'}
+          styles={{ body: { padding: 8 } }}
+          extra={
+            <Space>
+              <span className="text-muted text-xs">共 {filteredItems.length} 项</span>
+              <Button type="primary" size="small" disabled={!selectedType} onClick={() => { itemForm.resetFields(); setItemModal({ open: true, node: null }); }}>+ 新建字典项</Button>
+            </Space>
+          }
+        >
+          {selectedType ? (
+            <Table<DictItem> rowKey="id" size="small" columns={itemColumns} dataSource={filteredItems} pagination={false} />
+          ) : (
+            <div className="dict-empty"><Empty description="请先选择字典类型" /></div>
+          )}
+        </Card>
+      </div>
+
+      {/* 字典类型编辑弹窗 */}
+      <Modal title={typeModal.node ? '编辑字典类型' : '新建字典类型'} open={typeModal.open} onCancel={() => setTypeModal({ open: false, node: null })}
+        onOk={handleSaveType} okText="保存" cancelText="取消" destroyOnClose>
+        <Form form={typeForm} layout="vertical" preserve={false}>
+          <Form.Item name="typeCode" label="字典编码" rules={[{ required: true, message: '请输入字典编码' }]}>
+            <Input placeholder="如 menu_type" disabled={!!typeModal.node} />
+          </Form.Item>
+          <Form.Item name="typeName" label="字典名称" rules={[{ required: true, message: '请输入字典名称' }]}>
+            <Input placeholder="如 菜单类型" />
+          </Form.Item>
+          <Form.Item name="description" label="描述">
+            <Input.TextArea rows={2} placeholder="字典类型说明" />
+          </Form.Item>
+          <Form.Item name="status" label="状态" initialValue="1">
+            <Select options={STATUS_OPTIONS} />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* 字典项编辑弹窗 */}
+      <Modal title={itemModal.node ? '编辑字典项' : '新建字典项'} open={itemModal.open} onCancel={() => setItemModal({ open: false, node: null })}
+        onOk={handleSaveItem} okText="保存" cancelText="取消" destroyOnClose>
+        <Form form={itemForm} layout="vertical" preserve={false}>
+          <Form.Item name="itemValue" label="字典项值" rules={[{ required: true, message: '请输入字典项值' }]}>
+            <Input placeholder="如 1" />
+          </Form.Item>
+          <Form.Item name="itemLabel" label="字典项标签" rules={[{ required: true, message: '请输入字典项标签' }]}>
+            <Input placeholder="如 目录" />
+          </Form.Item>
+          <Form.Item name="description" label="描述">
+            <Input.TextArea rows={2} placeholder="字典项说明" />
+          </Form.Item>
+          <Row gutter={12}>
+            <Col span={12}>
+              <Form.Item name="sort" label="排序" rules={[{ required: true, message: '请输入排序' }]}>
+                <Input type="number" placeholder="越小越靠前" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="status" label="状态" initialValue="1">
+                <Select options={STATUS_OPTIONS} />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Modal>
     </div>
   );
 };
+
 
 // ==================== 系统监控（演示） ====================
 
