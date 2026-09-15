@@ -3,10 +3,10 @@ import type { BaseVo011 } from '@/types/common';
 
 // ==================== 契约（/julyDictionary/v1/*） ====================
 
-/** 字典明细项 */
+/** 字典明细项（与后端 JulyDictionaryItemVo011 一致：出参不含 dictionaryCode） */
 export interface JulyDictionaryItemVo011 extends BaseVo011 {
-  /** 所属字典编码（insertItem 用它定位主表） */
-  dictionaryCode: string;
+  /** 所属字典编码（仅 insertItem 入参使用；出参不含此字段） */
+  dictionaryCode?: string;
   /** 明细项编码（同一字典内唯一，不可变） */
   itemCode: string;
   /** 明细项标签 */
@@ -78,11 +78,10 @@ export interface JulyDictionaryItemUpdateVo011 {
   remark?: string;
 }
 
-/** 字典明细列表查询入参 */
+/** 字典明细列表查询入参（与后端一致：仅 dictionaryCode + status） */
 export interface JulyDictionaryItemQueryVo011 {
   dictionaryCode: string;
   status?: string;
-  keyword?: string;
 }
 
 /** 字典明细列表出参（selectItemListByType 返回 data：JulyDictionaryItemVo011[]） */
