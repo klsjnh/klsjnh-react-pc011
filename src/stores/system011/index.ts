@@ -8,3 +8,4 @@ export * from '@/stores/system011/julyRoleStore';
 export * from '@/stores/system011/julyOrganizationStore';
 export * from '@/stores/system011/julyConfigStore';
 export * from '@/stores/system011/julySchedulerStore';
+export * from '@/stores/system011/julyDictionaryStore';

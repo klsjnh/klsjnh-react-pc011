@@ -10,6 +10,7 @@ export const SYSTEM011_ROUTES = {
   julyOrganization: '/system011/julyOrganization',
   julyScheduler: '/system011/julyScheduler',
   julyConfig: '/system011/julyConfig',
+  julyDictionary: '/system011/julyDictionary',
 } as const;
 
 /** 数据服务模块（dataservice011）路由（前缀大写 dataService011，与页面目录一致） */

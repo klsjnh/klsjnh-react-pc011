@@ -46,4 +46,25 @@ export const handlers: Record<string, Handler> = {
     const [removed] = mockConfigs.splice(i, 1);
     return ok({ id: removed.id });
   },
+  '/julyConfig/v1/export': async () => {
+    await delay(350);
+    const rows = mockConfigs.map((c) => ({ code: c.code, data: c.data, status: c.status }));
+    return ok({
+      metaInfo: {
+        objectCode: 'julyConfig',
+        exportTime: new Date().toISOString().slice(0, 19),
+        rowCount: rows.length,
+        columns: [
+          { code: 'code', name: '配置键' },
+          { code: 'data', name: '配置值' },
+          { code: 'status', name: '状态' },
+        ],
+      },
+      rows,
+    });
+  },
+  '/julyConfig/v1/backup011': async () => {
+    await delay(400);
+    return ok(`backup/julyConfig/${Date.now()}.json`);
+  },
 };

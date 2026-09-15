@@ -4,6 +4,7 @@ import { SYSTEM011_ACTIONS } from '@/services/system011/actions';
 import { julyConfigStore } from '@/stores/system011/julyConfigStore';
 import type {
   JulyConfigVo011, JulyConfigQueryVo011, JulyConfigUpdateVo011, JulyConfigUpsertVo,
+  ExportResult011, BackupResult011,
   PageResult011, IdVo011,
 } from '@/types/system011';
 
@@ -38,4 +39,14 @@ export async function saveConfig(params: { id?: string; code: string; data: stri
 export async function removeConfig(id: string): Promise<void> {
   await api.post<IdVo011>(SYSTEM011_ACTIONS.config.logicDelete, { id } as IdVo011);
   await fetchConfigPage(julyConfigStore.getSnapshot().query);
+}
+
+/** 导出全部配置（POST /julyConfig/v1/export，无 body） */
+export function exportConfig(): Promise<ExportResult011> {
+  return api.post<ExportResult011>(SYSTEM011_ACTIONS.config.export, {});
+}
+
+/** 备份全部配置到存储中心（POST /julyConfig/v1/backup011，无 body，返回 object key） */
+export function backupConfig011(): Promise<BackupResult011> {
+  return api.post<BackupResult011>(SYSTEM011_ACTIONS.config.backup011, {});
 }

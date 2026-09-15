@@ -10,4 +10,5 @@ export * from '@/services/system011/julyRoleService';
 export * from '@/services/system011/julyOrganizationService';
 export * from '@/services/system011/julyConfigService';
 export * from '@/services/system011/julySchedulerService';
+export * from '@/services/system011/julyDictionaryService';
 export * from '@/services/system011/exportService';
