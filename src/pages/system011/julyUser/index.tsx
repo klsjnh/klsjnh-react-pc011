@@ -4,16 +4,25 @@
  * 字段直接对齐后端（userAccount/userName/mobile/pkOrg/status），仅补充关联字段 department/roles。
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import { Card, Input, Select, Space, Button, Table, Tag } from 'antd';
+import { DatabaseOutlined, DeleteOutlined, DownloadOutlined, DownOutlined, PlusOutlined } from '@ant-design/icons';
+import { Button, Card, Dropdown, Input, Popconfirm, Select, Space, Table, Tag } from 'antd';
+import type { MenuProps } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useRoleState } from '@/stores/system011/julyRoleStore';
-import { loadRoles } from '@/services/system011';
+import { loadRoles, exportUsers, backupUser011, removeUsers } from '@/services/system011';
 import { useOrganizationState } from '@/stores/system011/julyOrganizationStore';
 import { useUserState } from '@/stores/system011/julyUserStore';
 import { fetchUserPage } from '@/services/system011';
+import { toast } from '@/utils/toast';
 import { mockRelations } from '@/mock/system011';
 import { JulyUserFormModal } from '@/pages/system011/julyUser/JulyUserFormModal';
 import type { JulyUserVo011, JulyUserView } from '@/types/system011/julyUser';
+
+/** 表头单元格水平居中 */
+const hdrCenter = (): React.HTMLAttributes<HTMLElement> => ({ style: { textAlign: 'center' } });
+
+/** 数据内容左对齐 + 表头居中 */
+const leftCell = { align: 'left' as const, onHeaderCell: hdrCenter };
 
 /** 后端 JulyUserVo011 + 关联解析（组织名 / 角色编码） */
 function toView(u: JulyUserVo011, orgNameById: Map<string, string>): JulyUserView {
@@ -31,6 +40,9 @@ export const JulyUser = () => {
   const [keyword, setKeyword] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [modal, setModal] = useState<{ open: boolean; user: JulyUserView | null }>({ open: false, user: null });
+  const [actionLoading, setActionLoading] = useState<'export' | 'backup' | null>(null);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const [batchDeleting, setBatchDeleting] = useState(false);
 
   // loadRoles 内部会拉组织树（填充 orgNameById）；用户分页单独拉
   useEffect(() => { loadRoles(); }, []);
@@ -40,25 +52,79 @@ export const JulyUser = () => {
   const dataSource = users.filter((u) => !statusFilter || u.status === statusFilter);
   const roleLabel = (code: string) => roles.find((r) => r.roleCode === code)?.roleName || code;
 
+  // 导出全部用户 -> 下载细节收敛在 service，页面只反馈结果
+  const handleExport = async (format: 'json' | 'csv' = 'csv') => {
+    setActionLoading('export');
+    try {
+      const res = await exportUsers(format);
+      toast.success(`export julyUser success, ${res.rowCount} rows (${format})`);
+    } catch (e) {
+      toast.error((e as Error)?.message || '导出失败，请重试');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // 备份全部用户 -> 返回 object key
+  const handleBackup = async () => {
+    setActionLoading('backup');
+    try {
+      const key = await backupUser011();
+      toast.success(`backup julyUser success, key=${key}`);
+    } catch (e) {
+      toast.error((e as Error)?.message || '备份失败，请重试');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const exportMenu: MenuProps = {
+    items: [
+      { key: 'json', label: 'JSON (.json)' },
+      { key: 'csv', label: 'CSV (.csv)' },
+    ],
+    onClick: ({ key }) => handleExport(key as 'json' | 'csv'),
+  };
+
+  // 批量逻辑删除（选中行 -> service，删除/刷新已收敛在 service）
+  const handleBatchRemove = async () => {
+    if (!selectedRowKeys.length) return;
+    setBatchDeleting(true);
+    try {
+      const res = await removeUsers(selectedRowKeys.map(String));
+      setSelectedRowKeys([]);
+      toast.success(`批量删除成功 ${res.success} 条，失败 ${res.failed} 条`);
+    } catch (e) {
+      toast.error((e as Error)?.message || '批量删除失败，请重试');
+    } finally {
+      setBatchDeleting(false);
+    }
+  };
+
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (keys: React.Key[]) => setSelectedRowKeys(keys),
+  };
+
   const columns: ColumnsType<JulyUserView> = [
-    { title: '用户名', dataIndex: 'userAccount', width: 120 },
-    { title: '姓名', dataIndex: 'userName', width: 160 },
-    { title: '邮箱', dataIndex: 'email', width: 230,render: (v) => v || '—' },
-    { title: '手机号', dataIndex: 'mobile', width: 130, render: (v) => v || '—' },
-    { title: '组织', dataIndex: 'department', width: 140, render: (v) => v || '—' },
+    { ...leftCell, title: '用户名', dataIndex: 'userAccount', width: 120 },
+    { ...leftCell, title: '姓名', dataIndex: 'userName', width: 160 },
+    { ...leftCell, title: '邮箱', dataIndex: 'email', width: 230, render: (v) => v || '—' },
+    { ...leftCell, title: '手机号', dataIndex: 'mobile', width: 130, render: (v) => v || '—' },
+    { ...leftCell, title: '组织', dataIndex: 'department', width: 140, render: (v) => v || '—' },
     {
-      title: '角色', dataIndex: 'roles', width: 160,
+      title: '角色', dataIndex: 'roles', width: 160, align: 'left', onHeaderCell: hdrCenter,
       render: (codes: string[]) => codes.length === 0
         ? '—'
         : codes.map((c) => <Tag key={c} color="blue">{roleLabel(c)}</Tag>),
     },
     {
-      title: '状态', dataIndex: 'status', width: 90,
+      title: '状态', dataIndex: 'status', width: 90, align: 'center', onHeaderCell: hdrCenter,
       render: (s: string) => <Tag color={s === '1' ? 'green' : 'red'}>{s === '1' ? '正常' : '停用'}</Tag>,
     },
-    { title: '最近登录', dataIndex: 'lastLoginTime', width: 160, render: (v) => v || '—' },
+    { ...leftCell, title: '最近登录', dataIndex: 'lastLoginTime', width: 160, render: (v) => v || '—' },
     {
-      title: '操作', key: 'action', width: 90, fixed: 'right',
+      title: '操作', key: 'action', width: 90, fixed: 'right', align: 'center', onHeaderCell: hdrCenter,
       render: (_, user) => (
         <Space size="small">
           <Button type="link" size="small" onClick={() => setModal({ open: true, user })}>编辑</Button>
@@ -71,21 +137,20 @@ export const JulyUser = () => {
     <div>
       <div className="page-header">
         <h2>用户管理</h2>
-        <p>共 {total} 个用户 · 接口 /julyUser/v1/selectListByPage</p>
       </div>
 
-      <div className="page-toolbar">
-        <div className="toolbar-left">
+      <div className="page-toolbar" style={{ display: 'block' }}>
+        <div className="toolbar-row-search" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
           <Input.Search
             allowClear
             placeholder="搜索账号"
-            className="search-input"
+            style={{ width: 260 }}
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             onSearch={(v) => fetchUserPage({ pageIndex: 1, userAccount: v || undefined })}
           />
           <Select
-            className="filter-select"
+            style={{ width: 140 }}
             value={statusFilter}
             onChange={setStatusFilter}
             options={[
@@ -96,7 +161,33 @@ export const JulyUser = () => {
           />
         </div>
         <div className="toolbar-right">
-          <Button type="primary" onClick={() => setModal({ open: true, user: null })}>+ 新建用户</Button>
+          <Button icon={<PlusOutlined />} onClick={() => setModal({ open: true, user: null })}
+            style={{ background: '#52c41a', borderColor: '#52c41a', color: '#fff' }}>新建用户</Button>
+          <Popconfirm
+            title={`确定要删除选中的 ${selectedRowKeys.length} 个用户吗？`}
+            okText="删除" cancelText="取消" okButtonProps={{ danger: true }}
+            onConfirm={handleBatchRemove}
+            disabled={!selectedRowKeys.length}
+          >
+            <Button
+              icon={<DeleteOutlined />}
+              disabled={!selectedRowKeys.length}
+              loading={batchDeleting}
+              style={
+                selectedRowKeys.length
+                  ? { background: '#ff4d4f', borderColor: '#ff4d4f', color: '#fff' }
+                  : { background: '#f5f5f5', borderColor: '#d9d9d9', color: 'rgba(0, 0, 0, 0.25)' }
+              }
+            >批量删除</Button>
+          </Popconfirm>
+          <Button icon={<DatabaseOutlined />} loading={actionLoading === 'backup'} onClick={handleBackup}
+            style={{ background: '#faad14', borderColor: '#faad14', color: '#fff' }}>备份011</Button>
+          <Dropdown menu={exportMenu} trigger={['click']}>
+            <Button icon={<DownloadOutlined />} loading={actionLoading === 'export'}
+              style={{ background: '#1677ff', borderColor: '#1677ff', color: '#fff' }}>
+              导出 <DownOutlined />
+            </Button>
+          </Dropdown>
         </div>
       </div>
 
@@ -104,6 +195,7 @@ export const JulyUser = () => {
         <Table<JulyUserView>
           rowKey="id"
           columns={columns}
+          rowSelection={rowSelection}
           dataSource={dataSource}
           loading={loading}
           scroll={{ x: 1100 }}

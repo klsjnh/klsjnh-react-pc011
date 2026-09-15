@@ -4,15 +4,14 @@
  * 字段直接对齐后端：code/data/status。
  */
 import React, { useEffect, useState } from 'react';
-import { DatabaseOutlined, DownloadOutlined, DownOutlined, PlusOutlined } from '@ant-design/icons';
+import { DatabaseOutlined, DeleteOutlined, DownloadOutlined, DownOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button, Card, Dropdown, Form, Input, Modal, Popconfirm, Space, Table, Tag } from 'antd';
 import type { MenuProps } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useConfigState } from '@/stores/system011/julyConfigStore';
-import { fetchConfigPage, saveConfig, removeConfig, exportConfig, backupConfig011 } from '@/services/system011';
+import { fetchConfigPage, saveConfig, removeConfig, removeConfigs, exportConfig, backupConfig011 } from '@/services/system011';
 import { toast } from '@/utils/toast';
 import type { JulyConfigVo011 } from '@/types/system011/julyConfig';
-import type { ExportResult011 } from '@/types/system011/julyConfig/vo';
 
 /** 表头单元格水平居中 */
 const hdrCenter = (): React.HTMLAttributes<HTMLElement> => ({ style: { textAlign: 'center' } });
@@ -26,37 +25,17 @@ export const JulyConfig = () => {
   const [form] = Form.useForm();
   const [saving, setSaving] = useState(false);
   const [actionLoading, setActionLoading] = useState<'export' | 'backup' | null>(null);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const [batchDeleting, setBatchDeleting] = useState(false);
 
   useEffect(() => { fetchConfigPage({ pageIndex: 1, pageSize: 10 }); }, []);
 
-  // 导出全部配置 -> 按格式下载（后端 /julyConfig/v1/export 返回结构化 ExportResult，前端按 json/csv 渲染）
+  // 导出全部配置 -> 下载细节收敛在 service，页面只反馈结果
   const handleExport = async (format: 'json' | 'csv' = 'csv') => {
     setActionLoading('export');
     try {
-      const res: ExportResult011 = await exportConfig();
-      const meta = res?.metaInfo;
-      const rows = res?.rows || [];
-      const cols = meta?.columns || [];
-      if (!cols.length) return toast.success('export complete, 0 rows');
-      let blob: Blob;
-      let ext = format;
-      if (format === 'json') {
-        blob = new Blob([JSON.stringify(meta ? { metaInfo: meta, rows } : { rows }, null, 2)],
-          { type: 'application/json' });
-      } else {
-        const header = cols.map((c) => c.name).join(',');
-        const body = rows
-          .map((r) => cols.map((c) => `${(r[c.code] ?? '') as string}`.replace(/,/g, '，')).join(','))
-          .join('\n');
-        blob = new Blob(['\uFEFF' + `${header}\n${body}`], { type: 'text/csv' });
-      }
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${meta?.objectCode || 'julyConfig'}.${ext}`;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast.success(`export julyConfig success, ${rows.length} rows (${format})`);
+      const res = await exportConfig(format);
+      toast.success(`export julyConfig success, ${res.rowCount} rows (${format})`);
     } catch (e) {
       toast.error((e as Error)?.message || '导出失败，请重试');
     } finally {
@@ -115,6 +94,26 @@ export const JulyConfig = () => {
     }
   };
 
+  // 批量逻辑删除（选中行 -> service，删除/刷新已收敛在 service；后端无批量端点，service 内循环单删）
+  const handleBatchRemove = async () => {
+    if (!selectedRowKeys.length) return;
+    setBatchDeleting(true);
+    try {
+      const res = await removeConfigs(selectedRowKeys.map(String));
+      setSelectedRowKeys([]);
+      toast.success(`批量删除成功 ${res.success} 条，失败 ${res.failed} 条`);
+    } catch (e) {
+      toast.error((e as Error)?.message || '批量删除失败，请重试');
+    } finally {
+      setBatchDeleting(false);
+    }
+  };
+
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (keys: React.Key[]) => setSelectedRowKeys(keys),
+  };
+
   const columns: ColumnsType<JulyConfigVo011> = [
     { ...leftCell, title: '配置键', dataIndex: 'code', width: 160, render: (v) => <code>{v}</code> },
     { ...leftCell, title: '配置值', dataIndex: 'data' },
@@ -151,6 +150,23 @@ export const JulyConfig = () => {
         <div className="toolbar-right">
           <Button icon={<PlusOutlined />} onClick={() => { form.resetFields(); setModal({ open: true, node: null }); }}
             style={{ background: '#52c41a', borderColor: '#52c41a', color: '#fff' }}>新建配置</Button>
+          <Popconfirm
+            title={`确定要删除选中的 ${selectedRowKeys.length} 条配置吗？`}
+            okText="删除" cancelText="取消" okButtonProps={{ danger: true }}
+            onConfirm={handleBatchRemove}
+            disabled={!selectedRowKeys.length}
+          >
+            <Button
+              icon={<DeleteOutlined />}
+              disabled={!selectedRowKeys.length}
+              loading={batchDeleting}
+              style={
+                selectedRowKeys.length
+                  ? { background: '#ff4d4f', borderColor: '#ff4d4f', color: '#fff' }
+                  : { background: '#f5f5f5', borderColor: '#d9d9d9', color: 'rgba(0, 0, 0, 0.25)' }
+              }
+            >批量删除</Button>
+          </Popconfirm>
           <Button icon={<DatabaseOutlined />} loading={actionLoading === 'backup'} onClick={handleBackup}
             style={{ background: '#faad14', borderColor: '#faad14', color: '#fff' }}>备份011</Button>
           <Dropdown menu={exportMenu} trigger={['click']}>
@@ -166,6 +182,7 @@ export const JulyConfig = () => {
         <Table<JulyConfigVo011>
           rowKey="id"
           columns={columns}
+          rowSelection={rowSelection}
           dataSource={list}
           loading={loading}
           scroll={{ x: 800 }}

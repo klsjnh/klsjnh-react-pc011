@@ -22,8 +22,10 @@ export interface IdVo011 {
   id: string;
 }
 
-/** 逻辑删除入参：主键数组（直接作为 body 发送，非对象包裹） */
-export type IdsVo011 = string[];
+/** 批量逻辑删除入参（body 为对象包裹：{ ids: [...] }，勿传裸集合） */
+export interface IdsVo011 {
+  ids: string[];
+}
 
 /** 批量逻辑删除结果（julyUser/v1/logicDelete 返回 data） */
 export interface BatchDeleteResultVo011 {

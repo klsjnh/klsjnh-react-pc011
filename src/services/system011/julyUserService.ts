@@ -20,6 +20,10 @@ import type {
   SaveUserParams,
   PageResult011,
   IdVo011,
+  IdsVo011,
+  ExportResult011,
+  BackupResult011,
+  BatchDeleteResultVo011,
 } from '@/types/system011';
 
 export type { SaveUserParams };
@@ -93,4 +97,50 @@ export async function saveUser(params: SaveUserParams): Promise<string> {
   const q = julyUserStore.getSnapshot().query;
   await fetchUserPage({ ...q, pageIndex: id ? q.pageIndex : 1 });
   return savedId;
+}
+
+/**
+ * 导出全部用户（POST /julyUser/v1/export）并按 json/csv 触发浏览器下载。
+ * 下载/拆包细节收敛在 service 层，页面只需调用并反馈结果。
+ */
+export async function exportUsers(format: 'json' | 'csv' = 'csv'): Promise<{ objectCode: string; rowCount: number }> {
+  const res = await api.post<ExportResult011>(SYSTEM011_ACTIONS.user.export, {});
+  const meta = res?.metaInfo;
+  const rows = res?.rows || [];
+  const cols = meta?.columns || [];
+  const objectCode = meta?.objectCode || 'julyUser';
+  if (!cols.length) return { objectCode, rowCount: 0 };
+
+  let blob: Blob;
+  if (format === 'json') {
+    blob = new Blob([JSON.stringify(meta ? { metaInfo: meta, rows } : { rows }, null, 2)], { type: 'application/json' });
+  } else {
+    const header = cols.map((c) => c.name).join(',');
+    const body = rows
+      .map((r) => cols.map((c) => `${(r[c.code] ?? '') as string}`.replace(/,/g, '，')).join(','))
+      .join('\n');
+    blob = new Blob(['\uFEFF' + `${header}\n${body}`], { type: 'text/csv' });
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${objectCode}.${format}`;
+  a.click();
+  URL.revokeObjectURL(url);
+  return { objectCode, rowCount: rows.length };
+}
+
+/** 备份全部用户到存储中心（POST /julyUser/v1/backup011，无 body，返回 object key） */
+export function backupUser011(): Promise<BackupResult011> {
+  return api.post<BackupResult011>(SYSTEM011_ACTIONS.user.backup011, {});
+}
+
+/**
+ * 批量逻辑删除（POST /julyUser/v1/logicDeleteBatch，body 为 { ids: [...] }）
+ * 删除成功后内部刷新当前分页列表（dataSource 从 store 同步），返回删除汇总。
+ */
+export async function removeUsers(ids: string[]): Promise<BatchDeleteResultVo011> {
+  const res = await api.post<BatchDeleteResultVo011>(SYSTEM011_ACTIONS.user.logicDeleteBatch, { ids } as IdsVo011);
+  await fetchUserPage();
+  return res;
 }
