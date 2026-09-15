@@ -6,15 +6,15 @@
  */
 import React, { useEffect, useState } from 'react';
 import { ApiOutlined } from '@ant-design/icons';
-import { Alert, Button, Card, Col, Form, Input, Modal, Popconfirm, Row, Select, Space, Table, Tag } from 'antd';
+import { Button, Card, Col, Form, Input, Modal, Popconfirm, Row, Select, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useDatasourceState } from '@/stores/dataservice011/julyDatasourceStore';
 import { fetchDatasourcePage, saveDatasource, removeDatasource, testDatasourceConnection } from '@/services/dataservice011';
 import { toast } from '@/utils/toast';
+import { TestFeedbackAlert, type TestFeedback } from '@/components/system011/TestFeedbackAlert';
 import type { DataSourceItem, JulyDatasourceTestVo011, JulyDatasourceTestResultVo011 } from '@/types/dataservice011/datasource';
 import { DB_TYPE_OPTIONS } from '@/types/dataservice011/datasource';
 import { STATUS_LABEL } from '@/config/constants';
-import './index.css';
 
 /** 表头单元格水平居中 */
 const hdrCenter = (): React.HTMLAttributes<HTMLElement> => ({ style: { textAlign: 'center' } });
@@ -22,17 +22,8 @@ const hdrCenter = (): React.HTMLAttributes<HTMLElement> => ({ style: { textAlign
 /** 内容左对齐 + 表头居中（用户要求：表头居中、内容 left） */
 const leftCell = { align: 'left' as const, onHeaderCell: hdrCenter };
 
-/** 测试连接反馈（参照老前端：成功/失败 + 耗时） */
-interface TestFeedback {
-  ok: boolean;
-  message: string;
-  elapsedMs?: number;
-  databaseProduct?: string | null;
-  databaseVersion?: string | null;
-}
-
-/** 组装测试反馈 */
-function buildFeedback(res: JulyDatasourceTestResultVo011, name?: string, startedAt?: number): TestFeedback {
+/** 组装测试反馈（供 TestFeedbackAlert 消费） */
+function buildFeedback(res: JulyDatasourceTestResultVo011, startedAt?: number): TestFeedback {
   const elapsedMs = startedAt != null ? Date.now() - startedAt : undefined;
   return {
     ok: res.success,
@@ -43,35 +34,11 @@ function buildFeedback(res: JulyDatasourceTestResultVo011, name?: string, starte
   };
 }
 
-/** 测试连接反馈展示（参照老前端：三行 = 结果[message] / 耗时 / 数据库产品·版本） */
-function TestAlert({ data }: { data: TestFeedback }) {
-  const timing = data.elapsedMs != null
-    ? data.elapsedMs < 1000 ? `${data.elapsedMs}ms` : `${(data.elapsedMs / 1000).toFixed(2)}s`
-    : '';
-  const db = data.databaseProduct ? `数据库：${data.databaseProduct}` : '';
-  const version = data.databaseVersion ? `版本：${data.databaseVersion}` : '';
-  return (
-    <Alert
-      type={data.ok ? 'success' : 'error'}
-      showIcon
-      closable
-      message={data.ok ? '连接成功' : '连接失败'}
-      description={
-        <div className="test-feedback-lines">
-          <div className="tf-msg">{data.message || (data.ok ? '连接成功' : '连接失败')}</div>
-          {timing && <div className="tf-timing">耗时：{timing}</div>}
-          {(db || version) && (
-            <div className="tf-db">
-              {db && <span>{db}</span>}
-              {db && version && <span className="tf-sep"> · </span>}
-              {version && <span>{version}</span>}
-            </div>
-          )}
-        </div>
-      }
-      className="test-feedback"
-    />
-  );
+/** 请求异常（如 HTTP 500）时的失败反馈 -> 用 Alert 展示，而非 toast */
+function failureFeedback(e: unknown, startedAt?: number): TestFeedback {
+  const elapsedMs = startedAt != null ? Date.now() - startedAt : undefined;
+  const msg = (e as Error)?.message || '连接测试请求失败';
+  return { ok: false, message: msg, elapsedMs };
 }
 
 export const JulyDatasource = () => {
@@ -100,24 +67,32 @@ export const JulyDatasource = () => {
 
   /** 弹窗内测试连接（新建草稿态 / 编辑重测），结果展示在弹窗内 Alert */
   const handleModalTest = async () => {
+    // 表单校验失败 → toast 提示补全信息（属于校验，不占用 Alert）
+    let v: { dsCode: string; dbType: string; jdbcUrl: string; username: string; driverClass?: string; password?: string };
     try {
-      const v = await form.validateFields();
-      setModalTesting(true);
-      setModalTest(null);
-      const startedAt = Date.now();
-      const payload: JulyDatasourceTestVo011 = {
-        id: modal.node?.id,
-        dsCode: modal.node?.dsCode || v.dsCode,
-        dbType: v.dbType,
-        jdbcUrl: v.jdbcUrl,
-        username: v.username,
-        driverClass: v.driverClass,
-        password: v.password || undefined,
-      };
+      v = await form.validateFields();
+    } catch {
+      toast.warning('请先完善连接信息（编码/名称/类型/JDBC URL/用户名）后再测试');
+      return;
+    }
+    setModalTesting(true);
+    setModalTest(null);
+    const startedAt = Date.now();
+    const payload: JulyDatasourceTestVo011 = {
+      id: modal.node?.id,
+      dsCode: modal.node?.dsCode || v.dsCode,
+      dbType: v.dbType,
+      jdbcUrl: v.jdbcUrl,
+      username: v.username,
+      driverClass: v.driverClass,
+      password: v.password || undefined,
+    };
+    try {
       const res = await testDatasourceConnection(payload);
-      setModalTest(buildFeedback(res, v.dsName, startedAt));
+      setModalTest(buildFeedback(res, startedAt));
     } catch (e) {
-      toast.warning((e as Error)?.message || '请先完善连接信息（编码/名称/类型/JDBC URL/用户名）后再测试');
+      // 请求失败（如 HTTP 500）→ 在 Alert 里明确提示失败
+      setModalTest(failureFeedback(e, startedAt));
     } finally {
       setModalTesting(false);
     }
@@ -130,9 +105,10 @@ export const JulyDatasource = () => {
     const startedAt = Date.now();
     try {
       const res = await testDatasourceConnection({ id: row.id, dsCode: row.dsCode });
-      setPageTest(buildFeedback(res, row.dsName, startedAt));
+      setPageTest(buildFeedback(res, startedAt));
     } catch (e) {
-      toast.error((e as Error)?.message || '连接失败');
+      // 请求失败（如 HTTP 500）→ Alert 提示失败，不再用 toast
+      setPageTest(failureFeedback(e, startedAt));
     } finally {
       setRowTestingId(null);
     }
@@ -204,7 +180,7 @@ export const JulyDatasource = () => {
         </div>
       </div>
 
-      {pageTest && <TestAlert data={pageTest} />}
+      {pageTest && <TestFeedbackAlert data={pageTest} />}
 
       <Card className="table-wrapper" styles={{ body: { padding: 0 } }}>
         <Table<DataSourceItem>
@@ -239,7 +215,7 @@ export const JulyDatasource = () => {
         destroyOnClose
       >
         <Form form={form} layout="vertical" preserve={false} initialValues={formInitialValues}>
-          {modalTest && <TestAlert data={modalTest} />}
+          {modalTest && <TestFeedbackAlert data={modalTest} />}
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="dsCode" label="数据源编码" rules={[{ required: true, message: '请输入数据源编码' }]}>
