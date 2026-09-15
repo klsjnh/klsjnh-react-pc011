@@ -8,7 +8,7 @@ import { Button, Card, Col, Form, Input, Modal, Popconfirm, Row, Select, Space, 
 import type { ColumnsType } from 'antd/es/table';
 import { useSchedulerState } from '@/stores/system011/julySchedulerStore';
 import {
-  fetchSchedulerPage, saveScheduler, startScheduler, stopScheduler, runSchedulerOnce, removeSchedulers,
+  fetchSchedulerPage, saveScheduler, runSchedulerOnce, removeSchedulers,
 } from '@/services/system011';
 import { STATUS_OPTIONS } from '@/config/constants';
 import { toast } from '@/utils/toast';
@@ -20,41 +20,65 @@ export const JulyScheduler = () => {
   const [form] = Form.useForm();
 
   useEffect(() => { fetchSchedulerPage({ pageIndex: 1, pageSize: 10 }); }, []);
-  useEffect(() => {
-    if (!modal.open) return;
-    form.setFieldsValue({
-      schedulerCode: modal.node?.schedulerCode || '',
-      schedulerName: modal.node?.schedulerName || '',
-      schedulerHandler: modal.node?.schedulerHandler || '',
-      schedulerCron: modal.node?.schedulerCron || '',
-      status: modal.node?.status || '0',
-    });
-  }, [modal, form]);
+
+  // 表单初始值：编辑回填无需 setFieldsValue 副作用（用 key 重挂载保证每次打开都是干净初始值）
+  const formInitialValues = {
+    schedulerCode: modal.node?.schedulerCode || '',
+    schedulerName: modal.node?.schedulerName || '',
+    schedulerHandler: modal.node?.schedulerHandler || '',
+    schedulerCron: modal.node?.schedulerCron || '',
+    status: modal.node?.status || '0',
+  };
+
+  const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
-    const v = await form.validateFields();
-    await saveScheduler({ id: modal.node?.id, schedulerCode: v.schedulerCode, schedulerName: v.schedulerName, schedulerHandler: v.schedulerHandler, schedulerCron: v.schedulerCron, status: v.status });
-    toast.success('保存成功');
-    setModal({ open: false, node: null });
+    try {
+      const v = await form.validateFields();
+      setSaving(true);
+      const savedId = await saveScheduler({ id: modal.node?.id, schedulerCode: v.schedulerCode, schedulerName: v.schedulerName, schedulerHandler: v.schedulerHandler, schedulerCron: v.schedulerCron, status: v.status });
+      toast.success(modal.node?.id ? `update ${modal.node.id} success ...` : `insert ${savedId} success ...`);
+      setModal({ open: false, node: null });
+    } catch (e) {
+      toast.error((e as Error)?.message || '保存失败，请检查输入');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRunOnce = async (id: string) => {
+    try {
+      await runSchedulerOnce(id);
+      toast.success(`run once ${id} success ...`);
+      await fetchSchedulerPage(query);
+    } catch (e) {
+      toast.error((e as Error)?.message || '执行失败，请重试');
+    }
+  };
+
+  const handleRemove = async (id: string) => {
+    try {
+      await removeSchedulers([id]);
+      toast.success(`delete ${id} success ...`);
+    } catch (e) {
+      toast.error((e as Error)?.message || '删除失败，请重试');
+    }
   };
 
   const columns: ColumnsType<JulySchedulerVo011> = [
-    { title: '任务编码', dataIndex: 'schedulerCode', width: 140 },
-    { title: '任务名称', dataIndex: 'schedulerName', width: 230 },
-    { title: '处理器', dataIndex: 'schedulerHandler', width: 260 },
-    { title: 'Cron', dataIndex: 'schedulerCron', width: 160, render: (v) => <code>{v}</code> },
-    { title: '执行次数', dataIndex: 'executeTimes', width: 90 },
-    { title: '状态', dataIndex: 'status', width: 90, render: (s) => <Tag color={s === '1' ? 'green' : 'default'}>{s === '1' ? '运行中' : '已停止'}</Tag> },
+    { title: '任务编码', dataIndex: 'schedulerCode', width: 140, align: 'center' },
+    { title: '任务名称', dataIndex: 'schedulerName', width: 230, align: 'center' },
+    { title: '处理器', dataIndex: 'schedulerHandler', width: 260, align: 'center' },
+    { title: 'Cron', dataIndex: 'schedulerCron', width: 160, align: 'center', render: (v) => <code>{v}</code> },
+    { title: '执行次数', dataIndex: 'executeTimes', width: 90, align: 'center' },
+    { title: '状态', dataIndex: 'status', width: 90, align: 'center', render: (s) => <Tag color={s === '1' ? 'green' : 'default'}>{s === '1' ? '运行中' : '已停止'}</Tag> },
     {
-      title: '操作', key: 'action', width: 240, fixed: 'right',
+      title: '操作', key: 'action', width: 200, fixed: 'right', align: 'center',
       render: (_, r) => (
         <Space size="small">
           <Button type="link" size="small" onClick={() => setModal({ open: true, node: r })}>编辑</Button>
-          {r.status === '1'
-            ? <Button type="link" size="small" onClick={() => stopScheduler(r.id)}>停止</Button>
-            : <Button type="link" size="small" onClick={() => startScheduler(r.id)}>启动</Button>}
-          <Button type="link" size="small" onClick={() => runSchedulerOnce(r.id)}>执行一次</Button>
-          <Popconfirm title="确定删除这个定时任务吗？" okText="删除" cancelText="取消" okButtonProps={{ danger: true }} onConfirm={() => removeSchedulers([r.id])}>
+          <Button type="link" size="small" onClick={() => handleRunOnce(r.id)}>执行一次</Button>
+          <Popconfirm title="确定删除这个定时任务吗？" okText="删除" cancelText="取消" okButtonProps={{ danger: true }} onConfirm={() => handleRemove(r.id)}>
             <Button type="link" size="small" danger>删除</Button>
           </Popconfirm>
         </Space>
@@ -102,9 +126,9 @@ export const JulyScheduler = () => {
         />
       </Card>
 
-      <Modal title={modal.node ? '编辑任务' : '新建任务'} open={modal.open} onCancel={() => setModal({ open: false, node: null })}
-        onOk={handleSave} okText="保存" cancelText="取消" destroyOnClose>
-        <Form form={form} layout="vertical" preserve={false}>
+      <Modal title={modal.node ? '编辑任务' : '新建任务'} key={modal.node?.id ?? 'new'} open={modal.open} onCancel={() => setModal({ open: false, node: null })}
+        onOk={handleSave} okText="保存" cancelText="取消" confirmLoading={saving} destroyOnClose>
+        <Form form={form} layout="vertical" preserve={false} initialValues={formInitialValues}>
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="schedulerCode" label="任务编码" rules={[{ required: true, message: '请输入任务编码' }]}>

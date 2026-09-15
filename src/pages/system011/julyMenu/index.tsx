@@ -212,6 +212,7 @@ export const JulyMenu = () => {
         menuIcon: v.menuIcon,
         menuRoute: v.menuRoute,
         menuType: v.menuType,
+        parentId: v.parentId || '',
         status: v.status,
         sortOrder: v.sortOrder,
       });
@@ -302,7 +303,7 @@ export const JulyMenu = () => {
                 <Row gutter={24}>
                   <Col span={12}>
                     <Form.Item name="menuCode" label="菜单编码" rules={[{ required: true, message: '请输入菜单编码' }]}>
-                      <Input />
+                      <Input disabled />
                     </Form.Item>
                   </Col>
                   <Col span={12}>

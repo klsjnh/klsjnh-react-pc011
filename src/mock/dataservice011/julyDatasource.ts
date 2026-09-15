@@ -1,29 +1,50 @@
-/** Mock：数据源（julyDatasource） - 对齐后端 dataservice011 模块 */
+/** Mock：数据源（julyDatasource） - 对齐后端 dataservice011 模块契约 */
 import { ok, fail, delay, pageResult, type Handler } from '@/mock/system011/common';
 import type { DataSourceItem } from '@/types/dataservice011/datasource';
 
 /** mock 数据源自增 id */
 let nextId = 100;
 
-/** Mock 数据源列表 */
+/** Mock 数据源列表（字段对齐后端 VO：dsCode/dsName/dbType/jdbcUrl/schemaName/username/remark/status） */
 export const mockDataSources: DataSourceItem[] = [
-  { id: 1, name: '主数据库', type: 'MySQL', host: '192.168.1.10:3306', database: 'enterprise_main', status: 'connected', latency: '2ms' },
-  { id: 2, name: '缓存数据库', type: 'Redis', host: '192.168.1.12:6379', database: 'db0', status: 'connected', latency: '0.5ms' },
-  { id: 3, name: '测试数据库', type: 'MySQL', host: '10.0.0.20:3306', database: 'test_db', status: 'disconnected', latency: '-' },
-  { id: 4, name: '分析数据库', type: 'PostgreSQL', host: '192.168.1.15:5432', database: 'analytics', status: 'connected', latency: '5ms' },
+  {
+    id: 'ds-0001', dsCode: 'ds_main', dsName: '主数据库', dbType: 'mysql',
+    jdbcUrl: 'jdbc:mysql://192.168.1.10:3306/enterprise_main', schemaName: 'enterprise_main',
+    username: 'root', driverClass: '', remark: '业务主库', status: '1',
+    createTime: '2026-09-15 10:00:00', updateTime: '2026-09-15 10:00:00',
+  },
+  {
+    id: 'ds-0002', dsCode: 'ds_analytics', dsName: '分析数据库', dbType: 'postgresql',
+    jdbcUrl: 'jdbc:postgresql://192.168.1.15:5432/analytics', schemaName: 'analytics',
+    username: 'postgres', driverClass: '', remark: '', status: '1',
+    createTime: '2026-09-15 10:01:00', updateTime: '2026-09-15 10:01:00',
+  },
+  {
+    id: 'ds-0003', dsCode: 'ds_test', dsName: '测试数据库', dbType: 'mysql',
+    jdbcUrl: 'jdbc:mysql://10.0.0.20:3306/test_db', schemaName: 'test_db',
+    username: 'test', driverClass: '', remark: '', status: '0',
+    createTime: '2026-09-15 10:02:00', updateTime: '2026-09-15 10:02:00',
+  },
 ];
 
 export const handlers: Record<string, Handler> = {
-  // ===== 分页查询（名称模糊过滤） =====
+  // ===== 分页查询（keyword 模糊 dsCode/dsName/jdbcUrl，status 过滤） =====
   '/julyDatasource/v1/selectListByPage': async (body) => {
     await delay(300);
-    const kw = (body?.name || body?.keyword || '').trim().toLowerCase();
+    const kw = (body?.keyword || body?.name || '').trim().toLowerCase();
+    const status = body?.status;
     let rows = [...mockDataSources];
-    if (kw) rows = rows.filter((r) => r.name.toLowerCase().includes(kw));
+    if (kw) {
+      rows = rows.filter((r) =>
+        r.dsCode.toLowerCase().includes(kw) ||
+        r.dsName.toLowerCase().includes(kw) ||
+        (r.jdbcUrl || '').toLowerCase().includes(kw));
+    }
+    if (status) rows = rows.filter((r) => r.status === status);
     return ok(pageResult(rows, body?.pageIndex || 1, body?.pageSize || 10));
   },
 
-  // ===== 主键查询 =====
+  // ===== 主键查询（mock 模式下仍按 body.id 匹配） =====
   '/julyDatasource/v1/getById': async (body) => {
     await delay(200);
     const item = mockDataSources.find((s) => s.id === body?.id);
@@ -34,35 +55,47 @@ export const handlers: Record<string, Handler> = {
   // ===== 新增（写入 mock 列表） =====
   '/julyDatasource/v1/insert': async (body) => {
     await delay(400);
-    const name = (body?.name || '').trim();
-    if (!name) return fail('insert: name is required', 400);
+    const dsCode = (body?.dsCode || '').trim();
+    const dsName = (body?.dsName || '').trim();
+    if (!dsCode) return fail('insert: dsCode is required', 400);
+    if (!dsName) return fail('insert: dsName is required', 400);
+    if (mockDataSources.some((s) => s.dsCode === dsCode)) return fail(`insert: dsCode ${dsCode} already exists`, 400);
     const item: DataSourceItem = {
-      id: nextId++,
-      name,
-      type: body?.type || 'MySQL',
-      host: body?.host || '',
-      database: body?.database || '',
-      status: 'connected',
-      latency: '1ms',
+      id: String(nextId++),
+      dsCode,
+      dsName,
+      dbType: body?.dbType || 'mysql',
+      jdbcUrl: body?.jdbcUrl || '',
+      schemaName: body?.schemaName || '',
+      username: body?.username || '',
+      driverClass: body?.driverClass || '',
+      remark: body?.remark || '',
+      status: '1',
+      createTime: '2026-09-15 10:10:00',
+      updateTime: '2026-09-15 10:10:00',
     };
     mockDataSources.unshift(item);
     return ok({ id: item.id });
   },
 
-  // ===== 更新 =====
+  // ===== 更新（dsCode 不可变） =====
   '/julyDatasource/v1/update': async (body) => {
     await delay(400);
     const item = mockDataSources.find((s) => s.id === body?.id);
     if (!item) return fail(`record not found, id=${body?.id}`, 404);
-    if (body?.name !== undefined) item.name = body.name;
-    if (body?.type !== undefined) item.type = body.type;
-    if (body?.host !== undefined) item.host = body.host;
-    if (body?.database !== undefined) item.database = body.database;
-    if (body?.status !== undefined) item.status = body.status;
+    if (body?.dsName !== undefined) item.dsName = body.dsName;
+    if (body?.dbType !== undefined) item.dbType = body.dbType;
+    if (body?.jdbcUrl !== undefined) item.jdbcUrl = body.jdbcUrl;
+    if (body?.schemaName !== undefined) item.schemaName = body.schemaName;
+    if (body?.username !== undefined) item.username = body.username;
+    if (body?.driverClass !== undefined) item.driverClass = body.driverClass;
+    if (body?.remark !== undefined) item.remark = body.remark;
+    // status 不在 update VO 中（后端 update 不含 status），这里仅记录
+    item.updateTime = '2026-09-15 10:12:00';
     return ok({ id: item.id });
   },
 
-  // ===== 逻辑删除（单个，字节从 mock 列表移除） =====
+  // ===== 逻辑删除（单个） =====
   '/julyDatasource/v1/logicDelete': async (body) => {
     await delay(300);
     const i = mockDataSources.findIndex((s) => s.id === body?.id);
@@ -74,9 +107,9 @@ export const handlers: Record<string, Handler> = {
   // ===== 逻辑删除（批量） =====
   '/julyDatasource/v1/logicDeleteBatch': async (body) => {
     await delay(500);
-    const ids: number[] = body?.ids || [];
+    const ids: string[] = body?.ids || [];
     let success = 0;
-    const errors: { id: number; message: string }[] = [];
+    const errors: { id: string; message: string }[] = [];
     for (const id of ids) {
       const i = mockDataSources.findIndex((s) => s.id === id);
       if (i < 0) { errors.push({ id, message: 'record not found' }); continue; }
@@ -89,14 +122,19 @@ export const handlers: Record<string, Handler> = {
   // ===== 测试连接 =====
   '/julyDatasource/v1/testConnection': async (body) => {
     await delay(800);
-    const source = mockDataSources.find((s) => s.host === body?.host && s.database === body?.database);
-    if (source) return ok({ connected: source.status === 'connected', latency: source.latency, message: '连接成功' });
-    return ok({ connected: false, message: '无法连接到该数据源' });
+    // id 存在 → 重测已保存；否则按草稿 jdbcUrl 判定
+    const item = body?.id ? mockDataSources.find((s) => s.id === body.id) : undefined;
+    const jdbcUrl = item?.jdbcUrl || body?.jdbcUrl || '';
+    const reachable = jdbcUrl.startsWith('jdbc:mysql://192.168.') || jdbcUrl.startsWith('jdbc:postgresql://192.168.') || (item && item.status === '1');
+    if (reachable) {
+      return ok({ success: true, message: '连接成功', databaseProduct: item?.dbType === 'postgresql' ? 'PostgreSQL' : 'MySQL', databaseVersion: '8.0' });
+    }
+    return ok({ success: false, message: '无法连接到该数据源', databaseProduct: null, databaseVersion: null });
   },
 
   // ===== 重新加载注册表 =====
   '/julyDatasource/v1/reloadRegistry': async () => {
     await delay(600);
-    return ok({ message: '注册表已重新加载' });
+    return ok({ enabled: mockDataSources.filter((s) => s.status === '1').length, registered: mockDataSources.length, reused: 0, closed: 0, failed: 0 });
   },
 };

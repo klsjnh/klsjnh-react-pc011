@@ -81,5 +81,16 @@ export const SYSTEM011_ACTIONS = {
     stop: '/julyScheduler/v1/stop',
     runOnce: '/julyScheduler/v1/runOnce',
   },
+  dictionary: {
+    insert: '/julyDictionary/v1/insert',
+    update: '/julyDictionary/v1/update',
+    logicDelete: '/julyDictionary/v1/logicDelete',
+    getById: '/julyDictionary/v1/getById',
+    selectListByPage: '/julyDictionary/v1/selectListByPage',
+    insertItem: '/julyDictionary/v1/insertItem',
+    updateItem: '/julyDictionary/v1/updateItem',
+    logicDeleteItem: '/julyDictionary/v1/logicDeleteItem',
+    selectItemListByType: '/julyDictionary/v1/selectItemListByType',
+  },
   exportData: '/export/v1',
 } as const;

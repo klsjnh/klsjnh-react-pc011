@@ -88,7 +88,7 @@ export const GLOBAL_MENUS: NavItem[] = [
     label: '业务中心',
     icon: AppstoreOutlined,
     children: [
-      { path: '/business/config', label: '配置管理', icon: SettingOutlined },
+      { path: SYSTEM011_ROUTES.julyConfig, label: '配置管理', icon: SettingOutlined },
       { path: SYSTEM011_ROUTES.julyScheduler, label: '定时任务', icon: FieldTimeOutlined },
       { path: '/business/dict', label: '字典管理', icon: BookOutlined },
       { path: '/business/monitor', label: '系统监控', icon: MonitorOutlined },

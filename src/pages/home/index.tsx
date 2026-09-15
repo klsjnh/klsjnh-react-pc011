@@ -24,11 +24,11 @@ const JulyMenuPage = lazy(() => import('@/pages/system011/julyMenu').then(m => (
 const JulyPermissionPage = lazy(() => import('@/pages/system011/julyPermission').then(m => ({ default: m.JulyPermission })));
 const JulyOrganizationPage = lazy(() => import('@/pages/system011/julyOrganization').then(m => ({ default: m.JulyOrganization })));
 const JulySchedulerPage = lazy(() => import('@/pages/system011/julyScheduler').then(m => ({ default: m.JulyScheduler })));
+const JulyConfigPage = lazy(() => import('@/pages/system011/julyConfig').then(m => ({ default: m.JulyConfig })));
 const AuditPage = lazy(() => import('@/pages/management-pages').then(m => ({ default: m.AuditPage })));
 
 // 业务功能页
 const BusinessPage = lazy(() => import('@/pages/BusinessPage').then(m => ({ default: m.BusinessPage })));
-const ConfigPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.ConfigPage })));
 const DictPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.DictPage })));
 const MonitorPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.MonitorPage })));
 const OnlineUsersPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.OnlineUsersPage })));
@@ -66,7 +66,7 @@ const MyProfilePage = lazy(() => import('@/pages/ProfilePage').then(m => ({ defa
 const MySettingsPage = lazy(() => import('@/pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
 
 const BUSINESS_PAGES: Record<string, PageComponent> = {
-  config: ConfigPage, scheduler: JulySchedulerPage, dict: DictPage,
+  config: JulyConfigPage, scheduler: JulySchedulerPage, dict: DictPage,
   monitor: MonitorPage, online: OnlineUsersPage, cache: CachePage,
   datasource: JulyDatasourcePage, storage: StoragePage, params: ParamsPage,
   template: TemplatePage, push: PushPage, stats: StatsPage,
@@ -92,6 +92,7 @@ const PAGE_MAP: Record<string, PageComponent> = {
   [SYSTEM011_ROUTES.julyPermission]: JulyPermissionPage,
   [SYSTEM011_ROUTES.julyOrganization]: JulyOrganizationPage,
   [SYSTEM011_ROUTES.julyScheduler]: JulySchedulerPage,
+  [SYSTEM011_ROUTES.julyConfig]: JulyConfigPage,
   [DATASERVICE011_ROUTES.julyDatasource]: JulyDatasourcePage,
   '/audit': AuditPage,
   '/settings': SettingsPage,
