@@ -25,6 +25,7 @@ const JulyPermissionPage = lazy(() => import('@/pages/system011/julyPermission')
 const JulyOrganizationPage = lazy(() => import('@/pages/system011/julyOrganization').then(m => ({ default: m.JulyOrganization })));
 const JulySchedulerPage = lazy(() => import('@/pages/system011/julyScheduler').then(m => ({ default: m.JulyScheduler })));
 const JulyConfigPage = lazy(() => import('@/pages/system011/julyConfig').then(m => ({ default: m.JulyConfig })));
+const JulyDictionaryPage = lazy(() => import('@/pages/system011/julyDictionary').then(m => ({ default: m.JulyDictionary })));
 const AuditPage = lazy(() => import('@/pages/management-pages').then(m => ({ default: m.AuditPage })));
 
 // 业务功能页
@@ -93,6 +94,7 @@ const PAGE_MAP: Record<string, PageComponent> = {
   [SYSTEM011_ROUTES.julyOrganization]: JulyOrganizationPage,
   [SYSTEM011_ROUTES.julyScheduler]: JulySchedulerPage,
   [SYSTEM011_ROUTES.julyConfig]: JulyConfigPage,
+  [SYSTEM011_ROUTES.julyDictionary]: JulyDictionaryPage,
   [DATASERVICE011_ROUTES.julyDatasource]: JulyDatasourcePage,
   '/audit': AuditPage,
   '/settings': SettingsPage,

@@ -33,6 +33,7 @@ export const mockMenus: JulyMenuVo011[] = [
         children: [
           { id: 'menu0000000000000000000000000201', parentId: 'menu0000000000000000000000root2', menuCode: 'config', menuName: '配置管理', menuType: '2', menuIcon: 'SettingOutlined', menuRoute: '/system011/julyConfig', permissionCode: null, component: null, sortOrder: 1, status: '1', children: [] },
           { id: 'menu0000000000000000000000000202', parentId: 'menu0000000000000000000000root2', menuCode: 'scheduler', menuName: '定时任务', menuType: '2', menuIcon: 'ClockCircleOutlined', menuRoute: '/system011/julyScheduler', permissionCode: 'scheduler:view', component: null, sortOrder: 2, status: '1', children: [] },
+          { id: 'menu0000000000000000000000000203', parentId: 'menu0000000000000000000000root2', menuCode: 'dictionary', menuName: '字典管理', menuType: '2', menuIcon: 'BookOutlined', menuRoute: '/system011/julyDictionary', permissionCode: 'dictionary:view', component: null, sortOrder: 3, status: '1', children: [] },
         ],
       },
       {

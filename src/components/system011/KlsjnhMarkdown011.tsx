@@ -7,6 +7,7 @@ import React, { useCallback, useRef, useState, type ClipboardEvent } from 'react
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { App, Button, Input, Space, Tooltip } from 'antd';
+import type { TextAreaRef } from 'antd/es/input/TextArea';
 import {
   BoldOutlined,
   ItalicOutlined,
@@ -53,11 +54,12 @@ export const KlsjnhMarkdown011: React.FC<KlsjnhMarkdown011Props> = ({
 }) => {
   const { message } = App.useApp();
   const [mode, setMode] = useState<'edit' | 'preview'>('edit');
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const textareaRef = useRef<TextAreaRef>(null);
 
   const insertText = useCallback((before: string, after: string = '') => {
-    if (readOnly || !textareaRef.current) return;
-    const textarea = textareaRef.current;
+    if (readOnly) return;
+    const textarea = textareaRef.current?.resizableTextArea?.textArea;
+    if (!textarea) return;
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const selectedText = value.substring(start, end);
@@ -71,8 +73,9 @@ export const KlsjnhMarkdown011: React.FC<KlsjnhMarkdown011Props> = ({
   }, [value, onChange, readOnly]);
 
   const insertBlock = useCallback((text: string) => {
-    if (readOnly || !textareaRef.current) return;
-    const textarea = textareaRef.current;
+    if (readOnly) return;
+    const textarea = textareaRef.current?.resizableTextArea?.textArea;
+    if (!textarea) return;
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const before = value.substring(0, start);

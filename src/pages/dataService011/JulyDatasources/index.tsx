@@ -2,27 +2,87 @@
  * 数据源管理页面（dataservice011 · julyDatasource）- 对齐后端 JulyDatasourceController
  * 字段：dsCode/dsName/dbType/jdbcUrl/schemaName/username/password/driverClass/remark
  * Toast：insert {id} success ... / update {id} success ... / delete {id} success ...
- * 表格：表头居中、内容左对齐；弹窗表单双列布局，含「测试连接」。
+ * 布局参照老前端：表格每行「测试」+ 弹窗底部「测试连接」，双列表单；表头居中、内容左对齐。
  */
 import React, { useEffect, useState } from 'react';
-import { Button, Card, Col, Form, Input, Modal, Popconfirm, Row, Select, Space, Table, Tag } from 'antd';
+import { ApiOutlined } from '@ant-design/icons';
+import { Alert, Button, Card, Col, Form, Input, Modal, Popconfirm, Row, Select, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useDatasourceState } from '@/stores/dataservice011/julyDatasourceStore';
 import { fetchDatasourcePage, saveDatasource, removeDatasource, testDatasourceConnection } from '@/services/dataservice011';
 import { toast } from '@/utils/toast';
-import type { DataSourceItem } from '@/types/dataservice011/datasource';
+import type { DataSourceItem, JulyDatasourceTestVo011, JulyDatasourceTestResultVo011 } from '@/types/dataservice011/datasource';
 import { DB_TYPE_OPTIONS } from '@/types/dataservice011/datasource';
 import { STATUS_LABEL } from '@/config/constants';
+import './index.css';
 
-/** 表头居中、内容左对齐：antd 6 用 titleAlign 控表头、align 控内容 */
-const cell = { titleAlign: 'center' as const, align: 'left' as const };
+/** 表头单元格水平居中 */
+const hdrCenter = (): React.HTMLAttributes<HTMLElement> => ({ style: { textAlign: 'center' } });
+
+/** 内容左对齐 + 表头居中（用户要求：表头居中、内容 left） */
+const leftCell = { align: 'left' as const, onHeaderCell: hdrCenter };
+
+/** 测试连接反馈（参照老前端：成功/失败 + 耗时） */
+interface TestFeedback {
+  ok: boolean;
+  message: string;
+  elapsedMs?: number;
+  databaseProduct?: string | null;
+  databaseVersion?: string | null;
+}
+
+/** 组装测试反馈 */
+function buildFeedback(res: JulyDatasourceTestResultVo011, name?: string, startedAt?: number): TestFeedback {
+  const elapsedMs = startedAt != null ? Date.now() - startedAt : undefined;
+  return {
+    ok: res.success,
+    message: res.message || (res.success ? '连接成功' : '连接失败'),
+    elapsedMs,
+    databaseProduct: res.databaseProduct,
+    databaseVersion: res.databaseVersion,
+  };
+}
+
+/** 测试连接反馈展示（参照老前端：三行 = 结果[message] / 耗时 / 数据库产品·版本） */
+function TestAlert({ data }: { data: TestFeedback }) {
+  const timing = data.elapsedMs != null
+    ? data.elapsedMs < 1000 ? `${data.elapsedMs}ms` : `${(data.elapsedMs / 1000).toFixed(2)}s`
+    : '';
+  const db = data.databaseProduct ? `数据库：${data.databaseProduct}` : '';
+  const version = data.databaseVersion ? `版本：${data.databaseVersion}` : '';
+  return (
+    <Alert
+      type={data.ok ? 'success' : 'error'}
+      showIcon
+      closable
+      message={data.ok ? '连接成功' : '连接失败'}
+      description={
+        <div className="test-feedback-lines">
+          <div className="tf-msg">{data.message || (data.ok ? '连接成功' : '连接失败')}</div>
+          {timing && <div className="tf-timing">耗时：{timing}</div>}
+          {(db || version) && (
+            <div className="tf-db">
+              {db && <span>{db}</span>}
+              {db && version && <span className="tf-sep"> · </span>}
+              {version && <span>{version}</span>}
+            </div>
+          )}
+        </div>
+      }
+      className="test-feedback"
+    />
+  );
+}
 
 export const JulyDatasource = () => {
   const { list, total, loading, query } = useDatasourceState();
   const [modal, setModal] = useState<{ open: boolean; node: DataSourceItem | null }>({ open: false, node: null });
   const [form] = Form.useForm();
   const [saving, setSaving] = useState(false);
-  const [testing, setTesting] = useState(false);
+  const [modalTesting, setModalTesting] = useState(false);
+  const [rowTestingId, setRowTestingId] = useState<string | null>(null);
+  const [pageTest, setPageTest] = useState<TestFeedback | null>(null);
+  const [modalTest, setModalTest] = useState<TestFeedback | null>(null);
 
   useEffect(() => { fetchDatasourcePage({ pageIndex: 1, pageSize: 10 }); }, []);
 
@@ -36,6 +96,46 @@ export const JulyDatasource = () => {
     username: modal.node?.username || '',
     driverClass: modal.node?.driverClass || '',
     remark: modal.node?.remark || '',
+  };
+
+  /** 弹窗内测试连接（新建草稿态 / 编辑重测），结果展示在弹窗内 Alert */
+  const handleModalTest = async () => {
+    try {
+      const v = await form.validateFields();
+      setModalTesting(true);
+      setModalTest(null);
+      const startedAt = Date.now();
+      const payload: JulyDatasourceTestVo011 = {
+        id: modal.node?.id,
+        dsCode: modal.node?.dsCode || v.dsCode,
+        dbType: v.dbType,
+        jdbcUrl: v.jdbcUrl,
+        username: v.username,
+        driverClass: v.driverClass,
+        password: v.password || undefined,
+      };
+      const res = await testDatasourceConnection(payload);
+      setModalTest(buildFeedback(res, v.dsName, startedAt));
+    } catch (e) {
+      toast.warning((e as Error)?.message || '请先完善连接信息（编码/名称/类型/JDBC URL/用户名）后再测试');
+    } finally {
+      setModalTesting(false);
+    }
+  };
+
+  /** 表格行内测试（对已保存数据源重测），结果展示在页面顶部 Alert */
+  const handleRowTest = async (row: DataSourceItem) => {
+    setRowTestingId(row.id);
+    setPageTest(null);
+    const startedAt = Date.now();
+    try {
+      const res = await testDatasourceConnection({ id: row.id, dsCode: row.dsCode });
+      setPageTest(buildFeedback(res, row.dsName, startedAt));
+    } catch (e) {
+      toast.error((e as Error)?.message || '连接失败');
+    } finally {
+      setRowTestingId(null);
+    }
   };
 
   const handleSave = async () => {
@@ -61,36 +161,20 @@ export const JulyDatasource = () => {
     }
   };
 
-  const handleTestConnection = async () => {
-    try {
-      const v = await form.validateFields();
-      setTesting(true);
-      const res = await testDatasourceConnection({ id: modal.node?.id, ...v });
-      if (res.success) {
-        toast.success(res.message || '连接成功');
-      } else {
-        toast.error(res.message || '连接失败');
-      }
-    } catch (e) {
-      toast.error((e as Error)?.message || '请完善连接信息后再测试');
-    } finally {
-      setTesting(false);
-    }
-  };
-
   const columns: ColumnsType<DataSourceItem> = [
-    { ...cell, title: '数据源编码', dataIndex: 'dsCode', width: 150, render: (v) => <code>{v}</code> },
-    { ...cell, title: '数据源名称', dataIndex: 'dsName', width: 160 },
-    { ...cell, title: '类型', dataIndex: 'dbType', width: 120, render: (v) => <Tag color="blue">{v}</Tag> },
-    { ...cell, title: 'JDBC URL', dataIndex: 'jdbcUrl', ellipsis: true, render: (v) => <code>{v}</code> },
-    { ...cell, title: '库名/Schema', dataIndex: 'schemaName', width: 140 },
-    { ...cell, title: '用户名', dataIndex: 'username', width: 120 },
-    { ...cell, title: '状态', dataIndex: 'status', width: 90, render: (s) => <Tag color={s === '1' ? 'green' : 'red'}>{STATUS_LABEL[s] || s}</Tag> },
+    { ...leftCell, title: '数据源编码', dataIndex: 'dsCode', width: 150, render: (v) => <code>{v}</code> },
+    { ...leftCell, title: '数据源名称', dataIndex: 'dsName', width: 160 },
+    { ...leftCell, title: '类型', dataIndex: 'dbType', width: 110, render: (v) => <Tag color="blue">{v}</Tag> },
+    { ...leftCell, title: 'JDBC URL', dataIndex: 'jdbcUrl', width: 230, ellipsis: true, render: (v) => <code>{v}</code> },
+    { ...leftCell, title: '库名/Schema', dataIndex: 'schemaName', width: 130 },
+    { ...leftCell, title: '用户名', dataIndex: 'username', width: 120 },
+    { ...leftCell, title: '状态', dataIndex: 'status', width: 90, render: (s) => <Tag color={s === '1' ? 'green' : 'red'}>{STATUS_LABEL[s] || s}</Tag> },
     {
-      title: '操作', key: 'action', width: 140, titleAlign: 'center', align: 'left',
+      title: '操作', key: 'action', width: 200, align: 'left',
       render: (_, r) => (
-        <Space size="small">
-          <Button type="link" size="small" onClick={() => setModal({ open: true, node: r })}>编辑</Button>
+        <Space size="small" wrap>
+          <Button type="link" size="small" icon={<ApiOutlined />} loading={rowTestingId === r.id} onClick={() => handleRowTest(r)}>测试</Button>
+          <Button type="link" size="small" onClick={() => { setModal({ open: true, node: r }); setModalTest(null); }}>编辑</Button>
           <Popconfirm title="确定删除这个数据源吗？" okText="删除" cancelText="取消" okButtonProps={{ danger: true }} onConfirm={() => handleRemove(r.id)}>
             <Button type="link" size="small" danger>删除</Button>
           </Popconfirm>
@@ -116,9 +200,11 @@ export const JulyDatasource = () => {
           />
         </div>
         <div className="toolbar-right">
-          <Button type="primary" onClick={() => { form.resetFields(); setModal({ open: true, node: null }); }}>+ 新建数据源</Button>
+          <Button type="primary" onClick={() => { form.resetFields(); setModal({ open: true, node: null }); setModalTest(null); }}>+ 新建数据源</Button>
         </div>
       </div>
+
+      {pageTest && <TestAlert data={pageTest} />}
 
       <Card className="table-wrapper" styles={{ body: { padding: 0 } }}>
         <Table<DataSourceItem>
@@ -145,7 +231,7 @@ export const JulyDatasource = () => {
         open={modal.open}
         onCancel={() => setModal({ open: false, node: null })}
         footer={[
-          <Button key="test" loading={testing} onClick={handleTestConnection}>测试连接</Button>,
+          <Button key="test" icon={<ApiOutlined />} loading={modalTesting} onClick={handleModalTest}>测试连接</Button>,
           <Button key="cancel" onClick={() => setModal({ open: false, node: null })}>取消</Button>,
           <Button key="ok" type="primary" loading={saving} onClick={handleSave}>保存</Button>,
         ]}
@@ -153,6 +239,7 @@ export const JulyDatasource = () => {
         destroyOnClose
       >
         <Form form={form} layout="vertical" preserve={false} initialValues={formInitialValues}>
+          {modalTest && <TestAlert data={modalTest} />}
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="dsCode" label="数据源编码" rules={[{ required: true, message: '请输入数据源编码' }]}>
