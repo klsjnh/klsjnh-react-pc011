@@ -1,12 +1,8 @@
 /**
- * 全局配置（应用级静态配置）
- *  - appName：应用名
- *  - menuFromConfig：菜单来源开关。true → 用下方 GLOBAL_MENUS；false → 走接口（menuStore）
- *  - menus：本地菜单列表（开发态默认使用）
- *
- * 图标一律使用 antd 图标组件（见 types/view/layout 的 NavIcon），不再使用 emoji：
- * emoji 由系统字体渲染，各平台大小/色彩不一，无法与 antd 视觉体系对齐。
+ * 系统级全局常量（枚举 / 选项 / 默认值 / 菜单 / 配置）
+ * 避免各页面重复定义同一组选项。
  */
+
 import {
   ApartmentOutlined,
   AppstoreAddOutlined,
@@ -16,6 +12,7 @@ import {
   BellOutlined,
   BookOutlined,
   CalculatorOutlined,
+  ClockCircleOutlined,
   ControlOutlined,
   DashboardOutlined,
   DatabaseOutlined,
@@ -36,6 +33,7 @@ import {
   QuestionCircleOutlined,
   SearchOutlined,
   SettingOutlined,
+  SmileOutlined,
   TeamOutlined,
   ThunderboltOutlined,
   ToolOutlined,
@@ -44,6 +42,32 @@ import {
 } from '@ant-design/icons';
 import { SYSTEM011_ROUTES } from '@/config/routes';
 import type { NavItem } from '@/types/view/layout';
+
+/** 菜单类型 */
+export const MENU_TYPE_OPTIONS = [
+  { value: '1', label: '目录' },
+  { value: '2', label: '菜单' },
+  { value: '3', label: '按钮' },
+] as const;
+
+/** 菜单类型文本映射（用于展示） */
+export const MENU_TYPE_LABEL: Record<string, string> = {
+  '1': '目录',
+  '2': '菜单',
+  '3': '按钮',
+};
+
+/** 通用状态（启用 / 停用） */
+export const STATUS_OPTIONS = [
+  { value: '1', label: '启用' },
+  { value: '0', label: '停用' },
+] as const;
+
+/** 通用状态文本映射 */
+export const STATUS_LABEL: Record<string, string> = {
+  '1': '启用',
+  '0': '停用',
+};
 
 /** 本地菜单列表（开发态使用；非开发态走接口 selectUserMenuTree） */
 export const GLOBAL_MENUS: NavItem[] = [

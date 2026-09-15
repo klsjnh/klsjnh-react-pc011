@@ -4,12 +4,13 @@
  * 关联用户采用「草稿 + 保存」模式，与菜单权限 tab 一致。
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Card, Empty, List, Popconfirm, Space, Table, Tabs, Tag, Tree } from 'antd';
+import { Button, Card, Empty, List, Space, Table, Tabs, Tag, Tree } from 'antd';
 import { KeyOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import type { DataNode } from 'antd/es/tree';
 import { useRoleState } from '@/stores/system011/julyRoleStore';
-import { selectMenuTree, loadRoles, assignPermissions, removeRole, assignUsersToRole } from '@/services/system011';
+import { selectMenuTree, loadRoles, assignPermissions, assignUsersToRole, getMenusByRole } from '@/services/system011';
+import { isMockMode } from '@/config/appConfig';
 import { toast } from '@/utils/toast';
 import type { RoleDetail } from '@/types/system011/julyRole/view';
 import { UserTransferModal } from '@/components/UserTransferModal';
@@ -72,9 +73,20 @@ export const JulyPermission = () => {
     [userDraftIds, users],
   );
 
-  const selectRole = (role: RoleDetail) => {
+  const selectRole = async (role: RoleDetail) => {
     setSelectedRoleId(role.id);
-    setPermissionDraft([...role.permissions]);
+    // 菜单权限先清空，再用真实接口数据回显（mock 模式回退到本地投影）
+    setPermissionDraft([]);
+    if (!isMockMode()) {
+      try {
+        const menus = await getMenusByRole(role.id);
+        setPermissionDraft(menus.map((m) => m.id));
+      } catch {
+        setPermissionDraft([]);
+      }
+    } else {
+      setPermissionDraft([...role.permissions]);
+    }
   };
 
   const savePermissions = async () => {
@@ -126,32 +138,18 @@ export const JulyPermission = () => {
           className="permission-sider"
           title="角色"
           styles={{ body: { padding: 0 } }}
+          // 操作按钮集中在卡片头：+ 新建（primary）/ 编辑（link，默认置灰，选中角色后可用）。
           extra={
-            // 按钮风格：主操作「+ 新建」用 primary；行内操作「编辑/删除」统一 link（与用户管理页一致）
             <Space size="small">
-              <Button size="small" type="primary" onClick={() => setEditModal({ open: true, role: null })}>+ 新建</Button>
+              <Button type="primary" onClick={() => setEditModal({ open: true, role: null })}>+ 新建</Button>
               <Button
-                size="small"
                 type="link"
                 disabled={!selectedRole}
                 onClick={() => selectedRole && setEditModal({ open: true, role: selectedRole })}
               >
                 编辑
               </Button>
-              <Popconfirm
-                title="确定删除这个角色吗？"
-                okText="删除"
-                cancelText="取消"
-                okButtonProps={{ danger: true }}
-                disabled={!selectedRole}
-                onConfirm={() => {
-                  if (!selectedRole) return;
-                  removeRole(selectedRole.id);
-                  setSelectedRoleId(null);
-                }}
-              >
-                <Button size="small" type="link" danger disabled={!selectedRole}>删除</Button>
-              </Popconfirm>
+
             </Space>
           }
         >
@@ -166,7 +164,7 @@ export const JulyPermission = () => {
                 <List.Item.Meta
                   avatar={<KeyOutlined className="role-icon" />}
                   title={role.roleName}
-                  description={`${role.roleCode} · ${role.userIds.length}用户 · ${role.permissions.length}菜单`}
+                  description={`${role.roleCode}`}
                 />
                 <Tag color={role.status === '1' ? 'green' : 'red'}>{role.status === '1' ? '启用' : '停用'}</Tag>
               </List.Item>
