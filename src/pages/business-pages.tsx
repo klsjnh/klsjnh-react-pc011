@@ -7,91 +7,14 @@ import {
   Button, Card, Col, Empty, Form, Input, Modal, Popconfirm, Progress, Row, Select, Space, Statistic, Switch, Table, Tag,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { useConfigState } from '@/stores/system011/julyConfigStore';
 import {
-  fetchConfigPage, saveConfig, removeConfig,
   exportData,
 } from '@/services/system011';
 import { toast } from '@/utils/toast';
 import { KlsjnhSql011, KlsjnhMarkdown011 } from '@/components/system011';
-import type { JulyConfigVo011 } from '@/types/system011';
 import type { OnlineUser, CacheItem } from '@/types/view/business';
 import type { DictTypeVo011, DictItemVo011 } from '@/types/view/dict';
 import { STATUS_OPTIONS } from '@/config/constants';
-
-// ==================== 配置管理（对接 julyConfig） ====================
-
-export const ConfigPage = () => {
-  const { list, total, loading, query } = useConfigState();
-  const [modal, setModal] = useState<{ open: boolean; node: JulyConfigVo011 | null }>({ open: false, node: null });
-  const [form] = Form.useForm();
-
-  useEffect(() => { fetchConfigPage({ pageIndex: 1, pageSize: 10 }); }, []);
-  useEffect(() => {
-    if (!modal.open) return;
-    form.setFieldsValue({ code: modal.node?.code || '', data: modal.node?.data || '' });
-  }, [modal, form]);
-
-  const handleSave = async () => {
-    const v = await form.validateFields();
-    await saveConfig({ id: modal.node?.id, code: v.code, data: v.data });
-    toast.success('保存成功');
-    setModal({ open: false, node: null });
-  };
-
-  const columns: ColumnsType<JulyConfigVo011> = [
-    { title: '配置键', dataIndex: 'code', render: (v) => <code>{v}</code> },
-    { title: '配置值', dataIndex: 'data' },
-    { title: '状态', dataIndex: 'status', width: 90, render: (s) => <Tag color={s === '1' ? 'green' : 'red'}>{s === '1' ? '启用' : '停用'}</Tag> },
-    {
-      title: '操作', key: 'action', width: 140,
-      render: (_, r) => (
-        <Space size="small">
-          <Button type="link" size="small" onClick={() => setModal({ open: true, node: r })}>编辑</Button>
-          <Popconfirm title="确定删除这条配置吗？" okText="删除" cancelText="取消" okButtonProps={{ danger: true }} onConfirm={() => removeConfig(r.id)}>
-            <Button type="link" size="small" danger>删除</Button>
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ];
-
-  return (
-    <div>
-      <div className="page-header"><h2>配置管理</h2><p>共 {total} 条配置</p></div>
-      <div className="page-toolbar">
-        <div className="toolbar-left">
-          <Input.Search allowClear placeholder="搜索 code / data" className="search-input"
-            onSearch={(v) => fetchConfigPage({ pageIndex: 1, keyword: v || undefined })} />
-        </div>
-        <div className="toolbar-right">
-          <Button type="primary" onClick={() => { form.resetFields(); setModal({ open: true, node: null }); }}>+ 新建配置</Button>
-        </div>
-      </div>
-      <Card className="table-wrapper" styles={{ body: { padding: 0 } }}>
-        <Table<JulyConfigVo011>
-          rowKey="id" columns={columns} dataSource={list} loading={loading}
-          pagination={{
-            current: query.pageIndex, pageSize: query.pageSize, total,
-            showSizeChanger: true, pageSizeOptions: [10, 50, 100], showTotal: (t) => `共 ${t} 条`,
-            onChange: (pageIndex, pageSize) => fetchConfigPage({ pageIndex, pageSize }),
-          }}
-        />
-      </Card>
-      <Modal title={modal.node ? '编辑配置' : '新建配置'} open={modal.open} onCancel={() => setModal({ open: false, node: null })}
-        onOk={handleSave} okText="保存" cancelText="取消" destroyOnClose>
-        <Form form={form} layout="vertical" preserve={false}>
-          <Form.Item name="code" label="配置键" rules={modal.node ? [] : [{ required: true, message: '请输入配置键' }]}>
-            <Input disabled={!!modal.node} placeholder="如 site.name" />
-          </Form.Item>
-          <Form.Item name="data" label="配置值" rules={[{ required: true, message: '请输入配置值' }]}>
-            <Input placeholder="请输入配置值" />
-          </Form.Item>
-        </Form>
-      </Modal>
-    </div>
-  );
-};
 
 // ==================== 字典管理（主子表：字典类型 + 字典项） ====================
 

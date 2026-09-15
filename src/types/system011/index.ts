@@ -17,4 +17,5 @@ export * from '@/types/system011/julyMenu';
 export * from '@/types/system011/julyOrganization';
 export * from '@/types/system011/julyConfig';
 export * from '@/types/system011/julyScheduler';
+export * from '@/types/system011/julyDictionary';
 export * from '@/types/system011/export';

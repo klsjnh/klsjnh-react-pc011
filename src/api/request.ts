@@ -25,7 +25,13 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(action: string, body?: object, timeoutMs = 8000, method: 'GET' | 'POST' = 'POST'): Promise<T> {
+async function request<T>(
+  action: string,
+  body?: object,
+  timeoutMs = 8000,
+  method: 'GET' | 'POST' = 'POST',
+  baseOverride?: string,
+): Promise<T> {
   // ===== Mock 模式：按真实 action 路径分发到统一 mock 后端 =====
   // mock 与 api 共用下方同一套信封解包逻辑，因此拿到的数据结构完全一致。
   if (isMockMode()) {
@@ -45,7 +51,7 @@ async function request<T>(action: string, body?: object, timeoutMs = 8000, metho
     throw new ApiError(msg, 404);
   }
 
-  const base = appConfigStore.getSnapshot().apiBaseUrl.replace(/\/$/, '');
+  const base = (baseOverride || appConfigStore.getSnapshot().apiBaseUrl).replace(/\/$/, '');
   let url = `${base}${action}`;
   // GET 查询：把 body 序列化为 query string（真实后端按 ?id=xxx 收参）
   if (method === 'GET' && body) {
@@ -86,9 +92,9 @@ async function request<T>(action: string, body?: object, timeoutMs = 8000, metho
 
 export const api = {
   /** POST 业务查询/操作 */
-  post: <T>(action: string, body?: object) => request<T>(action, body, 8000, 'POST'),
+  post: <T>(action: string, body?: object, baseOverride?: string) => request<T>(action, body, 8000, 'POST', baseOverride),
   /** GET 业务查询（主键查、树查等无参/少参查询） */
-  get: <T>(action: string, body?: object) => request<T>(action, body, 8000, 'GET'),
+  get: <T>(action: string, body?: object, baseOverride?: string) => request<T>(action, body, 8000, 'GET', baseOverride),
 };
 
 /**
