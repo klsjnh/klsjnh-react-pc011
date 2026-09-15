@@ -1,4 +1,5 @@
 /** 业务中心演示页 UI 类型（无后端模块，展示数据） */
+import type { NavIcon } from '@/types/view/layout';
 
 export interface DictItem {
   id: number;
@@ -46,7 +47,7 @@ export interface RecentLog {
 
 /** 业务中心宫格入口 */
 export interface BizEntry {
-  icon: string;
+  icon: NavIcon;
   label: string;
   path: string;
   color: string;

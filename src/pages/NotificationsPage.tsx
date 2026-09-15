@@ -1,13 +1,22 @@
 /**
  * 消息通知页 - PC 端（antd，数据来自 notificationStore）
+ * 图标统一取自 @ant-design/icons，不再使用 emoji。
  */
 import React, { useState, useEffect } from 'react';
 import { Button, Card, List, Modal, Select, Tag, Typography } from 'antd';
+import { BellOutlined, ShoppingOutlined, UserOutlined } from '@ant-design/icons';
 import { notificationStore, useNotificationState } from '@/stores/notificationStore';
 import type { FilterType } from '@/types/view/page';
+import type { NavIcon } from '@/types/view/layout';
 
-const TYPE_ICON: Record<string, string> = { system: '🔔', user: '👤', order: '📦' };
+const TYPE_ICON: Record<string, NavIcon> = { system: BellOutlined, user: UserOutlined, order: ShoppingOutlined };
 const TYPE_LABEL: Record<string, string> = { system: '系统', user: '用户', order: '订单' };
+
+/** 通知类型图标（未知类型回退铃铛，保证不出现空白） */
+const typeIcon = (type: string) => {
+  const Icon = TYPE_ICON[type] ?? BellOutlined;
+  return <Icon />;
+};
 
 export const NotificationsPage = () => {
   const { notifications } = useNotificationState();
@@ -49,7 +58,7 @@ export const NotificationsPage = () => {
       <Card className="table-wrapper" styles={{ body: { padding: 0 } }}>
         <List
           dataSource={filtered}
-          locale={{ emptyText: '📭 暂无通知' }}
+          locale={{ emptyText: '暂无通知' }}
           renderItem={(n) => (
             <List.Item
               style={{ cursor: 'pointer', paddingLeft: 20, paddingRight: 20 }}
@@ -61,7 +70,7 @@ export const NotificationsPage = () => {
             >
               <List.Item.Meta
                 avatar={!n.read ? <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: 'var(--primary)' }} /> : <span style={{ width: 8 }} />}
-                title={<span style={{ fontWeight: n.read ? 400 : 600 }}>{TYPE_ICON[n.type]} {n.title}</span>}
+                title={<span className="flex-center gap-1" style={{ fontWeight: n.read ? 400 : 600 }}>{typeIcon(n.type)}{n.title}</span>}
                 description={<Typography.Text type="secondary" ellipsis>{n.content}</Typography.Text>}
               />
               <Typography.Text type="secondary" className="text-xs">{n.time}</Typography.Text>
@@ -71,7 +80,7 @@ export const NotificationsPage = () => {
       </Card>
 
       <Modal
-        title={selected ? `${TYPE_ICON[selected.type]} ${selected.title}` : ''}
+        title={selected ? <span className="flex-center gap-2">{typeIcon(selected.type)}{selected.title}</span> : ''}
         open={!!selected}
         onCancel={() => setSelected(null)}
         footer={[

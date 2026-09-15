@@ -1,27 +1,42 @@
 /**
  * 个人中心页 - PC 端（antd）
+ * 图标统一取自 @ant-design/icons，不再使用 emoji。
  */
 import React, { useState } from 'react';
 import { Avatar, Button, Card, Col, List, Modal, Row, Switch, Typography } from 'antd';
+import {
+  ApartmentOutlined,
+  AreaChartOutlined,
+  BellOutlined,
+  FileSearchOutlined,
+  InfoCircleOutlined,
+  KeyOutlined,
+  MenuOutlined,
+  MoonOutlined,
+  QuestionCircleOutlined,
+  SettingOutlined,
+  TeamOutlined,
+} from '@ant-design/icons';
 import { useCurrentUser, authStore } from '@/stores/authStore';
 import { SYSTEM011_ROUTES } from '@/config/routes';
 import type { ProfilePageProps } from '@/types/view/page';
+import type { NavIcon } from '@/types/view/layout';
 
 export const ProfilePage = ({ onNavigate }: ProfilePageProps) => {
   const user = useCurrentUser();
   const [settings, setSettings] = useState({ notify: true, darkMode: false });
 
-  const navItems = [
-    { icon: '👥', label: '用户管理', path: SYSTEM011_ROUTES.julyUser },
-    { icon: '🔑', label: '权限管理', path: SYSTEM011_ROUTES.julyPermission },
-    { icon: '🏢', label: '组织管理', path: SYSTEM011_ROUTES.julyOrganization },
-    { icon: '📋', label: '菜单管理', path: SYSTEM011_ROUTES.julyMenu },
-    { icon: '📊', label: '数据报表', path: '/reports' },
-    { icon: '🔔', label: '消息通知', path: '/notifications' },
-    { icon: '📝', label: '审计日志', path: '/audit' },
-    { icon: '⚙️', label: '系统设置', path: '/settings' },
-    { icon: '❓', label: '帮助反馈', path: '/help' },
-    { icon: 'ℹ️', label: '关于我们', path: '/about' },
+  const navItems: { icon: NavIcon; label: string; path: string }[] = [
+    { icon: TeamOutlined, label: '用户管理', path: SYSTEM011_ROUTES.julyUser },
+    { icon: KeyOutlined, label: '权限管理', path: SYSTEM011_ROUTES.julyPermission },
+    { icon: ApartmentOutlined, label: '组织管理', path: SYSTEM011_ROUTES.julyOrganization },
+    { icon: MenuOutlined, label: '菜单管理', path: SYSTEM011_ROUTES.julyMenu },
+    { icon: AreaChartOutlined, label: '数据报表', path: '/reports' },
+    { icon: BellOutlined, label: '消息通知', path: '/notifications' },
+    { icon: FileSearchOutlined, label: '审计日志', path: '/audit' },
+    { icon: SettingOutlined, label: '系统设置', path: '/settings' },
+    { icon: QuestionCircleOutlined, label: '帮助反馈', path: '/help' },
+    { icon: InfoCircleOutlined, label: '关于我们', path: '/about' },
   ];
 
   const confirmLogout = () => {
@@ -57,11 +72,11 @@ export const ProfilePage = ({ onNavigate }: ProfilePageProps) => {
 
           <Card title="偏好设置">
             <div className="flex-between mb-2">
-              <span>🔔 消息通知</span>
+              <span className="flex-center gap-2"><BellOutlined />消息通知</span>
               <Switch checked={settings.notify} onChange={(v) => setSettings((s) => ({ ...s, notify: v }))} />
             </div>
             <div className="flex-between">
-              <span>🌙 深色模式</span>
+              <span className="flex-center gap-2"><MoonOutlined />深色模式</span>
               <Switch checked={settings.darkMode} onChange={(v) => setSettings((s) => ({ ...s, darkMode: v }))} />
             </div>
           </Card>
@@ -72,13 +87,16 @@ export const ProfilePage = ({ onNavigate }: ProfilePageProps) => {
             <List
               grid={{ gutter: 12, column: 3 }}
               dataSource={navItems}
-              renderItem={(item) => (
-                <List.Item>
-                  <Button block className="profile-nav-btn" onClick={() => onNavigate?.(item.path)}>
-                    <span style={{ fontSize: 20 }}>{item.icon}</span> {item.label}
-                  </Button>
-                </List.Item>
-              )}
+              renderItem={(item) => {
+                const ItemIcon = item.icon;
+                return (
+                  <List.Item>
+                    <Button block className="profile-nav-btn" onClick={() => onNavigate?.(item.path)}>
+                      <ItemIcon /> {item.label}
+                    </Button>
+                  </List.Item>
+                );
+              }}
             />
           </Card>
         </Col>

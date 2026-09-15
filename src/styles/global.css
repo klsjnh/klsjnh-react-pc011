@@ -34,7 +34,6 @@ body {
 .app-layout { height: 100vh; }
 .app-sider { border-right: 1px solid var(--border); }
 .side-menu { border-inline-end: none !important; height: 100%; overflow-y: auto; }
-.nav-emoji { font-size: 15px; }
 .layout-content { padding: 16px; overflow: auto; background: var(--bg-page); }
 .content-breadcrumb { font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; }
 
@@ -43,7 +42,7 @@ body {
   padding: 0 16px; border-bottom: 1px solid var(--border); background: #fff;
 }
 .app-brand { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; }
-.app-brand-logo { font-size: 20px; }
+.app-brand-logo { font-size: 20px; color: var(--primary); }
 .app-header-actions { display: flex; align-items: center; gap: 20px; }
 .app-header-bell { font-size: 18px; cursor: pointer; }
 .app-header-user { cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
@@ -68,6 +67,7 @@ body {
 /* ==================== 通用工具类（仅保留 Tailwind 未覆盖的自定义类） ==================== */
 .text-muted { color: var(--text-muted); }
 .text-secondary { color: var(--text-secondary); }
+.text-primary { color: var(--primary); }
 .flex-between { display: flex; align-items: center; justify-content: space-between; }
 .flex-center { display: flex; align-items: center; }
 .search-input { width: 240px; }
@@ -90,7 +90,7 @@ body {
 .permission-empty { display: flex; align-items: center; justify-content: center; min-height: 400px; }
 .role-item { cursor: pointer; padding: 12px 14px !important; }
 .role-item.active { background: #e6f7ff; border-left: 3px solid var(--primary); }
-.role-icon { font-size: 16px; }
+.role-icon { font-size: 16px; color: var(--primary); }
 
 /* ==================== 菜单管理 ==================== */
 .menu-layout { display: flex; gap: 16px; align-items: flex-start; }
@@ -120,4 +120,6 @@ body {
 .biz-entry-icon {
   width: 52px; height: 52px; border-radius: 12px;
   display: flex; align-items: center; justify-content: center; font-size: 24px;
+  /* antd 图标以 currentColor 着色，这里统一给主色，取代原先 emoji 的自带彩色 */
+  color: var(--primary);
 }

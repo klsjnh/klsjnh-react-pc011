@@ -3,6 +3,7 @@
  */
 import React, { useState } from 'react';
 import { Button, Card, Col, Collapse, Form, Input, Modal, Row, Segmented, Table, Tag } from 'antd';
+import { ClockCircleOutlined, MailOutlined, MessageOutlined, PhoneOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import type { FeedbackItem } from '@/types/view/page';
 
@@ -74,10 +75,10 @@ export const HelpPage = () => {
             </Form>
           </Card>
           <Card title="其他联系方式">
-            <div className="text-secondary mb-2">📧 support@enterprise.com</div>
-            <div className="text-secondary mb-2">📞 400-123-4567</div>
-            <div className="text-secondary mb-2">💬 EnterpriseAdmin</div>
-            <div className="text-secondary">🕐 工作日 9:00-18:00</div>
+            <div className="text-secondary mb-2 flex-center gap-2"><MailOutlined />support@enterprise.com</div>
+            <div className="text-secondary mb-2 flex-center gap-2"><PhoneOutlined />400-123-4567</div>
+            <div className="text-secondary mb-2 flex-center gap-2"><MessageOutlined />EnterpriseAdmin</div>
+            <div className="text-secondary flex-center gap-2"><ClockCircleOutlined />工作日 9:00-18:00</div>
           </Card>
         </Col>
       </Row>

@@ -35,10 +35,8 @@ export const SYSTEM011_ACTIONS = {
     logicDelete: '/julyRole/v1/logicDelete',
     assignMenus: '/julyRole/v1/assignMenus',
   },
-  roleUser: {
-    insert: '/julyRoleUser/v1/insert',
-    logicDelete: '/julyRoleUser/v1/logicDelete',
-  },
+  // ⚠️ 无 julyRoleUser 资源：后端（java17-web011）没有 JulyRoleUserController，
+  // 角色↔用户的关联只能通过 julyUser/v1/assignRoles（用户 → 角色，整存替换）维护。
   organization: {
     selectListByPage: '/julyOrganization/v1/selectListByPage',
     selectTree: '/julyOrganization/v1/selectTree',

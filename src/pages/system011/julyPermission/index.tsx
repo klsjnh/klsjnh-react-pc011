@@ -5,10 +5,12 @@
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { Button, Card, Empty, List, Popconfirm, Space, Table, Tabs, Tag, Tree } from 'antd';
+import { KeyOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import type { DataNode } from 'antd/es/tree';
 import { useRoleState } from '@/stores/system011/julyRoleStore';
 import { selectMenuTree, loadRoles, assignPermissions, removeRole, assignUsersToRole } from '@/services/system011';
+import { toast } from '@/utils/toast';
 import type { RoleDetail } from '@/types/system011/julyRole/view';
 import { UserTransferModal } from '@/components/UserTransferModal';
 import { RoleFormModal } from '@/pages/system011/julyPermission/RoleFormModal';
@@ -17,11 +19,15 @@ import type { JulyOrganizationVo011 } from '@/types/system011/julyOrganization';
 import type { JulyUserView } from '@/types/system011/julyUser';
 import type { OrgTreeNode } from '@/types/view/common';
 
-/** JulyMenuVo011 → antd Tree DataNode */
+/**
+ * JulyMenuVo011 → antd Tree DataNode
+ * key 必须用**菜单 id**：后端 /julyRole/v1/assignMenus 的 pkMenus 收菜单 id 全量列表，
+ * 用 permissionCode 会导致保存写进不存在的主键（且目录节点 permissionCode 为 null）。
+ */
 function toTreeData(nodes: JulyMenuVo011[]): DataNode[] {
   return nodes.map((n) => ({
     title: `${n.menuIcon} ${n.menuName}`,
-    key: n.permissionCode ?? n.id,
+    key: n.id,
     children: n.children?.length ? toTreeData(n.children) : undefined,
   }));
 }
@@ -44,6 +50,7 @@ export const JulyPermission = () => {
   const [editModal, setEditModal] = useState<{ open: boolean; role: RoleDetail | null }>({ open: false, role: null });
   const [permissionDraft, setPermissionDraft] = useState<string[]>([]);
   const [addUserModal, setAddUserModal] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => { loadRoles(); }, []);
   useEffect(() => {
@@ -70,12 +77,30 @@ export const JulyPermission = () => {
     setPermissionDraft([...role.permissions]);
   };
 
-  const savePermissions = () => {
-    if (selectedRole) assignPermissions(selectedRole.id, permissionDraft);
+  const savePermissions = async () => {
+    if (!selectedRole) return;
+    setSaving(true);
+    try {
+      await assignPermissions(selectedRole.id, permissionDraft);
+      toast.success('菜单权限已保存');
+    } catch (e) {
+      toast.error((e as Error)?.message || '菜单权限保存失败');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const saveRoleUsers = () => {
-    if (selectedRole) assignUsersToRole(selectedRole.id, userDraftIds);
+  const saveRoleUsers = async () => {
+    if (!selectedRole) return;
+    setSaving(true);
+    try {
+      await assignUsersToRole(selectedRole.id, userDraftIds);
+      toast.success('关联用户已保存');
+    } catch (e) {
+      toast.error((e as Error)?.message || '关联用户保存失败');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const userColumns: ColumnsType<JulyUserView> = [
@@ -102,9 +127,17 @@ export const JulyPermission = () => {
           title="角色"
           styles={{ body: { padding: 0 } }}
           extra={
+            // 按钮风格：主操作「+ 新建」用 primary；行内操作「编辑/删除」统一 link（与用户管理页一致）
             <Space size="small">
               <Button size="small" type="primary" onClick={() => setEditModal({ open: true, role: null })}>+ 新建</Button>
-              <Button size="small" disabled={!selectedRole} onClick={() => selectedRole && setEditModal({ open: true, role: selectedRole })}>编辑</Button>
+              <Button
+                size="small"
+                type="link"
+                disabled={!selectedRole}
+                onClick={() => selectedRole && setEditModal({ open: true, role: selectedRole })}
+              >
+                编辑
+              </Button>
               <Popconfirm
                 title="确定删除这个角色吗？"
                 okText="删除"
@@ -117,7 +150,7 @@ export const JulyPermission = () => {
                   setSelectedRoleId(null);
                 }}
               >
-                <Button size="small" danger disabled={!selectedRole}>删除</Button>
+                <Button size="small" type="link" danger disabled={!selectedRole}>删除</Button>
               </Popconfirm>
             </Space>
           }
@@ -131,7 +164,7 @@ export const JulyPermission = () => {
                 onClick={() => selectRole(role)}
               >
                 <List.Item.Meta
-                  avatar={<span className="role-icon">🔑</span>}
+                  avatar={<KeyOutlined className="role-icon" />}
                   title={role.roleName}
                   description={`${role.roleCode} · ${role.userIds.length}用户 · ${role.permissions.length}菜单`}
                 />
@@ -156,7 +189,7 @@ export const JulyPermission = () => {
                     children: (
                       <>
                         <div className="text-right mb-2">
-                          <Button type="primary" size="small" onClick={savePermissions}>保存</Button>
+                          <Button type="primary" size="small" loading={saving} onClick={savePermissions}>保存</Button>
                         </div>
                         {menuTree.length === 0
                           ? <Empty description="暂无菜单" />
@@ -174,13 +207,14 @@ export const JulyPermission = () => {
                   },
                   {
                     key: 'users',
-                    label: `关联用户 (${selectedRole.userIds.length})`,
+                    label: `关联用户 (${roleUsersDraft.length})`,
                     children: (
                       <>
+                        {/* 主操作在右：+ 添加用户 为次要(default)，保存 为唯一 primary */}
                         <div className="text-right mb-2">
                           <Space size="small">
-                            <Button type="primary" size="small" onClick={saveRoleUsers}>保存</Button>
-                            <Button type="primary" size="small" onClick={() => setAddUserModal(true)}>+ 添加用户</Button>
+                            <Button size="small" onClick={() => setAddUserModal(true)}>+ 添加用户</Button>
+                            <Button type="primary" size="small" loading={saving} onClick={saveRoleUsers}>保存</Button>
                           </Space>
                         </div>
                         <Table<JulyUserView>
@@ -208,7 +242,7 @@ export const JulyPermission = () => {
             id: u.id, username: u.userAccount, realName: u.userName,
             department: u.department, departmentId: u.pkOrg || '',
           }))}
-          excludedUserIds={selectedRole.userIds}
+          excludedUserIds={userDraftIds}
           onConfirm={(userIds) => {
             setUserDraftIds(Array.from(new Set([...userDraftIds, ...userIds.map(String)])));
             setAddUserModal(false);

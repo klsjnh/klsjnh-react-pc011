@@ -10,8 +10,10 @@ import { roleStore } from '@/stores/system011/julyRoleStore';
 import { julyOrganizationStore } from '@/stores/system011/julyOrganizationStore';
 import { selectUserListByPage } from '@/services/system011/julyUserService';
 import { fetchOrganizationTree } from '@/services/system011/julyOrganizationService';
+import { selectMenuTree } from '@/services/system011/julyMenuService';
 import { mockRelations } from '@/mock/system011';
 import type { JulyRoleVo011 } from '@/types/system011/julyRole/vo';
+import type { JulyMenuVo011 } from '@/types/system011/julyMenu';
 import type { JulyUserVo011, JulyUserView } from '@/types/system011/julyUser';
 import type { RoleDetail } from '@/types/system011/julyRole/view';
 import type { PageResult011 } from '@/types/system011';
@@ -23,11 +25,29 @@ export function selectRoleListByPage(body: object = {}): Promise<PageResult011<J
 
 // ==================== 投影层 ====================
 
-function projectRole(r: JulyRoleVo011, userAccountToId: Map<string, string>): RoleDetail {
+/** 菜单树拍平（用于建立 permissionCode → 菜单 id 映射） */
+function flattenMenus(nodes: JulyMenuVo011[]): JulyMenuVo011[] {
+  return nodes.flatMap((n) => [n, ...(n.children?.length ? flattenMenus(n.children) : [])]);
+}
+
+/**
+ * 角色投影：把 mock 关系表里的 permissionCode 翻译成菜单 id。
+ * 后端 /julyRole/v1/assignMenus 的 pkMenus 收的是「菜单 id 全量列表」，
+ * 权限树勾选与下发必须同为 id，否则保存会把权限编码当主键写进去。
+ */
+function projectRole(
+  r: JulyRoleVo011,
+  userAccountToId: Map<string, string>,
+  menuIdByCode: Map<string, string>,
+): RoleDetail {
   const accounts = mockRelations.roleUserAccounts(r.roleCode);
+  const menuIds = mockRelations
+    .rolePermissions(r.roleCode)
+    .map((code) => menuIdByCode.get(code))
+    .filter((x): x is string => x != null);
   return {
     ...r,
-    permissions: mockRelations.rolePermissions(r.roleCode),
+    permissions: menuIds,
     userIds: accounts.map((a) => userAccountToId.get(a)).filter((x): x is string => x != null),
   };
 }
@@ -58,8 +78,20 @@ export async function loadRoles(): Promise<void> {
     const userAccountToId = new Map<string, string>(
       userPage.rows.map((u) => [u.userAccount, u.id] as [string, string]),
     );
+    // 菜单树单独取：失败不应连累角色列表加载（菜单仅用于权限勾选回显）
+    let menuTree: JulyMenuVo011[] = [];
+    try {
+      menuTree = await selectMenuTree();
+    } catch {
+      menuTree = [];
+    }
+    const menuIdByCode = new Map<string, string>(
+      flattenMenus(menuTree)
+        .filter((m) => m.permissionCode)
+        .map((m) => [m.permissionCode as string, m.id] as [string, string]),
+    );
     roleStore.setState({
-      roles: rolePage.rows.map((r) => projectRole(r, userAccountToId)),
+      roles: rolePage.rows.map((r) => projectRole(r, userAccountToId, menuIdByCode)),
       users: userPage.rows.map((u) => projectUser(u, orgSnapshot.orgNameById)),
       orgTree: orgSnapshot.tree,
       loaded: true,
@@ -111,45 +143,53 @@ export function removeRole(id: string): void {
   if (!isMockMode()) fireApi(SYSTEM011_ACTIONS.role.logicDelete, { id });
 }
 
-/** 分配权限 */
-export function assignPermissions(roleId: string, keys: string[]): void {
+/**
+ * 分配菜单权限：POST /julyRole/v1/assignMenus，body = { id, pkMenus }（整存替换）。
+ * pkMenus 必须是「菜单 id 全量列表」（后端 JulyRoleAssignMenusVo011 定义），
+ * 不能传 permissionCode。
+ */
+export async function assignPermissions(roleId: string, menuIds: string[]): Promise<void> {
   const s = roleStore.getSnapshot();
-  roleStore.setState({ roles: s.roles.map((r) => (r.id === roleId ? { ...r, permissions: keys } : r)) });
-  if (!isMockMode()) fireApi(SYSTEM011_ACTIONS.role.assignMenus, { id: roleId, pkMenus: keys });
+  roleStore.setState({ roles: s.roles.map((r) => (r.id === roleId ? { ...r, permissions: menuIds } : r)) });
+  if (isMockMode()) return; // mock 未实现该端点，本地投影即数据源
+  await api.post(SYSTEM011_ACTIONS.role.assignMenus, { id: roleId, pkMenus: menuIds });
 }
 
-/** 添加用户到角色 */
-export function addUserToRole(roleId: string, userId: string): void {
-  const s = roleStore.getSnapshot();
-  roleStore.setState({
-    roles: s.roles.map((r) => {
-      if (r.id !== roleId) return r;
-      if (r.userIds.includes(userId)) return r;
-      return { ...r, userIds: [...r.userIds, userId] };
-    }),
-  });
-  if (!isMockMode()) fireApi(SYSTEM011_ACTIONS.roleUser.insert, { roleId, userId });
-}
-
-/** 从角色移除用户 */
-export function removeUserFromRole(roleId: string, userId: string): void {
-  const s = roleStore.getSnapshot();
-  roleStore.setState({
-    roles: s.roles.map((r) => (r.id !== roleId ? r : { ...r, userIds: r.userIds.filter((id) => id !== userId) })),
-  });
-  if (!isMockMode()) fireApi(SYSTEM011_ACTIONS.roleUser.logicDelete, { roleId, userId });
-}
-
-/** 批量保存角色关联用户（与当前关联做 diff，仅下发增/删） */
-export function assignUsersToRole(roleId: string, userIds: string[]): void {
+/**
+ * 批量保存角色关联用户（与当前关联做 diff，仅下发增/删）。
+ *
+ * 后端约束（已核 java17-web011 源码，2026-09-14）：
+ * - **不存在 julyRoleUser 资源**：无 JulyRoleUserController、无 july_role_user 表，
+ *   故原先调用的 /julyRoleUser/v1/insert|logicDelete 是 404；
+ * - 唯一可用的是 POST /julyUser/v1/assignRoles（**用户 → 角色**，整存替换，
+ *   body = { id: 用户 id, pkRoles: 角色 id 全量列表 }）。
+ * 因此这里按用户维度反向下发：新增用户追加本角色、移除用户剔除本角色。
+ *
+ * ⚠️ 已知缺口：后端 JulyUserVo011 **不返回角色**，且没有「查询用户角色」端点，
+ * 本地 users[].roles 目前来自 mock 投影，API 模式下并非真实角色集合，
+ * 整存替换存在覆盖风险。后端补出 selectRolesByUser（或 JulyUserVo011 增加 pkRoles）后，
+ * 本函数应改为先查真实角色集合再合并下发。
+ */
+export async function assignUsersToRole(roleId: string, userIds: string[]): Promise<void> {
   const s = roleStore.getSnapshot();
   const role = s.roles.find((r) => r.id === roleId);
   const current = role?.userIds ?? [];
   const added = userIds.filter((id) => !current.includes(id));
   const removed = current.filter((id) => !userIds.includes(id));
   roleStore.setState({ roles: s.roles.map((r) => (r.id === roleId ? { ...r, userIds } : r)) });
-  if (!isMockMode()) {
-    added.forEach((id) => fireApi(SYSTEM011_ACTIONS.roleUser.insert, { roleId, userId: id }));
-    removed.forEach((id) => fireApi(SYSTEM011_ACTIONS.roleUser.logicDelete, { roleId, userId: id }));
+  if (isMockMode()) return;
+  // 本地 users[].roles 存的是 roleCode，后端要角色 id，需先翻译
+  const roleIdByCode = new Map(s.roles.map((r) => [r.roleCode, r.id] as [string, string]));
+  const roleIdsOf = (userId: string) =>
+    (s.users.find((u) => u.id === userId)?.roles ?? [])
+      .map((code) => roleIdByCode.get(code))
+      .filter((x): x is string => x != null);
+  for (const userId of added) {
+    const next = Array.from(new Set([...roleIdsOf(userId), roleId]));
+    await api.post(SYSTEM011_ACTIONS.user.assignRoles, { id: userId, pkRoles: next });
+  }
+  for (const userId of removed) {
+    const next = roleIdsOf(userId).filter((rid) => rid !== roleId);
+    await api.post(SYSTEM011_ACTIONS.user.assignRoles, { id: userId, pkRoles: next });
   }
 }
