@@ -64,7 +64,7 @@ export async function removeDictionary(id: string): Promise<void> {
 
 /* ==================== 明细（按 dictionaryCode 定位主表） ==================== */
 
-/** 查询某字典的明细列表（字典 + status + keyword => List<JulyDictionaryItemVo011>） */
+/** 查询某字典的明细列表（字典编码 + 可选状态 => List<JulyDictionaryItemVo011>） */
 export function selectDictionaryItems(body: JulyDictionaryItemQueryVo011 = {} as JulyDictionaryItemQueryVo011): Promise<JulyDictionaryItemVo011[]> {
   return api.post<JulyDictionaryItemVo011[]>(SYSTEM011_ACTIONS.dictionary.selectItemListByType, body);
 }
@@ -73,11 +73,10 @@ export function selectDictionaryItems(body: JulyDictionaryItemQueryVo011 = {} as
 export async function fetchDictionaryItems(
   dictionaryCode: string,
   status?: string,
-  keyword?: string,
 ): Promise<void> {
   julyDictionaryStore.setState({ itemsLoading: true });
   try {
-    const items = await selectDictionaryItems({ dictionaryCode, status, keyword });
+    const items = await selectDictionaryItems({ dictionaryCode, status });
     julyDictionaryStore.setState({ items: items || [], itemsLoading: false });
   } catch {
     julyDictionaryStore.setState({ items: [], itemsLoading: false });
