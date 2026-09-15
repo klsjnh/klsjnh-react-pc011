@@ -14,7 +14,7 @@ export function selectUserMenuTree(): Promise<JulyMenuVo011[]> {
   return api.get<JulyMenuVo011[]>(SYSTEM011_ACTIONS.menu.selectUserMenuTree);
 }
 
-/** 全量菜单树（权限配置用） */
+/** 全量菜单树（GET /julyMenu/v1/selectTree）：菜单管理页 + 角色授权树的数据源 */
 export function selectMenuTree(): Promise<JulyMenuVo011[]> {
   return api.get<JulyMenuVo011[]>(SYSTEM011_ACTIONS.menu.selectTree);
 }
@@ -23,6 +23,19 @@ export function selectMenuTree(): Promise<JulyMenuVo011[]> {
 
 /** 生成新菜单 id（mock / api 均为字符串主键） */
 const genId = () => `menu${Date.now()}${Math.random().toString(36).slice(2, 6)}`;
+
+/** 新建菜单图标默认值 */
+const DEFAULT_MENU_ICON = 'FileTextOutlined';
+
+/** 新建菜单入参（页面只传表单字段，默认值由 service 补齐） */
+export interface CreateMenuData {
+  parentId?: string;
+  menuCode: string;
+  menuName: string;
+  menuIcon?: string;
+  menuRoute: string;
+  menuType: string;
+}
 
 /** 深度优先查找 */
 function findMenu(items: JulyMenuVo011[], id: string): JulyMenuVo011 | null {
@@ -41,38 +54,60 @@ function containsId(node: JulyMenuVo011, id: string): boolean {
   return node.id === id || (node.children || []).some((c) => containsId(c, id));
 }
 
-/** 初始化加载菜单（只加载一次） */
+/** 初始化加载全量菜单树（菜单管理 / 角色授权的数据源；只加载一次） */
 export async function loadMenus(): Promise<void> {
   const s = menuStore.getSnapshot();
   if (s.loading || s.loaded) return;
   menuStore.setState({ loading: true });
   try {
-    const tree = await selectUserMenuTree();
-    const mapRoute = (list: JulyMenuVo011[]): JulyMenuVo011[] =>
-      list.map((m) => ({ ...m, children: m.children ? mapRoute(m.children) : undefined }));
-    menuStore.setState({ menus: mapRoute(tree), loaded: true, loading: false });
+    const tree = await selectMenuTree();
+    menuStore.setState({ menus: tree, loaded: true, loading: false });
   } catch {
     menuStore.setState({ loading: false });
   }
 }
 
-/** 清空缓存重新加载（切换数据模式后调用） */
-export async function reloadMenus(): Promise<void> {
-  menuStore.replace({ menus: [], loaded: false, loading: false });
-  await loadMenus();
+/**
+ * 加载当前登录人的菜单树（RBAC 侧边栏数据源）。
+ * 与 loadMenus 分属两个后端接口：本函数走 selectUserMenuTree（非内置角色只返回已授权菜单），
+ * 不能与 selectTree 换用，否则导航会绕过权限。
+ */
+export async function loadNavMenus(): Promise<void> {
+  try {
+    const tree = await selectUserMenuTree();
+    menuStore.setState({ navMenus: tree });
+  } catch {
+    menuStore.setState({ navMenus: [] });
+  }
 }
 
-/** 获取某个路由下的子菜单 */
+/** 清空缓存重新加载（切换数据模式 / 登录后进主界面时调用）：全量树 + 导航树一起重拉 */
+export async function reloadMenus(): Promise<void> {
+  menuStore.replace({ menus: [], navMenus: [], loaded: false, loading: false });
+  await Promise.all([loadMenus(), loadNavMenus()]);
+}
+
+/** 获取某个路由下的子菜单（导航树数据源，仅取启用项） */
 export function getChildMenus(parentRoute: string): JulyMenuVo011[] {
-  const { menus } = menuStore.getSnapshot();
-  const parent = menus.find((m) => m.menuRoute === parentRoute);
+  const { navMenus } = menuStore.getSnapshot();
+  const parent = navMenus.find((m) => m.menuRoute === parentRoute);
   return (parent?.children || []).filter((m) => m.status === '1').sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
-/** 添加菜单 */
-export function addMenu(data: Omit<JulyMenuVo011, 'id' | 'children'>): void {
+/** 添加菜单（service 内部补齐 id / children / 默认值） */
+export async function addMenu(data: CreateMenuData): Promise<void> {
   const { menus } = menuStore.getSnapshot();
-  const created: JulyMenuVo011 = { ...data, id: genId(), children: [] };
+  const created: JulyMenuVo011 = {
+    ...data,
+    id: genId(),
+    children: [],
+    menuIcon: data.menuIcon || DEFAULT_MENU_ICON,
+    permissionCode: null,
+    component: null,
+    sortOrder: 0,
+    status: '1',
+    parentId: data.parentId || '',
+  };
   if (!created.parentId) {
     menuStore.setState({ menus: [...menus, created] });
   } else {
@@ -82,32 +117,32 @@ export function addMenu(data: Omit<JulyMenuVo011, 'id' | 'children'>): void {
         : { ...item, children: item.children ? addToParent(item.children) : item.children });
     menuStore.setState({ menus: addToParent(menus) });
   }
-  if (!isMockMode()) fireApi(SYSTEM011_ACTIONS.menu.insert, created);
+  if (!isMockMode()) await fireApi(SYSTEM011_ACTIONS.menu.insert, created);
 }
 
 /** 更新菜单 */
-export function updateMenu(id: string, patch: Partial<JulyMenuVo011>): void {
+export async function updateMenu(id: string, patch: Partial<JulyMenuVo011>): Promise<void> {
   const { menus } = menuStore.getSnapshot();
   const updateRecursive = (items: JulyMenuVo011[]): JulyMenuVo011[] =>
     items.map((item) => item.id === id
       ? { ...item, ...patch }
       : { ...item, children: item.children ? updateRecursive(item.children) : item.children });
   menuStore.setState({ menus: updateRecursive(menus) });
-  if (!isMockMode()) fireApi(SYSTEM011_ACTIONS.menu.update, { id, ...patch });
+  if (!isMockMode()) await fireApi(SYSTEM011_ACTIONS.menu.update, { id, ...patch });
 }
 
 /** 删除菜单 */
-export function removeMenu(id: string): void {
+export async function removeMenu(id: string): Promise<void> {
   const { menus } = menuStore.getSnapshot();
   const removeRecursive = (items: JulyMenuVo011[]): JulyMenuVo011[] =>
     items.filter((item) => item.id !== id)
       .map((item) => ({ ...item, children: item.children ? removeRecursive(item.children) : undefined }));
   menuStore.setState({ menus: removeRecursive(menus) });
-  if (!isMockMode()) fireApi(SYSTEM011_ACTIONS.menu.logicDelete, { id });
+  if (!isMockMode()) await fireApi(SYSTEM011_ACTIONS.menu.logicDelete, { id });
 }
 
 /** 移动菜单到新的上级（parentId 为空串表示顶级；不能移到自己或子孙下） */
-export function moveMenu(id: string, newParentId: string): boolean {
+export async function moveMenu(id: string, newParentId: string): Promise<boolean> {
   const { menus } = menuStore.getSnapshot();
   const node = findMenu(menus, id);
   if (!node || id === newParentId) return false;
@@ -126,14 +161,28 @@ export function moveMenu(id: string, newParentId: string): boolean {
         : { ...item, children: item.children ? addUnder(item.children) : item.children });
     menuStore.setState({ menus: addUnder(rest) });
   }
-  if (!isMockMode()) fireApi(SYSTEM011_ACTIONS.menu.update, { id, parentId: newParentId });
+  if (!isMockMode()) {
+    // 后端 /update 要求 menuName/menuType 等必填，只传 parentId 会 500；
+    // 这里携带节点现有全量字段，仅 parentId 为本次变更。
+    await fireApi(SYSTEM011_ACTIONS.menu.update, {
+      id,
+      menuName: node.menuName,
+      menuType: node.menuType,
+      menuIcon: node.menuIcon,
+      menuRoute: node.menuRoute,
+      permissionCode: node.permissionCode,
+      component: node.component,
+      parentId: newParentId,
+      sortOrder: node.sortOrder,
+    });
+  }
   return true;
 }
 
 /** 切换启用/停用 */
-export function toggleMenuStatus(id: string): void {
+export async function toggleMenuStatus(id: string): Promise<void> {
   const node = findMenu(menuStore.getSnapshot().menus, id);
   if (!node) return;
   const status = node.status === '1' ? '0' : '1';
-  updateMenu(id, { status });
+  await updateMenu(id, { status });
 }

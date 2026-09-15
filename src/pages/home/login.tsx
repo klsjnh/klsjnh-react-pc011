@@ -10,7 +10,7 @@ import { ApartmentOutlined, UserOutlined, LockOutlined } from '@ant-design/icons
 import { authStore } from '@/stores/authStore';
 import { isDevelopment, useAppConfig } from '@/config/appConfig';
 import { readDevLoginUserName } from '@/utils/devLogin';
-import { globalConfig } from '@/config/global';
+import { globalConfig } from '@/config/constants';
 import { toast } from '@/utils/toast';
 import type { LoginTab } from '@/types/view/page';
 

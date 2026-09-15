@@ -42,8 +42,8 @@ export const JulyUser = () => {
 
   const columns: ColumnsType<JulyUserView> = [
     { title: '用户名', dataIndex: 'userAccount', width: 120 },
-    { title: '姓名', dataIndex: 'userName', width: 100 },
-    { title: '邮箱', dataIndex: 'email', render: (v) => v || '—' },
+    { title: '姓名', dataIndex: 'userName', width: 160 },
+    { title: '邮箱', dataIndex: 'email', width: 230,render: (v) => v || '—' },
     { title: '手机号', dataIndex: 'mobile', width: 130, render: (v) => v || '—' },
     { title: '组织', dataIndex: 'department', width: 140, render: (v) => v || '—' },
     {

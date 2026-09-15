@@ -34,6 +34,9 @@ export const SYSTEM011_ACTIONS = {
     update: '/julyRole/v1/update',
     logicDelete: '/julyRole/v1/logicDelete',
     assignMenus: '/julyRole/v1/assignMenus',
+    getById: '/julyRole/v1/getById',
+    getMenusByRole: '/julyRole/v1/getMenusByRole',
+    getUsersByRole: '/julyRole/v1/getUsersByRole',
   },
   // ⚠️ 无 julyRoleUser 资源：后端（java17-web011）没有 JulyRoleUserController，
   // 角色↔用户的关联只能通过 julyUser/v1/assignRoles（用户 → 角色，整存替换）维护。

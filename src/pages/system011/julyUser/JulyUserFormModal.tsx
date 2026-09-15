@@ -80,6 +80,7 @@ export const JulyUserFormModal = ({
       destroyOnClose
     >
       <Form form={form} layout="vertical" preserve={false} initialValues={initialValues}>
+
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item
@@ -90,23 +91,23 @@ export const JulyUserFormModal = ({
               <Input placeholder="请输入用户名" disabled={isEdit} />
             </Form.Item>
           </Col>
+
+          <Col span={12}>
+            <Form.Item name="password" label="密码" rules={[{ required: true, message: '请输入密码' }, { min: 6, message: '密码至少 6 位' }]}>
+              <Input.Password placeholder="至少 6 位" />
+            </Form.Item>
+          </Col>
+
+        </Row>
+
+        <Row gutter={16}>
+
           <Col span={12}>
             <Form.Item name="userName" label="姓名" rules={[{ required: true, message: '请输入姓名' }]}>
               <Input placeholder="请输入姓名" />
             </Form.Item>
           </Col>
-        </Row>
 
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              name="email"
-              label="邮箱"
-              rules={[{ type: 'email', message: '邮箱格式不正确' }]}
-            >
-              <Input placeholder="请输入邮箱" />
-            </Form.Item>
-          </Col>
           <Col span={12}>
             <Form.Item
               name="mobile"
@@ -141,13 +142,6 @@ export const JulyUserFormModal = ({
         </Row>
 
         <Row gutter={16}>
-          {!isEdit && (
-            <Col span={12}>
-              <Form.Item name="password" label="密码" rules={[{ required: true, message: '请输入密码' }, { min: 6, message: '密码至少 6 位' }]}>
-                <Input.Password placeholder="至少 6 位" />
-              </Form.Item>
-            </Col>
-          )}
           <Col span={12}>
             <Form.Item name="status" label="状态">
               <Select options={[{ value: '1', label: '启用' }, { value: '0', label: '停用' }]} />

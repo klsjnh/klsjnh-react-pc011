@@ -6,7 +6,7 @@ import { useCurrentUser, authStore } from '@/stores/authStore';
 import { useUnreadCount, notificationStore } from '@/stores/notificationStore';
 import { appConfigStore, useAppConfig, type DataMode } from '@/config/appConfig';
 import { reloadMenus, reloadRoles, changePassword } from '@/services/system011';
-import { globalConfig } from '@/config/global';
+import { globalConfig } from '@/config/constants';
 import { toast } from '@/utils/toast';
 import type { TopProps } from '@/types/view/layout';
 

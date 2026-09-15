@@ -93,8 +93,9 @@ export const api = {
 
 /**
  * API 模式下的静默写请求：本地先行更新（乐观更新），
- * 请求失败仅记录到 appConfigStore.lastApiError，不打断页面交互
+ * 请求失败仅记录到 appConfigStore.lastApiError，不打断页面交互。
+ * 返回 promise 以便调用方按序等待后端落库后再 reload。
  */
 export function fireApi(action: string, body?: object) {
-  request(action, body).catch(() => { /* 错误已记录 */ });
+  return request(action, body).catch(() => { /* 错误已记录 */ });
 }

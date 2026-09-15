@@ -50,13 +50,17 @@ export const FALLBACK_MENU_ICON: NavIcon = FileTextOutlined;
 
 /**
  * 字符串 → 图标组件。
- * 上半段为 antd 图标名（对象简写即 key=名），下半段为历史 emoji 值。
+ * 后端 menuIcon 统一存 antd 图标名（如 SettingOutlined），
+ * 此处直接做名称到组件的映射。
  */
 const MENU_ICON_MAP: Record<string, NavIcon> = {
-  // ===== antd 图标名（后端若改存名称，此处即生效）=====
+  // ===== antd 图标名（与后端 menuIcon 字段一一对应）=====
   ApartmentOutlined,
   AppstoreOutlined,
+  AppstoreAddOutlined,
+  AreaChartOutlined,
   BarChartOutlined,
+  BellOutlined,
   BookOutlined,
   CalculatorOutlined,
   ClockCircleOutlined,
@@ -65,6 +69,7 @@ const MENU_ICON_MAP: Record<string, NavIcon> = {
   DatabaseOutlined,
   DesktopOutlined,
   ExportOutlined,
+  FieldTimeOutlined,
   FileSearchOutlined,
   FileTextOutlined,
   FormOutlined,
@@ -85,44 +90,6 @@ const MENU_ICON_MAP: Record<string, NavIcon> = {
   ToolOutlined,
   UserOutlined,
   UserSwitchOutlined,
-
-  // ===== 历史 emoji 值（现有 mock 与库中数据）；⚠️ 含变体选择符的写法一并覆盖 =====
-  '⚙': SettingOutlined,
-  '⚙️': SettingOutlined,
-  '📋': MenuOutlined,
-  '🏢': ApartmentOutlined,
-  '👥': TeamOutlined,
-  '🔑': KeyOutlined,
-  '💼': AppstoreOutlined,
-  '⏰': ClockCircleOutlined,
-  '🗄': DatabaseOutlined,
-  '🗄️': DatabaseOutlined,
-  '💾': HddOutlined,
-  '🛠': ToolOutlined,
-  '🛠️': ToolOutlined,
-  '📝': FormOutlined,
-  '👤': UserOutlined,
-  '📊': BarChartOutlined,
-  '🔍': SearchOutlined,
-  '📄': FileTextOutlined,
-  '👶': SmileOutlined,
-  '📈': LineChartOutlined,
-  '📉': PieChartOutlined,
-  '🔔': NotificationOutlined,
-  '🔧': ControlOutlined,
-  '📡': MonitorOutlined,
-  '🖥': DesktopOutlined,
-  '🖥️': DesktopOutlined,
-  '📤': ExportOutlined,
-  '🧮': CalculatorOutlined,
-  '📖': BookOutlined,
-  '🧩': AppstoreOutlined,
-  '🟢': UserSwitchOutlined,
-  '❓': QuestionCircleOutlined,
-  'ℹ': InfoCircleOutlined,
-  'ℹ️': InfoCircleOutlined,
-  '📜': FileTextOutlined,
-  '🪵': FileTextOutlined,
 };
 
 /** 把后端 menuIcon 字符串解析为 antd 图标组件 */

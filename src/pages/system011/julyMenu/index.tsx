@@ -9,9 +9,11 @@ import type { DataNode, TreeProps } from 'antd/es/tree';
 import { useMenuState } from '@/stores/system011/julyMenuStore';
 import { addMenu, updateMenu, removeMenu, moveMenu, loadMenus, reloadMenus } from '@/services/system011';
 import { isMockMode } from '@/config/appConfig';
-import { resolveMenuIcon } from '@/config/menuIcons';
+import { resolveMenuIcon } from '@/components/layout/MenuIcons';
 import { uiStore, useUiState } from '@/stores/uiStore';
 import type { JulyMenuVo011 } from '@/types/system011/julyMenu';
+import { MENU_TYPE_OPTIONS } from '@/config/constants';
+import { toast } from '@/utils/toast';
 
 /**
  * 按后端 menuIcon 字符串渲染 antd 图标（树标题 / 下拉项 / 卡片标题复用）。
@@ -24,12 +26,6 @@ const MenuIcon = ({ value }: { value?: string | null }) =>
 
 /** 新建菜单时 menuIcon 的默认值（存 antd 图标名，由 resolveMenuIcon 解析） */
 const DEFAULT_MENU_ICON = 'FileTextOutlined';
-
-const MENU_TYPE_OPTIONS = [
-  { value: '1', label: '目录' },
-  { value: '2', label: '菜单' },
-  { value: '3', label: '按钮' },
-];
 
 function findMenu(items: JulyMenuVo011[], id: string): JulyMenuVo011 | null {
   for (const item of items) {
@@ -137,35 +133,41 @@ export const JulyMenu = () => {
 
   const handleCreate = async () => {
     const v = await createForm.validateFields();
-    addMenu({
-      parentId: v.parentId || '',
-      menuCode: v.menuCode,
-      menuName: v.menuName,
-      menuIcon: v.menuIcon || DEFAULT_MENU_ICON,
-      menuRoute: v.menuRoute,
-      menuType: v.menuType,
-      permissionCode: null,
-      component: null,
-      sortOrder: 0,
-      status: '1',
-    });
-    if (v.parentId) uiStore.setMenuTreeExpandedIds(Array.from(new Set([...expandedKeys, v.parentId])));
-    if (!isMockMode()) reloadMenus();
-    setCreateModal(false);
+    try {
+      await addMenu({
+        parentId: v.parentId,
+        menuCode: v.menuCode,
+        menuName: v.menuName,
+        menuIcon: v.menuIcon,
+        menuRoute: v.menuRoute,
+        menuType: v.menuType,
+      });
+      if (v.parentId) uiStore.setMenuTreeExpandedIds(Array.from(new Set([...expandedKeys, v.parentId])));
+      if (!isMockMode()) await reloadMenus();
+      setCreateModal(false);
+      toast.success('菜单已创建');
+    } catch (e) {
+      toast.error((e as Error)?.message || '创建失败');
+    }
   };
 
   const handleSaveEdit = async () => {
     if (!selectedNode) return;
-    const v = await form.validateFields();
-    updateMenu(selectedNode.id, {
-      menuName: v.menuName,
-      menuIcon: v.menuIcon,
-      menuRoute: v.menuRoute,
-      menuType: v.menuType,
-      status: v.status,
-    });
-    if (v.parentId !== selectedNode.parentId) moveMenu(selectedNode.id, v.parentId || '');
-    if (!isMockMode()) reloadMenus();
+    try {
+      const v = await form.validateFields();
+      await updateMenu(selectedNode.id, {
+        menuName: v.menuName,
+        menuIcon: v.menuIcon,
+        menuRoute: v.menuRoute,
+        menuType: v.menuType,
+        status: v.status,
+      });
+      if (v.parentId !== selectedNode.parentId) await moveMenu(selectedNode.id, v.parentId || '');
+      if (!isMockMode()) await reloadMenus();
+      toast.success(`update ${selectedNode.id} success ...`);
+    } catch (e) {
+      toast.error((e as Error)?.message || '保存失败');
+    }
   };
 
   const handleDelete = (menu: JulyMenuVo011) => {
@@ -179,23 +181,28 @@ export const JulyMenu = () => {
       okText: '删除',
       okButtonProps: { danger: true },
       cancelText: '取消',
-      onOk: () => {
-        removeMenu(menu.id);
-        if (selectedId === menu.id) uiStore.setMenuTreeSelectedId(null);
-        if (!isMockMode()) reloadMenus();
+      onOk: async () => {
+        try {
+          await removeMenu(menu.id);
+          if (selectedId === menu.id) uiStore.setMenuTreeSelectedId(null);
+          if (!isMockMode()) await reloadMenus();
+          toast.success('菜单已删除');
+        } catch (e) {
+          toast.error((e as Error)?.message || '删除失败');
+        }
       },
     });
   };
 
-  const onDrop: TreeProps['onDrop'] = (info) => {
+  const onDrop: TreeProps['onDrop'] = async (info) => {
     const dragId = String(info.dragNode.key);
     const dropId = String(info.node.key);
     if (dragId === dropId) return;
     const dragNode = findMenu(menus, dragId);
     if (!dragNode || containsId(dragNode, dropId)) return;
-    moveMenu(dragId, dropId);
+    await moveMenu(dragId, dropId);
     uiStore.setMenuTreeExpandedIds(Array.from(new Set([...expandedKeys, dropId])));
-    if (!isMockMode()) reloadMenus();
+    if (!isMockMode()) await reloadMenus();
   };
 
   return (

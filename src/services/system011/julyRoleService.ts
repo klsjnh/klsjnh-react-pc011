@@ -23,6 +23,21 @@ export function selectRoleListByPage(body: object = {}): Promise<PageResult011<J
   return api.post<PageResult011<JulyRoleVo011>>(SYSTEM011_ACTIONS.role.selectListByPage, body);
 }
 
+/** 主键查询 */
+export function getRoleById(id: string): Promise<JulyRoleVo011> {
+  return api.get<JulyRoleVo011>(`${SYSTEM011_ACTIONS.role.getById}?id=${encodeURIComponent(id)}`);
+}
+
+/** 角色已授权菜单（平铺列表，前端用于校验/回显） */
+export function getMenusByRole(id: string): Promise<JulyMenuVo011[]> {
+  return api.get<JulyMenuVo011[]>(`${SYSTEM011_ACTIONS.role.getMenusByRole}?id=${encodeURIComponent(id)}`);
+}
+
+/** 角色关联用户（全量用户列表，替代 mockRelations.roleUserAccounts） */
+export function getUsersByRole(id: string): Promise<JulyUserVo011[]> {
+  return api.get<JulyUserVo011[]>(`${SYSTEM011_ACTIONS.role.getUsersByRole}?id=${encodeURIComponent(id)}`);
+}
+
 // ==================== 投影层 ====================
 
 /** 菜单树拍平（用于建立 permissionCode → 菜单 id 映射） */
@@ -39,8 +54,12 @@ function projectRole(
   r: JulyRoleVo011,
   userAccountToId: Map<string, string>,
   menuIdByCode: Map<string, string>,
+  realUserIds?: string[], // 可选：来自 selectUsersByRole 的真实用户 id
 ): RoleDetail {
-  const accounts = mockRelations.roleUserAccounts(r.roleCode);
+  const accounts = realUserIds !== undefined ? [] : mockRelations.roleUserAccounts(r.roleCode);
+  const userIds = realUserIds !== undefined
+    ? realUserIds
+    : accounts.map((a) => userAccountToId.get(a)).filter((x): x is string => x != null);
   const menuIds = mockRelations
     .rolePermissions(r.roleCode)
     .map((code) => menuIdByCode.get(code))
@@ -48,7 +67,7 @@ function projectRole(
   return {
     ...r,
     permissions: menuIds,
-    userIds: accounts.map((a) => userAccountToId.get(a)).filter((x): x is string => x != null),
+    userIds,
   };
 }
 
@@ -90,8 +109,29 @@ export async function loadRoles(): Promise<void> {
         .filter((m) => m.permissionCode)
         .map((m) => [m.permissionCode as string, m.id] as [string, string]),
     );
+
+    // 并行拉每个角色的真实用户列表（替代 mock 投影），mock 模式回退
+    let usersByRoleId = new Map<string, JulyUserVo011[]>();
+    if (!isMockMode()) {
+      const pairs = await Promise.all(
+        rolePage.rows.map((r) =>
+          getUsersByRole(r.id)
+            .then((users) => [r.id, users] as [string, JulyUserVo011[]])
+            .catch(() => [r.id, []] as [string, JulyUserVo011[]]),
+        ),
+      );
+      usersByRoleId = new Map(pairs);
+    }
+
     roleStore.setState({
-      roles: rolePage.rows.map((r) => projectRole(r, userAccountToId, menuIdByCode)),
+      roles: rolePage.rows.map((r) =>
+        projectRole(
+          r,
+          userAccountToId,
+          menuIdByCode,
+          isMockMode() ? undefined : (usersByRoleId.get(r.id) || []).map((u) => u.id),
+        ),
+      ),
       users: userPage.rows.map((u) => projectUser(u, orgSnapshot.orgNameById)),
       orgTree: orgSnapshot.tree,
       loaded: true,
@@ -109,8 +149,14 @@ export async function reloadRoles(): Promise<void> {
   await loadRoles();
 }
 
-/** 添加角色（投影层）；api 模式静默写回真实后端 */
-export function addRole(data: { roleCode: string; roleName: string; remark?: string }): void {
+/**
+ * 添加角色（投影层）；api 模式静默写回真实后端。
+ *
+ * status 目前仅本地/mock 生效：后端 insert 无 status 入参（新建默认启用）。
+ * 2026-09-15 已确认后端 `JulyRoleUseCase.insert` 只收 roleCode/roleName/remark，
+ * domain 工厂固定建为启用。
+ */
+export function addRole(data: { roleCode: string; roleName: string; remark?: string; status?: string }): void {
   const s = roleStore.getSnapshot();
   const now = new Date().toISOString().slice(0, 19);
   const created: RoleDetail = {
@@ -119,7 +165,7 @@ export function addRole(data: { roleCode: string; roleName: string; remark?: str
     roleName: data.roleName,
     isBuiltin: '0',
     remark: data.remark || null,
-    status: '1',
+    status: data.status || '1',
     createTime: now,
     updateTime: now,
     permissions: [],
@@ -129,7 +175,12 @@ export function addRole(data: { roleCode: string; roleName: string; remark?: str
   if (!isMockMode()) fireApi(SYSTEM011_ACTIONS.role.insert, { roleCode: data.roleCode, roleName: data.roleName, remark: data.remark });
 }
 
-/** 更新角色 */
+/**
+ * 更新角色。
+ *
+ * 2026-09-15 后端已补 status 入参（`JulyRoleUpdateVo011.status` + `useCase.update(id, roleName, remark, status)`），
+ * 前端无需特殊处理，直接下发即可生效。
+ */
 export function updateRole(id: string, data: Partial<Pick<RoleDetail, 'roleName' | 'remark' | 'status'>>): void {
   const s = roleStore.getSnapshot();
   roleStore.setState({ roles: s.roles.map((r) => (r.id === id ? { ...r, ...data } : r)) });
