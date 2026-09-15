@@ -104,10 +104,21 @@ export const handlers: Record<string, Handler> = {
     return ok({ id: u.id });
   },
 
-  // ===== 批量逻辑删除（body 直接为 id 数组） =====
+  // ===== 逻辑删除单个（body 为 { id }） =====
   '/julyUser/v1/logicDelete': async (body) => {
     await delay(350);
-    const ids: string[] = Array.isArray(body) ? body : [];
+    const id = (body as { id?: string })?.id;
+    const i = mockUsers.findIndex((x) => x.id === id);
+    if (i < 0) return fail(`record not found, id=${id}`, 404);
+    const [removed] = mockUsers.splice(i, 1);
+    userNameById.delete(removed.id);
+    return ok({ id: removed.id });
+  },
+
+  // ===== 批量逻辑删除（body 为 { ids: [...] }） =====
+  '/julyUser/v1/logicDeleteBatch': async (body) => {
+    await delay(350);
+    const ids: string[] = Array.isArray((body as { ids?: string[] })?.ids) ? (body as { ids: string[] }).ids : [];
     const errors: { id: string; message: string }[] = [];
     let success = 0;
     for (const id of ids) {
