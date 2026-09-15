@@ -9,8 +9,21 @@ import type { DataNode, TreeProps } from 'antd/es/tree';
 import { useMenuState } from '@/stores/system011/julyMenuStore';
 import { addMenu, updateMenu, removeMenu, moveMenu, loadMenus, reloadMenus } from '@/services/system011';
 import { isMockMode } from '@/config/appConfig';
+import { resolveMenuIcon } from '@/config/menuIcons';
 import { uiStore, useUiState } from '@/stores/uiStore';
 import type { JulyMenuVo011 } from '@/types/system011/julyMenu';
+
+/**
+ * 按后端 menuIcon 字符串渲染 antd 图标（树标题 / 下拉项 / 卡片标题复用）。
+ * 用 createElement 而非 `const Icon = ...; <Icon />`：后者会被
+ * react-hooks/static-components 判定为「渲染期创建组件」，而这里只是从
+ * 模块级映射表取一个已存在的组件，并不新建组件。
+ */
+const MenuIcon = ({ value }: { value?: string | null }) =>
+  React.createElement(resolveMenuIcon(value));
+
+/** 新建菜单时 menuIcon 的默认值（存 antd 图标名，由 resolveMenuIcon 解析） */
+const DEFAULT_MENU_ICON = 'FileTextOutlined';
 
 const MENU_TYPE_OPTIONS = [
   { value: '1', label: '目录' },
@@ -72,12 +85,12 @@ export const JulyMenu = () => {
   const selectNode = (id: string) => uiStore.setMenuTreeSelectedId(id);
 
   const buildParentOptions = (exclude: JulyMenuVo011 | null) => {
-    const options: { value: string; label: string; disabled: boolean }[] = [];
+    const options: { value: string; label: React.ReactNode; disabled: boolean }[] = [];
     const walk = (items: JulyMenuVo011[], depth: number) => {
       items.forEach((m) => {
         options.push({
           value: m.id,
-          label: `${'　'.repeat(depth)}${m.menuIcon} ${m.menuName}`,
+          label: <span>{'　'.repeat(depth)}<MenuIcon value={m.menuIcon} /> {m.menuName}</span>,
           disabled: !!exclude && containsId(exclude, m.id),
         });
         if (m.children) walk(m.children, depth + 1);
@@ -108,7 +121,7 @@ export const JulyMenu = () => {
           }}
         >
           <span className="menu-tree-title">
-            {m.menuIcon} {m.menuName}
+            <MenuIcon value={m.menuIcon} /> {m.menuName}
             {m.status !== '1' && <span className="text-muted text-xs">（停用）</span>}
           </span>
         </Dropdown>
@@ -118,7 +131,7 @@ export const JulyMenu = () => {
 
   const openCreate = (parentId: string) => {
     createForm.resetFields();
-    createForm.setFieldsValue({ parentId, menuType: '2', menuIcon: '📄' });
+    createForm.setFieldsValue({ parentId, menuType: '2', menuIcon: DEFAULT_MENU_ICON });
     setCreateModal(true);
   };
 
@@ -128,7 +141,7 @@ export const JulyMenu = () => {
       parentId: v.parentId || '',
       menuCode: v.menuCode,
       menuName: v.menuName,
-      menuIcon: v.menuIcon || '📄',
+      menuIcon: v.menuIcon || DEFAULT_MENU_ICON,
       menuRoute: v.menuRoute,
       menuType: v.menuType,
       permissionCode: null,
@@ -219,7 +232,7 @@ export const JulyMenu = () => {
         <div className="menu-main">
           {selectedNode ? (
             <Card
-              title={`${selectedNode.menuIcon} 编辑菜单 - ${selectedNode.menuName}`}
+              title={<span><MenuIcon value={selectedNode.menuIcon} /> 编辑菜单 - {selectedNode.menuName}</span>}
               extra={<Button type="primary" onClick={handleSaveEdit}>保存</Button>}
             >
               <Form form={form} layout="vertical">
@@ -230,7 +243,7 @@ export const JulyMenu = () => {
                     </Form.Item>
                   </Col>
                   <Col span={12}>
-                    <Form.Item name="menuIcon" label="图标（emoji）"><Input /></Form.Item>
+                    <Form.Item name="menuIcon" label="图标（antd 图标名）"><Input /></Form.Item>
                   </Col>
                   <Col span={12}>
                     <Form.Item name="menuRoute" label="路由路径" rules={[{ required: true, message: '请输入路由路径' }]}>
@@ -285,7 +298,7 @@ export const JulyMenu = () => {
           </Form.Item>
           <Row gutter={12}>
             <Col span={12}>
-              <Form.Item name="menuIcon" label="图标（emoji）"><Input /></Form.Item>
+              <Form.Item name="menuIcon" label="图标（antd 图标名）"><Input /></Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item name="menuType" label="类型">

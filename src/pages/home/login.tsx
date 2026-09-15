@@ -6,7 +6,7 @@
  */
 import React, { useState } from 'react';
 import { Button, Card, Form, Input, Tabs, Typography } from 'antd';
-import { UserOutlined, LockOutlined } from '@ant-design/icons';
+import { ApartmentOutlined, UserOutlined, LockOutlined } from '@ant-design/icons';
 import { authStore } from '@/stores/authStore';
 import { isDevelopment, useAppConfig } from '@/config/appConfig';
 import { readDevLoginUserName } from '@/utils/devLogin';
@@ -54,7 +54,7 @@ export const LoginPage = () => {
     <div className="login-page">
       <Card className="login-card" styles={{ body: { padding: 32 } }}>
         <div className="login-brand">
-          <div className="login-brand-title">🏢 {globalConfig.appName}</div>
+          <div className="login-brand-title text-primary"><ApartmentOutlined /> {globalConfig.appName}</div>
           <Typography.Text type="secondary" className="text-xs">
             {dataMode === 'mock' ? 'MOCK' : 'API'} · {runState === 'development' ? '开发态' : '生产态'}
           </Typography.Text>

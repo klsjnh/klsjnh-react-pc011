@@ -4,6 +4,7 @@
  */
 import React, { useState, useMemo } from 'react';
 import { Button, Card, Checkbox, Col, Input, List, Modal, Row, Tree, Typography } from 'antd';
+import { FolderOpenOutlined } from '@ant-design/icons';
 import type { DataNode } from 'antd/es/tree';
 import type { NodeId, OrgTreeNode } from '@/types/view/common';
 import type { TransferUser } from '@/types/view/transfer';
@@ -76,7 +77,7 @@ export const UserTransferModal = ({
               style={{ textAlign: 'left', marginBottom: 4 }}
               onClick={() => setSelectedOrgId(null)}
             >
-              📂 全部部门
+              <FolderOpenOutlined /> 全部部门
             </Button>
             <Tree
               defaultExpandAll

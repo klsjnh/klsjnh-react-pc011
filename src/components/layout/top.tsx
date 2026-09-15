@@ -1,7 +1,7 @@
 /** 布局顶部：antd Header + 数据模式切换 / 通知铃铛 / 用户下拉 / 修改密码弹窗 */
 import React, { useState } from 'react';
 import { Layout, Dropdown, Avatar, Badge, Modal, Form, Input, Button } from 'antd';
-import { BellOutlined, LogoutOutlined, UserOutlined, LockOutlined } from '@ant-design/icons';
+import { ApartmentOutlined, BellOutlined, LogoutOutlined, UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useCurrentUser, authStore } from '@/stores/authStore';
 import { useUnreadCount, notificationStore } from '@/stores/notificationStore';
 import { appConfigStore, useAppConfig, type DataMode } from '@/config/appConfig';
@@ -66,7 +66,7 @@ export const Top = ({ onNavigate }: TopProps) => {
   return (
     <Header className="app-header">
       <div className="app-brand">
-        <span className="app-brand-logo">🏢</span>
+        <ApartmentOutlined className="app-brand-logo" />
         <span>{globalConfig.appName}</span>
       </div>
 

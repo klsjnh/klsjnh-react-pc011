@@ -8,12 +8,15 @@ import type { NavItem, LeftProps } from '@/types/view/layout';
 const { Sider } = Layout;
 
 function toItems(nodes: NavItem[]): NonNullable<React.ComponentProps<typeof Menu>['items']> {
-  return nodes.map((n) => ({
-    key: n.path,
-    icon: <span className="nav-emoji">{n.icon}</span>,
-    label: n.label,
-    children: n.children?.length ? toItems(n.children) : undefined,
-  }));
+  return nodes.map((n) => {
+    const Icon = n.icon;
+    return {
+      key: n.path,
+      icon: <Icon />,
+      label: n.label,
+      children: n.children?.length ? toItems(n.children) : undefined,
+    };
+  });
 }
 
 /** 找到 currentPath 的所有祖先菜单 key（用于默认展开所属分组） */

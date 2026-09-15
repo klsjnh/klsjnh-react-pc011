@@ -5,6 +5,7 @@
  */
 import { useMemo } from 'react';
 import { globalConfig, GLOBAL_MENUS } from '@/config/global';
+import { resolveMenuIcon } from '@/config/menuIcons';
 import { createStore, useStoreState } from '@/stores/createStore';
 import type { JulyMenuVo011 } from '@/types/system011/julyMenu/vo';
 import type { MenuState } from '@/types/system011/julyMenu/view';
@@ -28,7 +29,7 @@ function toNavItem(m: JulyMenuVo011): NavItem {
   return {
     path: m.menuRoute,
     label: m.menuName,
-    icon: m.menuIcon || '📄',
+    icon: resolveMenuIcon(m.menuIcon),
     children: (m.children || []).filter((c) => c.menuType !== '3').map(toNavItem),
   };
 }
