@@ -3,7 +3,7 @@
  * 列表读 julyUserStore；组织名读 julyOrganizationStore；分页/保存调 julyUserService。
  * 字段直接对齐后端（userAccount/userName/mobile/pkOrg/status），仅补充关联字段 department/roles。
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DatabaseOutlined, DeleteOutlined, DownloadOutlined, DownOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button, Card, Dropdown, Input, Popconfirm, Select, Space, Table, Tag } from 'antd';
 import type { MenuProps } from 'antd';
@@ -12,6 +12,7 @@ import { useRoleState } from '@/stores/system011/julyRoleStore';
 import { loadRoles, exportUsers, backupUser011, removeUsers } from '@/services/system011';
 import { useOrganizationState } from '@/stores/system011/julyOrganizationStore';
 import { useUserState } from '@/stores/system011/julyUserStore';
+import { PAGE_SIZE_OPTIONS } from '@/utils/pageSizePref';
 import { fetchUserPage } from '@/services/system011';
 import { toast } from '@/utils/toast';
 import { mockRelations } from '@/mock/system011';
@@ -33,6 +34,50 @@ function toView(u: JulyUserVo011, orgNameById: Map<string, string>): JulyUserVie
   };
 }
 
+/**
+ * 表格体高度自适应：实测「卡片高度 - 表头 - 分页（含外边距）」。
+ * 用 calc(100vh - Npx) 估值会随工具栏折行 / 窗口高度失准，残余高度就会顶出外层滚动条；
+ * 这里的前提是 .page-fill 的 flex 布局让卡片高度由容器决定（与数据量无关，无循环依赖），
+ * 卡片又 overflow:hidden，即使测量差 1~2px 也只会被卡片裁掉，不会外溢成页面滚动条。
+ * signature：数据/加载态变化时补测一次（表头、分页会随数据出现或改变，而卡片高度不变 → ResizeObserver 不会触发）。
+ */
+function useTableFillHeight(
+  cardRef: React.RefObject<HTMLDivElement | null>,
+  signature?: unknown,
+): number | undefined {
+  const [height, setHeight] = useState<number>();
+  const measureRef = useRef<() => void>(() => {});
+
+  useEffect(() => {
+    const card = cardRef.current;
+    if (!card) return;
+
+    measureRef.current = () => {
+      const head = card.querySelector<HTMLElement>('.ant-table-header');
+      const pager = card.querySelector<HTMLElement>('.ant-table-pagination');
+      const headH = head?.offsetHeight ?? 47;
+      let pagerH = 0;
+      if (pager) {
+        const cs = getComputedStyle(pager);
+        pagerH = pager.offsetHeight + (parseFloat(cs.marginTop) || 0) + (parseFloat(cs.marginBottom) || 0);
+      }
+      const next = Math.max(120, Math.floor(card.clientHeight - headH - pagerH - 2));
+      setHeight((prev) => (prev === next ? prev : next));
+    };
+
+    measureRef.current();
+    // 首帧还是整表（无 scroll.y），表头/分页测量值不可靠 → 下一帧补测一次
+    const timer = window.setTimeout(() => measureRef.current(), 0);
+    const ro = new ResizeObserver(() => measureRef.current());
+    ro.observe(card);
+    return () => { ro.disconnect(); window.clearTimeout(timer); };
+  }, [cardRef]);
+
+  useEffect(() => { measureRef.current(); }, [signature]);
+
+  return height;
+}
+
 export const JulyUser = () => {
   const { roles } = useRoleState();
   const { orgNameById, tree: orgTree } = useOrganizationState();
@@ -43,10 +88,13 @@ export const JulyUser = () => {
   const [actionLoading, setActionLoading] = useState<'export' | 'backup' | null>(null);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [batchDeleting, setBatchDeleting] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const tableBodyHeight = useTableFillHeight(cardRef, `${total}-${loading}`);
 
-  // loadRoles 内部会拉组织树（填充 orgNameById）；用户分页单独拉
+  // loadRoles 内部会拉组织树（填充 orgNameById）；用户分页单独拉。
+  // 只重置 pageIndex：pageSize 是用户偏好（存在 store 里），传值会把它覆盖回默认 10。
   useEffect(() => { loadRoles(); }, []);
-  useEffect(() => { fetchUserPage({ pageIndex: 1, pageSize: 10 }); }, []);
+  useEffect(() => { fetchUserPage({ pageIndex: 1 }); }, []);
 
   const users = useMemo(() => list.map((u) => toView(u, orgNameById)), [list, orgNameById]);
   const dataSource = users.filter((u) => !statusFilter || u.status === statusFilter);
@@ -101,6 +149,17 @@ export const JulyUser = () => {
     }
   };
 
+  // 行级删除（与批量删除同一个 service，刷新已收敛在 service 内）
+  const handleRemoveRow = async (id: string) => {
+    try {
+      const res = await removeUsers([String(id)]);
+      setSelectedRowKeys((keys) => keys.filter((k) => String(k) !== String(id)));
+      toast.success(`删除成功 ${res.success} 条，失败 ${res.failed} 条`);
+    } catch (e) {
+      toast.error((e as Error)?.message || '删除失败，请重试');
+    }
+  };
+
   const rowSelection = {
     selectedRowKeys,
     onChange: (keys: React.Key[]) => setSelectedRowKeys(keys),
@@ -124,17 +183,24 @@ export const JulyUser = () => {
     },
     { ...leftCell, title: '最近登录', dataIndex: 'lastLoginTime', width: 160, render: (v) => v || '—' },
     {
-      title: '操作', key: 'action', width: 90, fixed: 'right', align: 'center', onHeaderCell: hdrCenter,
+      title: '操作', key: 'action', width: 130, fixed: 'right', align: 'center', onHeaderCell: hdrCenter,
       render: (_, user) => (
         <Space size="small">
           <Button type="link" size="small" onClick={() => setModal({ open: true, user })}>编辑</Button>
+          <Popconfirm
+            title="确定删除这个用户吗？"
+            okText="删除" cancelText="取消" okButtonProps={{ danger: true }}
+            onConfirm={() => handleRemoveRow(user.id)}
+          >
+            <Button type="link" size="small" danger>删除</Button>
+          </Popconfirm>
         </Space>
       ),
     },
   ];
 
   return (
-    <div>
+    <div className="page-fill">
       <div className="page-header">
         <h2>用户管理</h2>
       </div>
@@ -161,8 +227,12 @@ export const JulyUser = () => {
           />
         </div>
         <div className="toolbar-right">
-          <Button icon={<PlusOutlined />} onClick={() => setModal({ open: true, user: null })}
-            style={{ background: '#52c41a', borderColor: '#52c41a', color: '#fff' }}>新建用户</Button>
+          {/* 浅底 tonal（variant="filled"）：颜色表达强度、跟随主题 token，不再写死色 */}
+          <Button
+            color="primary" variant="filled"
+            icon={<PlusOutlined />}
+            onClick={() => setModal({ open: true, user: null })}
+          >新建用户</Button>
           <Popconfirm
             title={`确定要删除选中的 ${selectedRowKeys.length} 个用户吗？`}
             okText="删除" cancelText="取消" okButtonProps={{ danger: true }}
@@ -170,41 +240,44 @@ export const JulyUser = () => {
             disabled={!selectedRowKeys.length}
           >
             <Button
+              color="danger" variant="filled"
               icon={<DeleteOutlined />}
               disabled={!selectedRowKeys.length}
               loading={batchDeleting}
-              style={
-                selectedRowKeys.length
-                  ? { background: '#ff4d4f', borderColor: '#ff4d4f', color: '#fff' }
-                  : { background: '#f5f5f5', borderColor: '#d9d9d9', color: 'rgba(0, 0, 0, 0.25)' }
-              }
             >批量删除</Button>
           </Popconfirm>
-          <Button icon={<DatabaseOutlined />} loading={actionLoading === 'backup'} onClick={handleBackup}
-            style={{ background: '#faad14', borderColor: '#faad14', color: '#fff' }}>备份011</Button>
+          <Button
+            color="default" variant="filled"
+            icon={<DatabaseOutlined />}
+            loading={actionLoading === 'backup'}
+            onClick={handleBackup}
+          >备份011</Button>
           <Dropdown menu={exportMenu} trigger={['click']}>
-            <Button icon={<DownloadOutlined />} loading={actionLoading === 'export'}
-              style={{ background: '#1677ff', borderColor: '#1677ff', color: '#fff' }}>
+            <Button
+              color="default" variant="filled"
+              icon={<DownloadOutlined />}
+              loading={actionLoading === 'export'}
+            >
               导出 <DownOutlined />
             </Button>
           </Dropdown>
         </div>
       </div>
 
-      <Card className="table-wrapper" styles={{ body: { padding: 0 } }}>
+      <Card className="table-wrapper" ref={cardRef} styles={{ body: { padding: 0 } }}>
         <Table<JulyUserView>
           rowKey="id"
           columns={columns}
           rowSelection={rowSelection}
           dataSource={dataSource}
           loading={loading}
-          scroll={{ x: 1100 }}
+          scroll={{ x: 1100, y: tableBodyHeight }}
           pagination={{
             current: query.pageIndex,
             pageSize: query.pageSize,
             total,
             showSizeChanger: true,
-            pageSizeOptions: [10, 50, 100],
+            pageSizeOptions: PAGE_SIZE_OPTIONS,
             showTotal: (t) => `共 ${t} 条`,
             onChange: (pageIndex, pageSize) => fetchUserPage({ pageIndex, pageSize }),
           }}

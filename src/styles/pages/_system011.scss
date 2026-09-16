@@ -18,3 +18,16 @@
 .dict-empty { display: flex; align-items: center; justify-content: center; min-height: 400px; }
 .dict-type-row-active { background: var(--primary-bg); cursor: pointer; }
 .dict-type-row-active td { font-weight: 600; }
+
+/* 字典下方明细区（Tabs：明细项）——卡片 body 是 padding:0，
+   表格要通版贴边，但页签条与表格下方的行编辑操作条需要各自补内边距 */
+.detail-tabs .ant-tabs-nav { padding-inline: 16px; margin-bottom: 0; }
+.detail-pane { padding: 16px; }
+.detail-empty { padding: 32px 0; text-align: center; color: var(--text-muted); }
+
+/* 行编辑子表的顶部操作条（新增一行 / 保存）——在表格上方，故用下边框 */
+.detail-actions {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+}
+.detail-dirty { font-size: 12px; color: var(--text-muted); }

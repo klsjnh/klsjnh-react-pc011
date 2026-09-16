@@ -62,6 +62,17 @@ export async function removeDictionary(id: string): Promise<void> {
   await fetchDictionaryPage(julyDictionaryStore.getSnapshot().query);
 }
 
+/**
+ * 选中某个字典：写入 store 的 active + 拉取其明细。
+ * 主表点行必须走这里 —— 只用 fetchDictionaryItems 的话 active 会一直停在
+ * fetchDictionaryPage 设的 rows[0]，导致选中行高亮 / 页签标签错位，
+ * 且子表保存时会用错的 dictionaryCode 定位主表。
+ */
+export async function selectDictionary(row: JulyDictionaryVo011): Promise<void> {
+  julyDictionaryStore.setState({ active: row });
+  await fetchDictionaryItems(row.dictionaryCode);
+}
+
 /* ==================== 明细（按 dictionaryCode 定位主表） ==================== */
 
 /** 查询某字典的明细列表（字典编码 + 可选状态 => List<JulyDictionaryItemVo011>） */

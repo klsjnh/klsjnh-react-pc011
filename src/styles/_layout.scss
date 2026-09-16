@@ -5,6 +5,11 @@
 .layout-content { padding: 16px; overflow: auto; background: var(--bg-page); }
 .content-breadcrumb { font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; }
 
+/* 页面根节点带 .page-fill 时，内容区切成 flex 列：
+   面包屑占位、页面吃掉剩余高度 → 页面自身不再撑出外层滚动条（表格改为内部滚动）。
+   用 :has() 限定作用范围，未声明的页面仍保持「内容区整体滚动」的原有行为。 */
+.layout-content:has(> .page-fill) { display: flex; flex-direction: column; }
+
 .app-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 20px; border-bottom: 1px solid var(--border); background: var(--bg-card);
