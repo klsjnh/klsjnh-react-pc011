@@ -40,7 +40,7 @@ import {
   UserOutlined,
   UserSwitchOutlined,
 } from '@ant-design/icons';
-import { SYSTEM011_ROUTES, DATASERVICE011_ROUTES, AI011_ROUTES } from '@/config/routes';
+import { SYSTEM011_ROUTES, DATASERVICE011_ROUTES, AI011_ROUTES, LOWCODE011_ROUTES } from '@/config/routes';
 import type { NavItem } from '@/types/view/layout';
 
 /** 菜单类型 */
@@ -124,6 +124,14 @@ export const GLOBAL_MENUS: NavItem[] = [
     icon: ThunderboltOutlined,
     children: [
       { path: AI011_ROUTES.julyAiModelProvider, label: '模型供应商', icon: KeyOutlined },
+    ],
+  },
+  {
+    path: '/lowcode011',
+    label: '低代码中心',
+    icon: AppstoreAddOutlined,
+    children: [
+      { path: LOWCODE011_ROUTES.julyMetadata, label: '元数据管理', icon: DatabaseOutlined },
     ],
   },
   {

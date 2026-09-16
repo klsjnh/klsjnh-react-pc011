@@ -12,10 +12,14 @@ import type { ColumnsType } from 'antd/es/table';
 import { useDictionaryState } from '@/stores/system011/julyDictionaryStore';
 import { fetchDictionaryPage, selectDictionary, removeDictionary, exportData } from '@/services/system011';
 import { toast } from '@/utils/toast';
+import { downloadText, exportFileName } from '@/utils/download';
 import { PAGE_SIZE_OPTIONS } from '@/utils/pageSizePref';
 import { DictionaryItemTable } from '@/pages/system011/julyDictionary/DictionaryItemTable';
 import { DictionaryFormModal } from '@/pages/system011/julyDictionary/DictionaryFormModal';
 import type { JulyDictionaryVo011 } from '@/types/system011';
+
+/** 本页导出格式（后端 /export/v1 支持 csv / json，字典暂只导出 csv） */
+const EXPORT_FORMAT = 'csv';
 
 const STATUS_TAG = (s?: string) => <Tag color={s === '1' ? 'green' : 'red'}>{s === '1' ? '启用' : '停用'}</Tag>;
 
@@ -38,15 +42,9 @@ export const JulyDictionary = () => {
   const handleExport = async (objectCode: string) => {
     setExporting(true);
     try {
-      const [format] = ['csv', 'json'];
-      const content = await exportData({ objectCode, format });
-      const blob = new Blob([content], { type: format === 'json' ? 'application/json' : 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${objectCode}.${format}`;
-      a.click();
-      URL.revokeObjectURL(url);
+      // /export/v1 直接返回文件内容字符串 → 交给公共下载工具存盘
+      const content = await exportData({ objectCode, format: EXPORT_FORMAT });
+      downloadText(content, exportFileName(objectCode, EXPORT_FORMAT), EXPORT_FORMAT);
       toast.success(`export ${objectCode} success ...`);
     } catch (e) {
       toast.error((e as Error)?.message || '导出失败，请重试');

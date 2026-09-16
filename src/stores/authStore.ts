@@ -65,12 +65,21 @@ export const authStore = {
     return user;
   },
 
+  /**
+   * 纯本地清理会话（**不调用后端**）。
+   * 用于 401 被动失效场景：请求层（`src/api/request.ts`）收到 401 时调用，
+   * 清空 token 后由路由守卫（App.tsx 的 `useIsAuthenticated`）自动跳登录。
+   */
+  clearSession: () => {
+    base.setState({ token: null, user: null });
+  },
+
   /** 登出：API 态通知后端（失败不影响本地清理），随后清 token */
   logout: async () => {
     if (!isMockMode() && base.getSnapshot().token) {
       try { await apiLogout(); } catch { /* 后端登出失败仍清本地 */ }
     }
-    base.setState({ token: null, user: null });
+    authStore.clearSession();
   },
 
   isAuthenticated: () => !!base.getSnapshot().token,

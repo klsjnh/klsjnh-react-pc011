@@ -7,6 +7,7 @@ import { Button, Card, Input, Select, Switch, Table, Tag, Typography } from 'ant
 import type { ColumnsType } from 'antd/es/table';
 import { selectUserAuditListByPage } from '@/services/system011';
 import { toast } from '@/utils/toast';
+import { downloadText } from '@/utils/download';
 import type { JulyUserAuditVo011 } from '@/types/system011';
 import type { SettingItem } from '@/types/view/business';
 
@@ -75,12 +76,7 @@ export const AuditPage = () => {
       l.objectCode, l.auditContent, l.auditIp,
     ].map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','));
     const csv = '\uFEFF' + [header.join(','), ...lines].join('\r\n');
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `julyUserAudit-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadText(csv, `julyUserAudit-${new Date().toISOString().slice(0, 10)}.csv`, 'csv');
     toast.success(`导出 ${logs.length} 条成功`);
   };
 

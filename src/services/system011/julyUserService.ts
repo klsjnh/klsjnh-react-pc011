@@ -8,6 +8,7 @@
 import { api } from '@/api/request';
 import { SYSTEM011_ACTIONS } from '@/services/system011/actions';
 import { julyUserStore } from '@/stores/system011/julyUserStore';
+import { downloadExportResult } from '@/utils/system011/exportFile';
 import type {
   JulyUserLoginVo011,
   JulyUserLoginByNameVo011,
@@ -101,33 +102,11 @@ export async function saveUser(params: SaveUserParams): Promise<string> {
 
 /**
  * 导出全部用户（POST /julyUser/v1/export）并按 json/csv 触发浏览器下载。
- * 下载/拆包细节收敛在 service 层，页面只需调用并反馈结果。
+ * 拆包 / 序列化 / 下载细节收敛在 `@/utils/system011/exportFile`，页面只需调用并反馈结果。
  */
 export async function exportUsers(format: 'json' | 'csv' = 'csv'): Promise<{ objectCode: string; rowCount: number }> {
   const res = await api.post<ExportResult011>(SYSTEM011_ACTIONS.user.export, {});
-  const meta = res?.metaInfo;
-  const rows = res?.rows || [];
-  const cols = meta?.columns || [];
-  const objectCode = meta?.objectCode || 'julyUser';
-  if (!cols.length) return { objectCode, rowCount: 0 };
-
-  let blob: Blob;
-  if (format === 'json') {
-    blob = new Blob([JSON.stringify(meta ? { metaInfo: meta, rows } : { rows }, null, 2)], { type: 'application/json' });
-  } else {
-    const header = cols.map((c) => c.name).join(',');
-    const body = rows
-      .map((r) => cols.map((c) => `${(r[c.code] ?? '') as string}`.replace(/,/g, '，')).join(','))
-      .join('\n');
-    blob = new Blob(['\uFEFF' + `${header}\n${body}`], { type: 'text/csv' });
-  }
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${objectCode}.${format}`;
-  a.click();
-  URL.revokeObjectURL(url);
-  return { objectCode, rowCount: rows.length };
+  return downloadExportResult(res, format, 'julyUser');
 }
 
 /** 备份全部用户到存储中心（POST /julyUser/v1/backup011，无 body，返回 object key） */

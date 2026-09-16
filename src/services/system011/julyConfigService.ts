@@ -2,6 +2,7 @@
 import { api } from '@/api/request';
 import { SYSTEM011_ACTIONS } from '@/services/system011/actions';
 import { julyConfigStore } from '@/stores/system011/julyConfigStore';
+import { downloadExportResult } from '@/utils/system011/exportFile';
 import type {
   JulyConfigVo011, JulyConfigQueryVo011, JulyConfigUpdateVo011, JulyConfigUpsertVo,
   ExportResult011, BackupResult011,
@@ -43,33 +44,11 @@ export async function removeConfig(id: string): Promise<void> {
 
 /**
  * 导出全部配置（POST /julyConfig/v1/export）并按 json/csv 触发浏览器下载。
- * 下载/拆包细节收敛在 service 层，页面只需调用并反馈结果。
+ * 拆包 / 序列化 / 下载细节收敛在 `@/utils/system011/exportFile`，页面只需调用并反馈结果。
  */
 export async function exportConfig(format: 'json' | 'csv' = 'csv'): Promise<{ objectCode: string; rowCount: number }> {
   const res = await api.post<ExportResult011>(SYSTEM011_ACTIONS.config.export, {});
-  const meta = res?.metaInfo;
-  const rows = res?.rows || [];
-  const cols = meta?.columns || [];
-  const objectCode = meta?.objectCode || 'julyConfig';
-  if (!cols.length) return { objectCode, rowCount: 0 };
-
-  let blob: Blob;
-  if (format === 'json') {
-    blob = new Blob([JSON.stringify(meta ? { metaInfo: meta, rows } : { rows }, null, 2)], { type: 'application/json' });
-  } else {
-    const header = cols.map((c) => c.name).join(',');
-    const body = rows
-      .map((r) => cols.map((c) => `${(r[c.code] ?? '') as string}`.replace(/,/g, '，')).join(','))
-      .join('\n');
-    blob = new Blob(['\uFEFF' + `${header}\n${body}`], { type: 'text/csv' });
-  }
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${objectCode}.${format}`;
-  a.click();
-  URL.revokeObjectURL(url);
-  return { objectCode, rowCount: rows.length };
+  return downloadExportResult(res, format, 'julyConfig');
 }
 
 /**
