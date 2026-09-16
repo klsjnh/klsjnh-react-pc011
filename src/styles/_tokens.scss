@@ -1,0 +1,34 @@
+/* ==================== 设计令牌 ====================
+   --primary-* / --bar-* / --hero-* 为「主题色变量」，运行时由
+   src/config/theme.ts 的 applyThemeCssVars() 覆盖；此处静态值仅作首屏 fallback
+   （等于默认主题「靛蓝」，防止 JS 就绪前出现无色/闪色）。
+
+   antd 侧的对应值（fontSize / lineHeight / 控件高度 / 圆角 / 间距 / 表格与按钮状态）
+   在 theme.ts 的 TYPOGRAPHY / SPACING / components 中定义，两边改一处即可。
+   本文件只管「自研 DOM」取色；SCSS 对 --primary-* 只读不写。
+*/
+:root {
+  --primary: #4f46e5;
+  --primary-hover: #6366f1;
+  --primary-active: #4338ca;
+  --primary-bg: #eef2ff;
+  --primary-border: #c7d2fe;
+  --bar-from: #4f46e5;
+  --bar-to: #c7d2fe;
+  --hero-from: #4f46e5;
+  --hero-to: #4338ca;
+  --success: #16a34a;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+  --bg-page: #f0f2f5;
+  --bg-card: #ffffff;
+  --bg-hover: #f5f6f8;
+  --border: #e5e7eb;
+  --border-light: #f3f4f6;
+  --radius: 8px;
+  --shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 6px 16px rgba(15, 23, 42, 0.06);
+  --shadow-pop: 0 6px 16px rgba(15, 23, 42, 0.08), 0 12px 32px rgba(15, 23, 42, 0.12);
+}

@@ -1,0 +1,13 @@
+/* ==================== 应用骨架（Header / Sider / Content） ==================== */
+
+.app-layout { height: 100vh; }
+.app-sider { border-right: 1px solid var(--border); }
+.layout-content { padding: 16px; overflow: auto; background: var(--bg-page); }
+.content-breadcrumb { font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; }
+
+.app-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px; border-bottom: 1px solid var(--border); background: var(--bg-card);
+  /* antd Header 默认 line-height:64px，会让内部不同字号的控件基线错位，这里归位 */
+  line-height: normal;
+}

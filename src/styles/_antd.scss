@@ -1,0 +1,22 @@
+/* ==================== antd 覆盖层 ====================
+   只放 token 表达不了的极少数规则。新增前先确认 theme.ts 的 token 真的做不到——
+   antd 6 的 CSS-in-JS 与本文件同权重，胜负取决于插入顺序，靠覆盖解问题会越滚越大。
+*/
+
+/* Sider 自带底部收起把手：light 主题下 lightTriggerBg = 容器白底、
+   lightTriggerColor = 正文色，等于「白底 + 一个不打眼的箭头」，且与菜单重叠时几乎不可见。
+   补上顶部分隔线与 hover 主色让它可被发现（顶栏另有显式开关）。 */
+.app-sider .ant-layout-sider-trigger {
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border-top: 1px solid var(--border);
+  transition: color .15s ease, background-color .15s ease;
+}
+.app-sider .ant-layout-sider-trigger:hover { color: var(--primary); background: var(--primary-bg); }
+
+/* Menu 撑满 Sider 并可滚动；antd 无对应 token（容器高度由布局决定） */
+.side-menu {
+  border-inline-end: none !important;
+  height: 100%;
+  overflow-y: auto;
+}

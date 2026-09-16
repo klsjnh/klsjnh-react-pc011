@@ -37,6 +37,10 @@ export interface CreateMenuData {
   menuRoute: string;
   menuType: string;
   status?: string;
+  /** 权限编码（目录节点为 null；菜单/按钮必填） */
+  permissionCode?: string | null;
+  /** 前端组件路径（仅菜单类型有值；目录/按钮为 null） */
+  component?: string | null;
 }
 
 /** 深度优先查找 */
@@ -105,8 +109,8 @@ export async function addMenu(data: CreateMenuData): Promise<void> {
     id: genId(),
     children: [],
     menuIcon: data.menuIcon || DEFAULT_MENU_ICON,
-    permissionCode: null,
-    component: null,
+    permissionCode: data.permissionCode ?? null,
+    component: data.component ?? null,
     sortOrder: 0,
     status: '1',
     parentId: data.parentId || '',

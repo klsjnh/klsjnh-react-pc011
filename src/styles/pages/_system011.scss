@@ -1,0 +1,20 @@
+/* ==================== system011：权限 / 菜单 / 字典管理 ==================== */
+
+.permission-layout { display: flex; gap: 16px; align-items: flex-start; }
+.permission-sider { width: 300px; flex-shrink: 0; }
+.permission-main { flex: 1; min-width: 0; }
+.permission-empty { display: flex; align-items: center; justify-content: center; min-height: 400px; }
+.role-item { cursor: pointer; padding: 12px 14px !important; }
+.role-item.active { background: var(--primary-bg); border-left: 3px solid var(--primary); }
+.role-icon { font-size: 16px; color: var(--primary); }
+
+.menu-layout { display: flex; gap: 16px; align-items: flex-start; }
+.menu-sider { width: 320px; flex-shrink: 0; }
+.menu-main { flex: 1; min-width: 0; }
+.menu-empty { display: flex; align-items: center; justify-content: center; min-height: 460px; }
+.menu-tree-title { display: inline-flex; align-items: center; gap: 4px; }
+
+.dict-vertical { display: flex; flex-direction: column; gap: 16px; }
+.dict-empty { display: flex; align-items: center; justify-content: center; min-height: 400px; }
+.dict-type-row-active { background: var(--primary-bg); cursor: pointer; }
+.dict-type-row-active td { font-weight: 600; }

@@ -51,6 +51,12 @@ export const Left = ({ currentPath, onNavigate }: LeftProps) => {
   /**
    * 侧边栏菜单展开控制：最多同时展开 2 个一级主菜单。
    * 当展开第三个主菜单时，自动关闭最早展开的主菜单及其子项。
+   *
+   * ⚠️ 关键：必须以 antd 回调给出的 `keys` 为唯一事实来源。
+   * 原先这里写成 `Array.from(new Set([...openKeys, ...keys]))` 求并集，
+   * 语义上「只会加、不会减」—— 用户点分组标题想收起时，antd 传回的新 keys
+   * 已经不含该 key，却被旧 openKeys 又并了回来，于是任何分组一旦展开
+   * 就再也收不起来（只有路由切换 / 展开第 3 个分组才会被动关闭）。
    */
   const handleOpenChange = (keys: string[]) => {
     // 计算 key 的层级深度（0 = 一级主菜单）
@@ -78,24 +84,21 @@ export const Left = ({ currentPath, onNavigate }: LeftProps) => {
       return null;
     }
 
-    // 合并新旧 keys，找出一级主菜单（depth === 0）已展开的项
-    const allKeys = Array.from(new Set([...openKeys, ...keys]));
-    const topLevelOpened = allKeys.filter(k => getDepth(menus, k, 0) === 0);
+    const topLevelOpened = keys.filter(k => getDepth(menus, k, 0) === 0);
 
-    let finalKeys = allKeys;
-    // 一级主菜单超过 2 个时，关闭最早展开的
+    // 一级主菜单超过 2 个时，只保留最近展开的 2 个（antd 的 keys 顺序即展开先后）
     if (topLevelOpened.length > 2) {
-      const [first, ...rest] = topLevelOpened;
-      const keepSet = new Set(rest);
-      finalKeys = allKeys.filter(k => {
-        if (k === first) return false; // 关闭最早的一级菜单
+      const keep = new Set(topLevelOpened.slice(-2));
+      setOpenKeys(keys.filter(k => {
+        if (getDepth(menus, k, 0) === 0) return keep.has(k); // 关闭最早的一级菜单
         const parent = findParentPath(menus, k);
-        if (parent === first) return false; // 关闭该菜单的子项
-        return true;
-      });
+        return parent ? keep.has(parent) : true; // 关闭被裁掉菜单的子项
+      }));
+      return;
     }
 
-    setOpenKeys(finalKeys);
+    // 未超限：直接采用 antd 的结果（点开就加、点收起就减）
+    setOpenKeys(keys);
   };
 
   return (

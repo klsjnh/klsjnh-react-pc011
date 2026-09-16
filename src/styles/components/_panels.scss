@@ -1,0 +1,87 @@
+/* ==================== 顶栏浮层面板 ====================
+   主题色 / 数据模式 / 用户三个面板共用同一套视觉语言：
+   卡片头（标题 + 右侧说明 em）→ 选项行（标识 + 名称 + 说明 + 选中勾）。
+   配色全部走 --primary-* 变量，换肤自动跟随。
+*/
+
+/* ---- 主题色面板：2 列网格，渐变色块 + 中文名 + 选中勾 ---- */
+.theme-panel { width: 300px; }
+.theme-panel-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  padding: 0 2px 8px; margin-bottom: 8px;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 13px; font-weight: 600; color: var(--text-primary);
+}
+.theme-panel-head em { font-style: normal; font-size: 12px; font-weight: 400; color: var(--text-muted); }
+.theme-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; }
+.theme-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 8px; text-align: left; cursor: pointer;
+  background: transparent; border: 1px solid transparent; border-radius: 8px;
+  transition: background-color .15s ease, border-color .15s ease;
+}
+.theme-item:hover { background: var(--bg-hover); }
+.theme-item.active { background: var(--primary-bg); border-color: var(--primary-border); }
+.theme-swatch {
+  flex: 0 0 auto; width: 16px; height: 16px; border-radius: 5px;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+}
+.theme-item-name { flex: 1; font-size: 13px; color: var(--text-primary); }
+.theme-item.active .theme-item-name { color: var(--primary); font-weight: 600; }
+.theme-item-check { font-size: 11px; color: var(--primary); }
+
+/* ---- 数据模式面板：状态圆点 + 名称 + 说明 + 选中勾 ---- */
+.mode-panel { width: 268px; }
+.mode-panel-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  padding: 0 2px 8px; margin-bottom: 8px;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 13px; font-weight: 600; color: var(--text-primary);
+}
+.mode-panel-head em { font-style: normal; font-size: 12px; font-weight: 400; color: var(--text-muted); }
+.mode-list { display: flex; flex-direction: column; gap: 4px; }
+.mode-item {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 8px 10px; text-align: left; cursor: pointer;
+  background: transparent; border: 1px solid transparent; border-radius: 10px;
+  transition: background-color .15s ease, border-color .15s ease;
+}
+.mode-item:hover { background: var(--bg-hover); }
+.mode-item.active { background: var(--primary-bg); border-color: var(--primary-border); }
+.mode-item-dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
+.mode-item-dot.is-mock { background: var(--success); }
+.mode-item-dot.is-api { background: var(--primary); }
+.mode-item-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.mode-item-name { font-size: 13px; color: var(--text-primary); }
+.mode-item.active .mode-item-name { color: var(--primary); font-weight: 600; }
+.mode-item-desc { font-size: 12px; color: var(--text-muted); }
+.mode-item-check { font-size: 11px; color: var(--primary); }
+
+/* ---- 用户面板：身份卡 + 操作行（退出登录为危险色，用分隔线隔开） ---- */
+.user-panel { width: 236px; }
+.user-panel-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 2px 2px 12px; margin-bottom: 8px;
+  border-bottom: 1px solid var(--border-light);
+}
+.user-panel-meta { min-width: 0; flex: 1; }
+.user-panel-name {
+  font-size: 14px; font-weight: 600; color: var(--text-primary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.user-panel-sub {
+  font-size: 12px; color: var(--text-muted); margin-top: 2px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.user-panel-actions { display: flex; flex-direction: column; gap: 2px; }
+.user-action {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; font-size: 13px; color: var(--text-primary);
+  background: transparent; border: none; border-radius: 8px;
+  text-align: left; cursor: pointer;
+  transition: background-color .15s ease, color .15s ease;
+}
+.user-action:hover { background: var(--bg-hover); color: var(--primary); }
+.user-action.danger { color: var(--danger); }
+.user-action.danger:hover { background: rgba(239, 68, 68, .08); color: var(--danger); }
+.user-panel-divider { height: 1px; margin: 4px 0; background: var(--border-light); }

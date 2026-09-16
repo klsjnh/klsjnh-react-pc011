@@ -40,7 +40,7 @@ import {
   UserOutlined,
   UserSwitchOutlined,
 } from '@ant-design/icons';
-import { SYSTEM011_ROUTES, DATASERVICE011_ROUTES } from '@/config/routes';
+import { SYSTEM011_ROUTES, DATASERVICE011_ROUTES, AI011_ROUTES } from '@/config/routes';
 import type { NavItem } from '@/types/view/layout';
 
 /** 菜单类型 */
@@ -115,6 +115,15 @@ export const GLOBAL_MENUS: NavItem[] = [
     icon: DatabaseOutlined,
     children: [
       { path: DATASERVICE011_ROUTES.julyDatasource, label: '数据源', icon: DatabaseOutlined },
+      { path: DATASERVICE011_ROUTES.julyBusinessModeling, label: '业务建模', icon: FormOutlined },
+    ],
+  },
+  {
+    path: '/ai011',
+    label: 'AI 中心',
+    icon: ThunderboltOutlined,
+    children: [
+      { path: AI011_ROUTES.julyAiModelProvider, label: '模型供应商', icon: KeyOutlined },
     ],
   },
   {

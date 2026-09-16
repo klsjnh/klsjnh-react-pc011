@@ -6,7 +6,7 @@ import React, { useEffect, Suspense, lazy } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { SidebarLayout } from '@/components/layout';
 import { reloadMenus } from '@/services/system011';
-import { SYSTEM011_ROUTES, DATASERVICE011_ROUTES, DEFAULT_ROUTE } from '@/config/routes';
+import { SYSTEM011_ROUTES, DATASERVICE011_ROUTES, AI011_ROUTES, DEFAULT_ROUTE } from '@/config/routes';
 import type { PageNavProps } from '@/types/view/page';
 
 /**
@@ -35,6 +35,8 @@ const MonitorPage = lazy(() => import('@/pages/business-pages').then(m => ({ def
 const OnlineUsersPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.OnlineUsersPage })));
 const CachePage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.CachePage })));
 const JulyDatasourcePage = lazy(() => import('@/pages/dataService011/JulyDatasources').then(m => ({ default: m.JulyDatasource })));
+const JulyBusinessModelingPage = lazy(() => import('@/pages/dataService011/JulyBusinessModeling').then(m => ({ default: m.JulyBusinessModeling })));
+const JulyAiModelProviderPage = lazy(() => import('@/pages/ai011/JulyAiModelProvider').then(m => ({ default: m.JulyAiModelProvider })));
 const StoragePage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.StoragePage })));
 const ParamsPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.ParamsPage })));
 const TemplatePage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.TemplatePage })));
@@ -96,6 +98,8 @@ const PAGE_MAP: Record<string, PageComponent> = {
   [SYSTEM011_ROUTES.julyConfig]: JulyConfigPage,
   [SYSTEM011_ROUTES.julyDictionary]: JulyDictionaryPage,
   [DATASERVICE011_ROUTES.julyDatasource]: JulyDatasourcePage,
+  [DATASERVICE011_ROUTES.julyBusinessModeling]: JulyBusinessModelingPage,
+  [AI011_ROUTES.julyAiModelProvider]: JulyAiModelProviderPage,
   '/audit': AuditPage,
   '/settings': SettingsPage,
   '/settings/params': SettingsPage,

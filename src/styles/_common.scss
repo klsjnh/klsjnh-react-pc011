@@ -1,0 +1,25 @@
+/* ==================== 页面通用块 + 工具类 ==================== */
+
+.page-loading { padding: 48px; text-align: center; color: var(--text-muted); }
+.page-header { margin-bottom: 16px; }
+.page-header h2 { font-size: 20px; font-weight: 700; }
+.page-header p { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+.page-toolbar {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px; gap: 12px;
+}
+.toolbar-left, .toolbar-right { display: flex; align-items: center; gap: 8px; }
+
+.table-wrapper {
+  background: var(--bg-card); border-radius: var(--radius);
+  box-shadow: var(--shadow); overflow: hidden;
+}
+
+.text-muted { color: var(--text-muted); }
+.text-secondary { color: var(--text-secondary); }
+.text-primary { color: var(--primary); }
+.flex-between { display: flex; align-items: center; justify-content: space-between; }
+.flex-center { display: flex; align-items: center; }
+.search-input { width: 240px; }
+.filter-select { width: 140px; }

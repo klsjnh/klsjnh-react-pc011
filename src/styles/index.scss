@@ -1,0 +1,28 @@
+/**
+ * 全局样式入口 —— 唯一被 src/main.tsx 引入的样式文件。
+ *
+ * 分层（@use 顺序即最终 CSS 的层叠顺序，勿随意调整）：
+ *   1. tokens     设计令牌（:root CSS 变量）
+ *   2. base       重置 + 基础排版
+ *   3. layout     应用骨架（Header / Sider / Content）
+ *   4. common     页面通用块 + 工具类
+ *   5. antd       极少量 antd 覆盖（仅限 token 表达不了的）
+ *   6. components 自研组件样式
+ *   7. pages      页面私有样式
+ *
+ * ⚠️ antd 组件本身的尺寸 / 字号 / 行高 / 状态色一律在 src/config/theme.ts 的
+ *    buildTheme() 里用 token 定义，不要在这里写 .ant-table / .ant-btn 覆盖
+ *    （原因见 theme.ts 顶部注释）。
+ */
+
+@use 'tokens';
+@use 'base';
+@use 'layout';
+@use 'common';
+@use 'antd';
+@use 'components/header';
+@use 'components/panels';
+@use 'components/sub-table';
+@use 'pages/login';
+@use 'pages/system011';
+@use 'pages/misc';
