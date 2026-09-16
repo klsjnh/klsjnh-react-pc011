@@ -4,7 +4,7 @@
  * 行内「SQL 调试」可快速跳转；弹窗内含字段子表 + SQL 调试。表头居中、内容左对齐。
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { CodeOutlined } from '@ant-design/icons';
+import { CodeOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button, Card, Input, Popconfirm, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useBusinessModelingState } from '@/stores/dataservice011/julyBusinessModelingStore';
@@ -15,11 +15,13 @@ import type { JulyBusinessModelingItem } from '@/types/dataservice011/businessMo
 import { STATUS_LABEL } from '@/config/constants';
 import { useTableFillHeight } from '@/hooks/useTableFillHeight';
 import { PAGE_SIZE_OPTIONS } from '@/utils/pageSizePref';
+import { DATASERVICE011_ROUTES } from '@/config/routes';
+import type { PageNavProps } from '@/types/view/page';
 
 const hdrCenter = (): React.HTMLAttributes<HTMLElement> => ({ style: { textAlign: 'center' } });
 const leftCell = { align: 'left' as const, onHeaderCell: hdrCenter };
 
-export const JulyBusinessModeling = () => {
+export const JulyBusinessModeling = ({ onNavigate }: PageNavProps) => {
   const { list, total, loading, query } = useBusinessModelingState();
   const [modal, setModal] = useState<{ open: boolean; node: JulyBusinessModelingItem | null }>({ open: false, node: null });
   const cardRef = useRef<HTMLDivElement>(null);
@@ -71,7 +73,7 @@ export const JulyBusinessModeling = () => {
           />
         </div>
         <div className="toolbar-right">
-          <Button type="primary" onClick={() => setModal({ open: true, node: null })}>+ 新建业务模型</Button>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => onNavigate?.(DATASERVICE011_ROUTES.julyBusinessModelingNew)}>新建业务模型</Button>
         </div>
       </div>
 
@@ -98,7 +100,7 @@ export const JulyBusinessModeling = () => {
         open={modal.open}
         node={modal.node}
         onClose={() => setModal({ open: false, node: null })}
-        onSaved={() => {}}
+        onSaved={() => fetchModelingPage(query)}
       />
     </div>
   );

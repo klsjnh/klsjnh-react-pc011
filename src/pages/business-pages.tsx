@@ -11,6 +11,7 @@ import {
   exportData,
 } from '@/services/system011';
 import { toast } from '@/utils/toast';
+import { downloadText, exportFileName } from '@/utils/download';
 import { KlsjnhSql011, KlsjnhMarkdown011 } from '@/components/system011';
 import type { OnlineUser, CacheItem } from '@/types/view/business';
 import type { DictTypeVo011, DictItemVo011 } from '@/types/view/dict';
@@ -620,14 +621,9 @@ export const ExportPage = () => {
     const v = await form.validateFields();
     setLoading(true);
     try {
+      // /export/v1 直接返回文件内容字符串 → 交给公共下载工具存盘
       const content = await exportData({ objectCode: v.objectCode, format: v.format });
-      const blob = new Blob([content], { type: v.format === 'json' ? 'application/json' : 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${v.objectCode}.${v.format}`;
-      a.click();
-      URL.revokeObjectURL(url);
+      downloadText(content, exportFileName(v.objectCode, v.format), v.format);
       toast.success('导出成功');
     } catch (e) {
       toast.error((e as Error)?.message || '导出失败');

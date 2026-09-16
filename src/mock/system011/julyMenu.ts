@@ -41,6 +41,7 @@ export const mockMenus: JulyMenuVo011[] = [
         menuIcon: 'DatabaseOutlined', menuRoute: '/dataService011', permissionCode: null, component: null, sortOrder: 3, status: '1',
         children: [
           { id: 'menu0000000000000000000000000610', parentId: 'menu0000000000000000000000rootDataservice', menuCode: 'datasource', menuName: '数据源', menuType: '2', menuIcon: 'DatabaseOutlined', menuRoute: '/dataService011/julyDatasource', permissionCode: 'datasource:view', component: null, sortOrder: 1, status: '1', children: [] },
+          { id: 'menu0000000000000000000000000620', parentId: 'menu0000000000000000000000rootDataservice', menuCode: 'businessModeling', menuName: '业务建模', menuType: '2', menuIcon: 'DeploymentUnitOutlined', menuRoute: '/dataService011/JulyBusinessModeling', permissionCode: 'businessModeling:view', component: null, sortOrder: 2, status: '1', children: [] },
         ],
       },
       {

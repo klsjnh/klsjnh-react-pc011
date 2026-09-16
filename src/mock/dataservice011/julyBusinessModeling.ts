@@ -154,13 +154,13 @@ export const handlers: Record<string, Handler> = {
     return ok(res);
   },
 
-  // ===== SQL 执行（不分页，返回全量示例行） =====
+  // ===== SQL 执行（不分页，按 pageSize 返回示例行，默认 10） =====
   '/julyBusinessModeling/v1/executeSql': async (body) => {
     await delay(700);
     const b = body as JulyBusinessModelingSqlVo011;
     if (!b?.dataSourceCode) return ok({ success: false, message: '请选择数据源' } as JulyBusinessModelingSqlResultVo011);
     if (!looksLikeSelect(b?.sqlContent || '')) return ok({ success: false, message: '仅支持 SELECT 查询' } as JulyBusinessModelingSqlResultVo011);
-    const rows = fakeRows(b.objectName || 'tbl', 8);
+    const rows = fakeRows(b.objectName || 'tbl', b.pageSize || 10);
     const res: JulyBusinessModelingSqlResultVo011 = {
       success: true,
       message: `执行成功，返回 ${rows.length} 行`,

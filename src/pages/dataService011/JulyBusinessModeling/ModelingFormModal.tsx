@@ -9,9 +9,11 @@ import { PlusOutlined, DeleteOutlined, ThunderboltOutlined, CodeOutlined } from 
 import { Alert, Button, Form, Input, Modal, Select, Space, Table, Tabs, Spin } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
-  saveModeling, probeSql, executeSql, executeSqlByPage, getModelData,
+  saveModeling, probeSql, executeSqlByPage, getModelData,
 } from '@/services/dataservice011';
+import { fetchDatasourcePage } from '@/services/dataservice011';
 import { toast } from '@/utils/toast';
+import { useDatasourceState } from '@/stores/dataservice011/julyDatasourceStore';
 import type {
   JulyBusinessModelingItem,
   JulyBusinessModelingFieldVo011,
@@ -19,12 +21,6 @@ import type {
 } from '@/types/dataservice011/businessModeling';
 import { STATUS_OPTIONS } from '@/config/constants';
 
-/** 可选数据源（与数据源模块 mock 对齐） */
-const DS_OPTIONS = [
-  { value: 'ds_main', label: '主数据库 (ds_main)' },
-  { value: 'ds_analytics', label: '分析数据库 (ds_analytics)' },
-  { value: 'ds_test', label: '测试数据库 (ds_test)' },
-];
 
 /** 字段数据类型选项 */
 const DATA_TYPE_OPTIONS = [
@@ -67,6 +63,10 @@ export const ModelingFormModal = ({ open, node, onClose, onSaved }: ModelingForm
   const [form] = Form.useForm();
   const [saving, setSaving] = useState(false);
 
+  // 数据源列表：从数据源 store 拉取（走接口，非 mock 硬编码）
+  const { list: datasourceList } = useDatasourceState();
+  const DS_OPTIONS = datasourceList.map((d) => ({ value: d.dsCode, label: `${d.dsName} (${d.dsCode})` }));
+
   // SQL 调试
   const [sqlDs, setSqlDs] = useState<string>(node?.dataSourceCode || 'ds_main');
   const [sqlText, setSqlText] = useState<string>(node ? `SELECT * FROM ${node.objectName} LIMIT 10` : 'SELECT * FROM ord_order LIMIT 10');
@@ -88,12 +88,16 @@ export const ModelingFormModal = ({ open, node, onClose, onSaved }: ModelingForm
           ? node.fieldData.map((f) => ({ ...f }))
           : [newField()],
       });
-      setSqlDs(node?.dataSourceCode || 'ds_main');
+      setSqlDs(node?.dataSourceCode || datasourceList[0]?.dsCode || 'ds_main');
       setSqlText(node ? `SELECT * FROM ${node.objectName} LIMIT 10` : 'SELECT * FROM ord_order LIMIT 10');
       setSqlOutcome(null);
       setSqlPage({ pageIndex: 1, pageSize: 10 });
     }
-  }, [open, node, form]);
+    // 拉取数据源列表（若 store 为空）
+    if (datasourceList.length === 0) {
+      fetchDatasourcePage({ pageIndex: 1, pageSize: 50 });
+    }
+  }, [open, node, form, datasourceList.length]);
 
   const handleSave = async () => {
     try {
@@ -121,20 +125,18 @@ export const ModelingFormModal = ({ open, node, onClose, onSaved }: ModelingForm
     try {
       if (kind === 'probe') {
         const res = await probeSql({ dataSourceCode: sqlDs, sqlContent: sqlText });
-        if (!res.success) setSqlOutcome({ kind, error: res.message || '探测失败' });
-        else setSqlOutcome({ kind, data: { ...res, columns: res.columns } as any });
+        setSqlOutcome({ kind, data: { ...res, columns: res.columns } as any });
       } else if (kind === 'execute') {
-        const res = await executeSql({ dataSourceCode: sqlDs, sqlContent: sqlText });
-        if (!res.success) setSqlOutcome({ kind, error: res.message || '执行失败' });
-        else setSqlOutcome({ kind, data: res });
+        const res = await executeSqlByPage({ dataSourceCode: sqlDs, sqlContent: sqlText, pageIndex: 1, pageSize: 10 });
+        setSqlTotal(res.total || (res.rows?.length ?? 0));
+        setSqlOutcome({ kind, data: res });
       } else if (kind === 'page') {
         const res = await executeSqlByPage({ dataSourceCode: sqlDs, sqlContent: sqlText, pageIndex: sqlPage.pageIndex, pageSize: sqlPage.pageSize });
-        if (!res.success) setSqlOutcome({ kind, error: res.message || '执行失败' });
-        else { setSqlTotal(res.total || (res.rows?.length ?? 0)); setSqlOutcome({ kind, data: res }); }
+        setSqlTotal(res.total || (res.rows?.length ?? 0));
+        setSqlOutcome({ kind, data: res });
       } else {
         const res = await getModelData({ modelCode: node?.modelCode, id: node?.id });
-        if (!res.success) setSqlOutcome({ kind, error: res.message || '获取失败' });
-        else setSqlOutcome({ kind, data: res });
+        setSqlOutcome({ kind, data: res });
       }
     } catch (e) {
       setSqlOutcome({ kind, error: (e as Error)?.message || '请求失败' });
@@ -168,7 +170,7 @@ export const ModelingFormModal = ({ open, node, onClose, onSaved }: ModelingForm
           size="small" rowKey={(_, i) => String(i)} scroll={{ x: 'max-content' }}
           columns={cols.map((c) => ({ title: c, dataIndex: c, key: c, render: (v: unknown) => <code>{v == null ? '' : String(v)}</code> }))}
           dataSource={rows}
-          pagination={sqlOutcome.kind === 'page' ? {
+          pagination={sqlOutcome.kind === 'execute' || sqlOutcome.kind === 'page' ? {
             current: sqlPage.pageIndex, pageSize: sqlPage.pageSize, total: sqlTotal,
             showTotal: (t) => `共 ${t} 条`,
             onChange: (pi, ps) => { setSqlPage({ pageIndex: pi, pageSize: ps }); runSql('page'); },

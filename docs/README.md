@@ -13,6 +13,7 @@
 | [015.project-info.md](015.project-info.md) | 项目信息：背景、前后端模块对应关系、技术栈 |
 | [016.coding-standards.md](016.coding-standards.md) | 前端编码标准（PC 页面统一写法 / store 模式 / 命名规范） |
 | [013.api-contract.md](013.api-contract.md) | API 契约（信封六键 + 状态码 + 前端请求行为） |
+| [019.lowcode011-findings.md](019.lowcode011-findings.md) | **低代码模块现状**：后端 `lowcode011/julyMetadata` 接口清单与一主三子模型、实测踩坑、与 `julyBusinessModeling` 的字段/方法错配清单、待拍板的实现方案 |
 
 ## 专题与知识库
 

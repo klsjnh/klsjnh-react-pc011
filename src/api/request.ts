@@ -2,9 +2,15 @@
  * 统一 API 请求封装（API 模式使用）
  * 对齐 docs/013.api-contract.md：POST + JSON body + 统一响应信封
  * URL 结构：{apiBaseUrl}/{模块}/{动作}，apiBaseUrl 默认 /klsjnh/system011
+ *
+ * 【收口职责】
+ * - 信封六键解析（红线 C5 / 016 §7）
+ * - **401 处置**（红线 C5 / 016 §7）：清除本地会话 → 由路由守卫跳登录
+ *   权威口径见 docs/013.api-contract.md §015：失效处置 = 清会话 → 跳登录，不做静默重试
  */
 import { appConfigStore, isMockMode } from '@/config/appConfig';
 import { authStore } from '@/stores/authStore';
+import { toast } from '@/utils/toast';
 import { getMockResponse } from '@/mock/system011';
 import type { Response011 } from '@/types/api';
 
@@ -25,6 +31,45 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * 「凭据类」接口白名单：它们的 401 语义是**凭据错误**而非**会话失效**，不得触发全局登出。
+ * 依据 docs/013.api-contract.md §015 关键口径：
+ * 「登录失败返回 401（账号密码错误 / 账号禁用 / production 下免密被拒）——
+ *   前端登录页须把 401 当『凭据错误』处理，而非『会话失效』」
+ */
+const CREDENTIAL_ACTIONS = [
+  '/julyUser/v1/login',
+  '/julyUser/v1/loginByUserName',
+  '/julyUser/v1/logout',
+];
+
+/** 会话失效处置节流窗口：并发请求同时 401 时只清一次、只提示一次 */
+let sessionExpiredAt = 0;
+const SESSION_EXPIRED_THROTTLE_MS = 2000;
+
+/**
+ * 401 统一处置（红线 C5）：清除本地会话 → 由路由守卫跳登录。
+ * 刻意**不直接操作 URL**：App 的守卫订阅 authStore（`useIsAuthenticated`），
+ * token 清空后守卫自动 `Navigate to="/login"`，避免与守卫逻辑双写、产生竞态。
+ */
+function handleSessionExpired(): void {
+  const now = Date.now();
+  if (now - sessionExpiredAt < SESSION_EXPIRED_THROTTLE_MS) return;
+  sessionExpiredAt = now;
+  authStore.clearSession();
+  toast.warning('登录状态已失效，请重新登录');
+}
+
+/** 统一失败出口：按状态码分流（401 → 会话失效处置）+ 记录最近错误 */
+function buildError(action: string, message: string, statusCode?: number): ApiError {
+  const isCredential = CREDENTIAL_ACTIONS.some((a) => action.startsWith(a));
+  if (statusCode === 401 && !isCredential) {
+    handleSessionExpired();
+  }
+  appConfigStore.setLastApiError(message);
+  return new ApiError(message, statusCode);
+}
+
 async function request<T>(
   action: string,
   body?: object,
@@ -40,15 +85,12 @@ async function request<T>(
       const env = await mockResp;
       if (env.statusCode !== 200) {
         const msg = env.errorMessage || env.message || `${action} 业务失败`;
-        appConfigStore.setLastApiError(msg);
-        throw new ApiError(msg, env.statusCode);
+        throw buildError(action, msg, env.statusCode);
       }
       return env.data as T;
     }
     // 该 action 无 mock 数据：明确报错（避免静默打到真实后端）
-    const msg = `Mock 模式未实现该接口：${action}`;
-    appConfigStore.setLastApiError(msg);
-    throw new ApiError(msg, 404);
+    throw buildError(action, `Mock 模式未实现该接口：${action}`, 404);
   }
 
   const base = (baseOverride || appConfigStore.getSnapshot().apiBaseUrl).replace(/\/$/, '');
@@ -71,10 +113,20 @@ async function request<T>(
       fetchInit.body = JSON.stringify(body ?? {});
     }
     const res = await fetch(url, fetchInit);
-    if (!res.ok) throw new ApiError(`${action} 失败(${res.status})`, res.status);
-    const envelope = (await res.json()) as Response011<T>;
-    if (envelope.statusCode !== 200) {
-      throw new ApiError(envelope.errorMessage || envelope.message || `${action} 业务失败`, envelope.statusCode);
+    // 后端错误响应同样是标准信封（401 由 GlobalAuthFilter 直接写出），优先取其 message
+    let envelope: Response011<T> | null = null;
+    try {
+      envelope = (await res.json()) as Response011<T>;
+    } catch {
+      envelope = null;
+    }
+    const statusCode = envelope?.statusCode ?? res.status;
+    if (!res.ok || (envelope && envelope.statusCode !== 200)) {
+      const msg = envelope?.errorMessage || envelope?.message || `${action} 失败(${statusCode})`;
+      throw buildError(action, msg, statusCode);
+    }
+    if (!envelope) {
+      throw buildError(action, `${action} 响应解析失败：非 JSON 信封`, res.status);
     }
     return envelope.data;
   } catch (e) {

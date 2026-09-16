@@ -79,14 +79,16 @@ export function probeSql(body: JulyBusinessModelingSqlVo011): Promise<JulyBusine
   return api.post<JulyBusinessModelingProbeResultVo011>(MODELING_ACTIONS.probe, body, DATASERVICE011_BASE);
 }
 
-/** SQL 执行（不分页） */
+/** SQL 执行（不分页，默认最多返回 10 行） */
 export function executeSql(body: JulyBusinessModelingSqlVo011): Promise<JulyBusinessModelingSqlResultVo011> {
-  return api.post<JulyBusinessModelingSqlResultVo011>(MODELING_ACTIONS.executeSql, body, DATASERVICE011_BASE);
+  const payload = { pageSize: 10, ...body };
+  return api.post<JulyBusinessModelingSqlResultVo011>(MODELING_ACTIONS.executeSql, payload, DATASERVICE011_BASE);
 }
 
-/** SQL 执行（分页） */
+/** SQL 执行（分页，默认每页 10 行） */
 export function executeSqlByPage(body: JulyBusinessModelingSqlVo011): Promise<JulyBusinessModelingSqlResultVo011 & PageResult011<Record<string, unknown>>> {
-  return api.post<JulyBusinessModelingSqlResultVo011 & PageResult011<Record<string, unknown>>>(MODELING_ACTIONS.executeSqlByPage, body, DATASERVICE011_BASE);
+  const payload = { pageSize: 10, ...body };
+  return api.post<JulyBusinessModelingSqlResultVo011 & PageResult011<Record<string, unknown>>>(MODELING_ACTIONS.executeSqlByPage, payload, DATASERVICE011_BASE);
 }
 
 /** 获取模型数据（按模型编码回填示例数据） */

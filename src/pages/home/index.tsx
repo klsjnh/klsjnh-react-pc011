@@ -6,7 +6,7 @@ import React, { useEffect, Suspense, lazy } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { SidebarLayout } from '@/components/layout';
 import { reloadMenus } from '@/services/system011';
-import { SYSTEM011_ROUTES, DATASERVICE011_ROUTES, AI011_ROUTES, DEFAULT_ROUTE } from '@/config/routes';
+import { SYSTEM011_ROUTES, DATASERVICE011_ROUTES, AI011_ROUTES, LOWCODE011_ROUTES, DEFAULT_ROUTE } from '@/config/routes';
 import type { PageNavProps } from '@/types/view/page';
 
 /**
@@ -36,7 +36,9 @@ const OnlineUsersPage = lazy(() => import('@/pages/business-pages').then(m => ({
 const CachePage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.CachePage })));
 const JulyDatasourcePage = lazy(() => import('@/pages/dataService011/JulyDatasources').then(m => ({ default: m.JulyDatasource })));
 const JulyBusinessModelingPage = lazy(() => import('@/pages/dataService011/JulyBusinessModeling').then(m => ({ default: m.JulyBusinessModeling })));
+const JulyBusinessModelingFormPage = lazy(() => import('@/pages/dataService011/JulyBusinessModeling/ModelingFormPage').then(m => ({ default: m.ModelingFormPage })));
 const JulyAiModelProviderPage = lazy(() => import('@/pages/ai011/JulyAiModelProvider').then(m => ({ default: m.JulyAiModelProvider })));
+const JulyMetadataPage = lazy(() => import('@/pages/lowcode011/JulyMetadata').then(m => ({ default: m.JulyMetadata })));
 const StoragePage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.StoragePage })));
 const ParamsPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.ParamsPage })));
 const TemplatePage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.TemplatePage })));
@@ -99,7 +101,9 @@ const PAGE_MAP: Record<string, PageComponent> = {
   [SYSTEM011_ROUTES.julyDictionary]: JulyDictionaryPage,
   [DATASERVICE011_ROUTES.julyDatasource]: JulyDatasourcePage,
   [DATASERVICE011_ROUTES.julyBusinessModeling]: JulyBusinessModelingPage,
+  [DATASERVICE011_ROUTES.julyBusinessModelingNew]: JulyBusinessModelingFormPage,
   [AI011_ROUTES.julyAiModelProvider]: JulyAiModelProviderPage,
+  [LOWCODE011_ROUTES.julyMetadata]: JulyMetadataPage,
   '/audit': AuditPage,
   '/settings': SettingsPage,
   '/settings/params': SettingsPage,
