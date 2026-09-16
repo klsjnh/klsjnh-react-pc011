@@ -409,38 +409,6 @@ export const StoragePage = () => {
   );
 };
 
-// ==================== 参数设置（演示） ====================
-
-export const ParamsPage = () => {
-  const [params, setParams] = useState([
-    { id: 1, name: '消息推送', key: 'notify.push', enabled: true, desc: '接收系统推送通知' },
-    { id: 2, name: '声音提醒', key: 'notify.sound', enabled: false, desc: '新消息播放提示音' },
-    { id: 3, name: '自动登录', key: 'security.autoLogin', enabled: true, desc: '下次打开自动登录' },
-    { id: 4, name: '错误上报', key: 'system.errorReport', enabled: true, desc: '自动上报错误信息' },
-  ]);
-
-  const columns: ColumnsType<typeof params[number]> = [
-    { title: '参数名称', dataIndex: 'name' },
-    { title: '说明', dataIndex: 'desc' },
-    { title: '参数键', dataIndex: 'key', render: (v) => <code>{v}</code> },
-    {
-      title: '状态', key: 'enabled', width: 90,
-      render: (_, p) => (
-        <Switch checked={p.enabled} onChange={() => setParams((prev) => prev.map((x) => x.id === p.id ? { ...x, enabled: !x.enabled } : x))} />
-      ),
-    },
-  ];
-
-  return (
-    <div>
-      <div className="page-header"><h2>参数设置</h2><p>运行参数配置</p></div>
-      <Card className="table-wrapper" styles={{ body: { padding: 0 } }}>
-        <Table rowKey="id" columns={columns} dataSource={params} pagination={false} />
-      </Card>
-    </div>
-  );
-};
-
 // ==================== 通知模板（演示） ====================
 
 export const TemplatePage = () => {
@@ -720,40 +688,6 @@ export const CalcPage = () => {
         </Space>
         {result && <div className="text-center mt-4" style={{ fontSize: 20, fontWeight: 700, color: 'var(--primary)' }}>{result}</div>}
       </Card>
-    </div>
-  );
-};
-
-// ==================== 数据查询（演示） ====================
-
-export const QueryPage = () => {
-  const [searched, setSearched] = useState(false);
-  const results = [
-    { id: 1, name: '用户001', type: '用户', detail: '正常 · 技术中心' },
-    { id: 2, name: '订单20260912', type: '订单', detail: '已支付 · ¥299' },
-    { id: 3, name: '配置site.name', type: '配置', detail: '企业管理系统' },
-  ];
-
-  const columns: ColumnsType<typeof results[number]> = [
-    { title: '类型', dataIndex: 'type', render: (v) => <Tag color="blue">{v}</Tag> },
-    { title: '名称', dataIndex: 'name' },
-    { title: '详情', dataIndex: 'detail' },
-  ];
-
-  return (
-    <div>
-      <div className="page-header"><h2>数据查询</h2><p>全局搜索</p></div>
-      <div className="page-toolbar">
-        <div className="toolbar-left">
-          <Input.Search className="search-input" style={{ width: 280 }} placeholder="搜索用户/订单/配置..."
-            onSearch={() => setSearched(true)} />
-        </div>
-      </div>
-      {searched && (
-        <Card className="table-wrapper" styles={{ body: { padding: 0 } }}>
-          <Table rowKey="id" columns={columns} dataSource={results} pagination={false} />
-        </Card>
-      )}
     </div>
   );
 };

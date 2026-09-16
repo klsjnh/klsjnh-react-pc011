@@ -1,16 +1,15 @@
 /**
  * 业务建模（低代码）管理页面（dataservice011 · julyBusinessModeling）- 对齐后端 JulyBusinessModelingController
  * 字段：modelCode/modelName/objectName/dataSourceCode/status/remark + 字段子表 fieldData
- * 行内「SQL 调试」可快速跳转；弹窗内含字段子表 + SQL 调试。表头居中、内容左对齐。
+ * 新增 / 设计走路由跳转。表头居中、内容左对齐。
  */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { CodeOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button, Card, Input, Popconfirm, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useBusinessModelingState } from '@/stores/dataservice011/julyBusinessModelingStore';
 import { fetchModelingPage, removeModeling } from '@/services/dataservice011';
 import { toast } from '@/utils/toast';
-import { ModelingFormModal } from '@/pages/dataService011/JulyBusinessModeling/ModelingFormModal';
 import type { JulyBusinessModelingItem } from '@/types/dataservice011/businessModeling';
 import { STATUS_LABEL } from '@/config/constants';
 import { useTableFillHeight } from '@/hooks/useTableFillHeight';
@@ -23,7 +22,6 @@ const leftCell = { align: 'left' as const, onHeaderCell: hdrCenter };
 
 export const JulyBusinessModeling = ({ onNavigate }: PageNavProps) => {
   const { list, total, loading, query } = useBusinessModelingState();
-  const [modal, setModal] = useState<{ open: boolean; node: JulyBusinessModelingItem | null }>({ open: false, node: null });
   const cardRef = useRef<HTMLDivElement>(null);
   const tableBodyHeight = useTableFillHeight(cardRef, `${total}-${loading}`);
 
@@ -47,7 +45,7 @@ export const JulyBusinessModeling = ({ onNavigate }: PageNavProps) => {
       title: '操作', key: 'action', width: 160, align: 'left',
       render: (_, r) => (
         <Space size="small" wrap>
-          <Button type="link" size="small" icon={<CodeOutlined />} onClick={() => setModal({ open: true, node: r })}>设计</Button>
+          <Button type="link" size="small" icon={<CodeOutlined />} onClick={() => onNavigate?.(`${DATASERVICE011_ROUTES.julyBusinessModeling}/${r.id}`)}>设计</Button>
           <Popconfirm title="确定删除该业务模型吗？" okText="删除" cancelText="取消" okButtonProps={{ danger: true }} onConfirm={() => handleRemove(r.id)}>
             <Button type="link" size="small" danger>删除</Button>
           </Popconfirm>
@@ -60,7 +58,6 @@ export const JulyBusinessModeling = ({ onNavigate }: PageNavProps) => {
     <div className="page-fill">
       <div className="page-header">
         <h2>业务建模（低代码）</h2>
-        <p>共 {total} 个业务模型 · 接口 /julyBusinessModeling/v1/selectListByPage</p>
       </div>
 
       <div className="page-toolbar">
@@ -95,13 +92,6 @@ export const JulyBusinessModeling = ({ onNavigate }: PageNavProps) => {
           }}
         />
       </Card>
-
-      <ModelingFormModal
-        open={modal.open}
-        node={modal.node}
-        onClose={() => setModal({ open: false, node: null })}
-        onSaved={() => fetchModelingPage(query)}
-      />
     </div>
   );
 };

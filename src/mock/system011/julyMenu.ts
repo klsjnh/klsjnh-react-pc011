@@ -34,6 +34,10 @@ export const mockMenus: JulyMenuVo011[] = [
           { id: 'menu0000000000000000000000000201', parentId: 'menu0000000000000000000000root2', menuCode: 'config', menuName: '配置管理', menuType: '2', menuIcon: 'SettingOutlined', menuRoute: '/system011/julyConfig', permissionCode: null, component: null, sortOrder: 1, status: '1', children: [] },
           { id: 'menu0000000000000000000000000202', parentId: 'menu0000000000000000000000root2', menuCode: 'scheduler', menuName: '定时任务', menuType: '2', menuIcon: 'ClockCircleOutlined', menuRoute: '/system011/julyScheduler', permissionCode: 'scheduler:view', component: null, sortOrder: 2, status: '1', children: [] },
           { id: 'menu0000000000000000000000000203', parentId: 'menu0000000000000000000000root2', menuCode: 'dictionary', menuName: '字典管理', menuType: '2', menuIcon: 'BookOutlined', menuRoute: '/system011/julyDictionary', permissionCode: 'dictionary:view', component: null, sortOrder: 3, status: '1', children: [] },
+          // 存储中心：前端是 pages/storageCenter/ 下两个独立路由页（BucketListPage / FileListPage），
+          // 两条平行菜单项、两级面包屑即可，不做目录层；后端 july_menu 需同步等价记录。
+          { id: 'menu0000000000000000000000000204', parentId: 'menu0000000000000000000000root2', menuCode: 'storageBucket', menuName: '存储桶列表', menuType: '2', menuIcon: 'DatabaseOutlined', menuRoute: '/storageCenter/bucketList', permissionCode: 'storage:bucket:list', component: null, sortOrder: 4, status: '1', children: [] },
+          { id: 'menu0000000000000000000000000205', parentId: 'menu0000000000000000000000root2', menuCode: 'storageFile', menuName: '文件列表', menuType: '2', menuIcon: 'FileTextOutlined', menuRoute: '/storageCenter/fileList', permissionCode: 'storage:object:list', component: null, sortOrder: 5, status: '1', children: [] },
         ],
       },
       {

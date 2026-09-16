@@ -105,7 +105,6 @@ export const JulyDatasource = () => {
     <div className="page-fill">
       <div className="page-header">
         <h2>数据源</h2>
-        <p>共 {total} 个数据源 · 接口 /julyDatasource/v1/selectListByPage</p>
       </div>
 
       <div className="page-toolbar">
@@ -147,7 +146,7 @@ export const JulyDatasource = () => {
         open={modal.open}
         node={modal.node}
         onClose={() => setModal({ open: false, node: null })}
-        onSaved={() => {}}
+        onSaved={() => { }}
       />
     </div>
   );

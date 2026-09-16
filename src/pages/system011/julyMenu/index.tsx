@@ -319,22 +319,29 @@ export const JulyMenu = () => {
             >
               <Form form={form} layout="vertical">
                 <Row gutter={24}>
-                  <Col span={12}>
+                  <Col span={8}>
+                    <Form.Item name="menuType" label="类型" rules={[{ required: true, message: '请选择类型' }]}>
+                      <Select options={MENU_TYPE_OPTIONS} />
+                    </Form.Item>
+                  </Col>
+                  <Col span={8}>
                     <Form.Item name="menuCode" label="菜单编码" rules={[{ required: true, message: '请输入菜单编码' }]}>
                       <Input disabled />
                     </Form.Item>
                   </Col>
-                  <Col span={12}>
+                  <Col span={8}>
                     <Form.Item name="menuName" label="菜单名称" rules={[{ required: true, message: '请输入菜单名称' }]}>
                       <Input />
                     </Form.Item>
                   </Col>
-                  <Col span={12}>
-                    <Form.Item name="menuType" label="类型">
-                      <Select options={MENU_TYPE_OPTIONS} />
+                </Row>
+                <Row gutter={24}>
+                  <Col span={8}>
+                    <Form.Item name="parentId" label="上级菜单" rules={[{ required: true, message: '请选择上级菜单' }]}>
+                      <Select allowClear placeholder="（顶级菜单）" options={buildParentOptions(selectedNode)} />
                     </Form.Item>
                   </Col>
-                  <Col span={12}>
+                  <Col span={8}>
                     <Form.Item
                       name="menuRoute"
                       label="路由路径"
@@ -344,21 +351,13 @@ export const JulyMenu = () => {
                       <Input placeholder="如 /business/newpage" />
                     </Form.Item>
                   </Col>
-                  <Col span={12}>
-                    <Form.Item name="parentId" label="上级菜单">
-                      <Select allowClear placeholder="（顶级菜单）" options={buildParentOptions(selectedNode)} />
+                  <Col span={8}>
+                    <Form.Item name="menuIcon" label="图标" rules={[{ required: true, message: '请选择图标' }]}>
+                      <IconPicker value={selectedNode?.menuIcon} onChange={(v) => form.setFieldsValue({ menuIcon: v })} />
                     </Form.Item>
                   </Col>
-                  <Col span={12}>
-                    <Form.Item
-                      name="component"
-                      label="前端组件"
-                      hidden={editType !== '2'}
-                      tooltip="菜单类型对应的页面组件路径，如 pages/business/NewPage"
-                    >
-                      <Input placeholder="如 pages/business/NewPage" />
-                    </Form.Item>
-                  </Col>
+                </Row>
+                <Row gutter={24}>
                   <Col span={12}>
                     <Form.Item
                       name="permissionCode"
@@ -371,18 +370,15 @@ export const JulyMenu = () => {
                     </Form.Item>
                   </Col>
                   <Col span={12}>
-                    <Form.Item name="status" label="状态">
-                      <Select options={[{ value: '1', label: '启用' }, { value: '0', label: '停用' }]} />
-                    </Form.Item>
-                  </Col>
-                  <Col span={12}>
-                    <Form.Item name="menuIcon" label="图标">
-                      <IconPicker value={selectedNode?.menuIcon} onChange={(v) => form.setFieldsValue({ menuIcon: v })} />
-                    </Form.Item>
-                  </Col>
-                  <Col span={12}>
                     <Form.Item name="sortOrder" label="排序" rules={[{ required: true, message: '请输入排序值' }]}>
                       <Input type="number" placeholder="越小越靠前" />
+                    </Form.Item>
+                  </Col>
+                </Row>
+                <Row gutter={24}>
+                  <Col span={24}>
+                    <Form.Item name="status" label="状态">
+                      <Select options={[{ value: '1', label: '启用' }, { value: '0', label: '停用' }]} />
                     </Form.Item>
                   </Col>
                 </Row>
@@ -404,28 +400,30 @@ export const JulyMenu = () => {
         destroyOnClose
       >
         <Form form={createForm} layout="vertical" preserve={false}>
-          <Form.Item name="parentId" label="上级菜单">
-            <Select allowClear placeholder="（顶级菜单）" options={buildParentOptions(null)} />
-          </Form.Item>
           <Row gutter={12}>
-            <Col span={12}>
+            <Col span={8}>
+              <Form.Item name="menuType" label="类型" rules={[{ required: true, message: '请选择类型' }]}>
+                <Select options={MENU_TYPE_OPTIONS} />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
               <Form.Item name="menuCode" label="菜单编码" rules={[{ required: true, message: '请输入菜单编码' }]}>
                 <Input placeholder="如 config" />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item name="menuName" label="菜单名称" rules={[{ required: true, message: '请输入菜单名称' }]}>
                 <Input placeholder="请输入菜单名称" />
               </Form.Item>
             </Col>
           </Row>
           <Row gutter={12}>
-            <Col span={12}>
-              <Form.Item name="menuType" label="类型" rules={[{ required: true, message: '请选择类型' }]}>
-                <Select options={MENU_TYPE_OPTIONS} />
+            <Col span={8}>
+              <Form.Item name="parentId" label="上级菜单" rules={[{ required: true, message: '请选择上级菜单' }]}>
+                <Select allowClear placeholder="（顶级菜单）" options={buildParentOptions(null)} />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item
                 name="menuRoute"
                 label="路由路径"
@@ -435,18 +433,13 @@ export const JulyMenu = () => {
                 <Input placeholder="如 /business/newpage" />
               </Form.Item>
             </Col>
-          </Row>
-          <Row gutter={12}>
-            <Col span={12}>
-              <Form.Item
-                name="component"
-                label="前端组件"
-                hidden={createType !== '2'}
-                tooltip="菜单类型对应的页面组件路径"
-              >
-                <Input placeholder="如 pages/business/NewPage" />
+            <Col span={8}>
+              <Form.Item name="menuIcon" label="图标" rules={[{ required: true, message: '请选择图标' }]}>
+                <IconPicker />
               </Form.Item>
             </Col>
+          </Row>
+          <Row gutter={12}>
             <Col span={12}>
               <Form.Item
                 name="permissionCode"
@@ -458,22 +451,19 @@ export const JulyMenu = () => {
                 <Input placeholder="如 biz:newpage:view" />
               </Form.Item>
             </Col>
-          </Row>
-          <Row gutter={12}>
-            <Col span={12}>
-              <Form.Item name="menuIcon" label="图标" rules={[{ required: true, message: '请选择图标' }]}>
-                <IconPicker />
-              </Form.Item>
-            </Col>
             <Col span={12}>
               <Form.Item name="sortOrder" label="排序" rules={[{ required: true, message: '请输入排序值' }]}>
                 <Input type="number" placeholder="越小越靠前" />
               </Form.Item>
             </Col>
           </Row>
-          <Form.Item name="status" label="状态" initialValue="1" rules={[{ required: true, message: '请选择状态' }]}>
-            <Select options={[{ value: '1', label: '启用' }, { value: '0', label: '停用' }]} />
-          </Form.Item>
+          <Row gutter={12}>
+            <Col span={24}>
+              <Form.Item name="status" label="状态" initialValue="1">
+                <Select options={[{ value: '1', label: '启用' }, { value: '0', label: '停用' }]} />
+              </Form.Item>
+            </Col>
+          </Row>
         </Form>
       </Modal>
     </div>

@@ -134,12 +134,9 @@ export const handlers: Record<string, Handler> = {
   },
 
   // ===== SQL 探测（返回列结构） =====
-  '/julyBusinessModeling/v1/probe': async (body) => {
-    await delay(600);
-    const b = body as JulyBusinessModelingSqlVo011;
-    if (!b?.dataSourceCode) return ok({ success: false, message: '请选择数据源', columns: [] } as JulyBusinessModelingProbeResultVo011);
-    if (!looksLikeSelect(b?.sqlContent || '')) return ok({ success: false, message: '仅支持 SELECT 语句探测', columns: [] } as JulyBusinessModelingProbeResultVo011);
-    const res: JulyBusinessModelingProbeResultVo011 = {
+  '/julyBusinessModeling/v1/probe': async () => {
+    await delay(300);
+    return ok<JulyBusinessModelingProbeResultVo011>({
       success: true,
       message: '探测成功',
       columns: [
@@ -150,8 +147,7 @@ export const handlers: Record<string, Handler> = {
         { name: 'status', type: 'tinyint' },
         { name: 'created_at', type: 'datetime' },
       ],
-    };
-    return ok(res);
+    });
   },
 
   // ===== SQL 执行（不分页，按 pageSize 返回示例行，默认 10） =====
@@ -171,25 +167,27 @@ export const handlers: Record<string, Handler> = {
     return ok(res);
   },
 
-  // ===== SQL 执行（分页） =====
+  // ===== SQL 执行（分页，默认每页 10 行） =====
   '/julyBusinessModeling/v1/executeSqlByPage': async (body) => {
-    await delay(700);
+    await delay(400);
     const b = body as JulyBusinessModelingSqlVo011;
-    if (!b?.dataSourceCode) return ok({ success: false, message: '请选择数据源' } as JulyBusinessModelingSqlResultVo011);
-    if (!looksLikeSelect(b?.sqlContent || '')) return ok({ success: false, message: '仅支持 SELECT 查询' } as JulyBusinessModelingSqlResultVo011);
-    const all = fakeRows(b.objectName || 'tbl', 23);
     const pageIndex = b.pageIndex || 1;
     const pageSize = b.pageSize || 10;
+    // 生成 23 行模拟数据，按分页切分
+    const all = fakeRows(b.objectName || 'tbl', 23);
     const slice = all.slice((pageIndex - 1) * pageSize, pageIndex * pageSize);
-    const res: JulyBusinessModelingSqlResultVo011 = {
+    const columns = Object.keys(all[0] || {});
+    return ok<JulyBusinessModelingSqlResultVo011 & { total: number; totalPages: number; pageIndex: number; pageSize: number }>({
       success: true,
-      message: `执行成功`,
-      columns: Object.keys(all[0] || {}),
-      rows: slice as Record<string, unknown>[],
-      elapsedMs: 150 + Math.floor(Math.random() * 90),
-    };
-    // 用分页信封返回，便于页面复用 PageResult011 解析
-    return ok({ ...res, pageIndex, pageSize, total: all.length, totalPages: Math.ceil(all.length / pageSize), rows: slice });
+      message: '执行成功',
+      columns,
+      rows: slice,
+      elapsedMs: 150,
+      pageIndex,
+      pageSize,
+      total: all.length,
+      totalPages: Math.ceil(all.length / pageSize),
+    });
   },
 
   // ===== 获取模型数据（按模型编码回填示例数据） =====

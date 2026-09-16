@@ -18,6 +18,7 @@ import { handlers as julyBusinessModelingHandlers } from '@/mock/dataservice011/
 import { handlers as julyDictionaryHandlers } from '@/mock/system011/julyDictionary';
 import { handlers as julyAiModelProviderHandlers } from '@/mock/ai011/julyAiModelProvider';
 import { handlers as julyMetadataHandlers } from '@/mock/lowcode011/julyMetadata';
+import { handlers as storage011Handlers } from '@/mock/storage011';
 
 export type { MockEnvelope } from '@/mock/system011/common';
 export { mockRelations } from '@/mock/system011/relations';
@@ -37,6 +38,7 @@ const handlers: Record<string, Handler> = {
   ...julyBusinessModelingHandlers,
   ...julyAiModelProviderHandlers,
   ...julyMetadataHandlers,
+  ...storage011Handlers,
 };
 
 export function getMockResponse(action: string, body?: any): Promise<MockEnvelope<any>> | null {

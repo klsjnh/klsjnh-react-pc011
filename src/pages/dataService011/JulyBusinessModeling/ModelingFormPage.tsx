@@ -1,15 +1,14 @@
 /**
- * 业务建模（低代码）新建页面（dataservice011 · julyBusinessModeling/new）
- * 由列表页「新建业务模型」按钮路由跳转而来，保存成功后返回列表页。
+ * 业务建模（低代码）新建 / 编辑页面（dataservice011 · julyBusinessModeling/new 或 /julyBusinessModeling/:id）
+ * 由列表页「新建业务模型」或「设计」按钮路由跳转而来，保存成功后返回列表页。
  * 包含：模型定义（主表 + 字段子表）+ SQL 调试两个 Tab。
- * 拆组件：本页面为路由级组件（用 onNavigate 跳回列表），原 ModelingFormModal 保留用于行内「设计」编辑。
  */
 import React, { useEffect, useState } from 'react';
 import { PlusOutlined, DeleteOutlined, ThunderboltOutlined, CodeOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { Alert, Button, Card, Form, Input, Select, Space, Table, Tabs, Spin } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
-  saveModeling, probeSql, executeSqlByPage,
+  saveModeling, probeSql, executeSqlByPage, getModelingById,
 } from '@/services/dataservice011';
 import { toast } from '@/utils/toast';
 import { DATASERVICE011_ROUTES } from '@/config/routes';
@@ -17,6 +16,7 @@ import { KlsjnhSql011 } from '@/components/system011';
 import { useDatasourceState } from '@/stores/dataservice011/julyDatasourceStore';
 import { fetchDatasourcePage } from '@/services/dataservice011';
 import type {
+  JulyBusinessModelingItem,
   JulyBusinessModelingFieldVo011,
   JulyBusinessModelingSqlResultVo011,
 } from '@/types/dataservice011/businessModeling';
@@ -45,7 +45,17 @@ const YESNO_OPTIONS = [
 /** 探测 / 执行结果展示 */
 interface SqlOutcome {
   kind: 'probe' | 'execute' | 'page';
-  data?: JulyBusinessModelingSqlResultVo011 & { columns?: { name: string; type: string }[] };
+  data?: {
+    success?: boolean;
+    message?: string;
+    elapsedMs?: number;
+    columns?: unknown;
+    rows?: Record<string, unknown>[];
+    total?: number;
+    pageIndex?: number;
+    pageSize?: number;
+    totalPages?: number;
+  };
   error?: string;
 }
 
@@ -54,9 +64,15 @@ const newField = (): JulyBusinessModelingFieldVo011 => ({
   isPrimaryKey: '0', isNullable: '1', isRequired: '0', sortOrder: 1,
 });
 
-export const ModelingFormPage = ({ onNavigate }: PageNavProps) => {
+interface Props extends PageNavProps {
+  /** 编辑时传入 id；新增不传 */
+  id?: string;
+}
+
+export const ModelingFormPage = ({ id, onNavigate }: Props) => {
   const [form] = Form.useForm();
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(!!id);
 
   // 数据源列表：从数据源 store 拉取（走接口，非 mock 硬编码）
   const { list: datasourceList } = useDatasourceState();
@@ -71,19 +87,40 @@ export const ModelingFormPage = ({ onNavigate }: PageNavProps) => {
   const [sqlPage, setSqlPage] = useState({ pageIndex: 1, pageSize: 10 });
 
   useEffect(() => {
-    form.setFieldsValue({ status: '1', fieldData: [newField()] });
+    if (id) {
+      // 编辑模式：拉取全量
+      setLoading(true);
+      getModelingById(id)
+        .then((node) => {
+          form.setFieldsValue({
+            modelCode: node.modelCode,
+            modelName: node.modelName,
+            objectName: node.objectName,
+            dataSourceCode: node.dataSourceCode || undefined,
+            status: node.status || '1',
+            remark: node.remark || '',
+            fieldData: node.fieldData?.length ? node.fieldData : [newField()],
+          });
+          if (node.dataSourceCode) setSqlDs(node.dataSourceCode);
+        })
+        .catch((e) => toast.error((e as Error)?.message || '加载详情失败'))
+        .finally(() => setLoading(false));
+    } else {
+      // 新增模式
+      form.setFieldsValue({ status: '1', fieldData: [newField()] });
+    }
     // 拉取数据源列表（若 store 为空）
     if (datasourceList.length === 0) {
       fetchDatasourcePage({ pageIndex: 1, pageSize: 50 });
     }
-  }, [form, datasourceList.length]);
+  }, [id, form, datasourceList.length]);
 
-  // 数据源加载后自动选中第一条
+  // 数据源加载后自动选中第一条（仅新增且未选时）
   useEffect(() => {
-    if (!sqlDs && datasourceList.length > 0) {
+    if (!sqlDs && datasourceList.length > 0 && !id) {
       setSqlDs(datasourceList[0].dsCode);
     }
-  }, [datasourceList, sqlDs]);
+  }, [datasourceList, sqlDs, id]);
 
   /** 保存 → 成功后跳回列表页 */
   const handleSave = async () => {
@@ -93,8 +130,8 @@ export const ModelingFormPage = ({ onNavigate }: PageNavProps) => {
       const fieldData: JulyBusinessModelingFieldVo011[] = (v.fieldData || []).map((f: JulyBusinessModelingFieldVo011, i: number) => ({
         ...f, sortOrder: f.sortOrder ?? i + 1,
       }));
-      const savedId = await saveModeling({ ...v, fieldData });
-      toast.success(`insert ${savedId} success ...`);
+      const savedId = await saveModeling({ id, ...v, fieldData });
+      toast.success(`${id ? 'update' : 'insert'} ${savedId} success ...`);
       onNavigate?.(DATASERVICE011_ROUTES.julyBusinessModeling);
     } catch (e) {
       if ((e as any)?.errorFields) return;
@@ -130,25 +167,30 @@ export const ModelingFormPage = ({ onNavigate }: PageNavProps) => {
 
   const renderOutcome = () => {
     if (!sqlOutcome) return null;
-    if (sqlOutcome.error) return <Alert type="error" showIcon message="执行失败" description={sqlOutcome.error} style={{ marginTop: 12 }} />;
+    if (sqlOutcome.error) {
+      return <Alert type="error" showIcon message="执行失败" description={sqlOutcome.error} style={{ marginTop: 12 }} />;
+    }
     const d = sqlOutcome.data;
+    const dRow = d as Record<string, unknown> | undefined;
+    // 探测结构：columns 为 [{ name, type }]
     if (sqlOutcome.kind === 'probe') {
+      const cols = Array.isArray(d?.columns) ? (d.columns as { name: string; type: string }[]) : [];
       return (
         <div style={{ marginTop: 12 }}>
-          <Alert type="success" showIcon message={d?.message || '探测成功'} style={{ marginBottom: 8 }} />
-          <Table
-            size="small" rowKey="name" pagination={false}
+          <Alert type="success" showIcon message={(dRow?.message as string) || '探测成功'} style={{ marginBottom: 8 }} />
+          <Table size="small" rowKey="name" pagination={false}
             columns={[{ title: '列名', dataIndex: 'name' }, { title: '类型', dataIndex: 'type' }]}
-            dataSource={d?.columns as { name: string; type: string }[] || []}
-          />
+            dataSource={cols} />
         </div>
       );
     }
-    const cols = (d?.columns as string[] | undefined) || [];
-    const rows = (d?.rows as Record<string, unknown>[] | undefined) || [];
+    // 执行结果：columns 为 string[]，rows 为 object[]
+    const cols = Array.isArray(dRow?.columns) ? (dRow!.columns as string[]) : [];
+    const rows = Array.isArray(dRow?.rows) ? (dRow!.rows as Record<string, unknown>[]) : [];
+    const headerMsg = `${(dRow?.message as string) || '执行成功'}${dRow?.elapsedMs ? ` · ${dRow.elapsedMs}ms` : ''}`;
     return (
       <div style={{ marginTop: 12 }}>
-        <Alert type="success" showIcon message={`${d?.message || '执行成功'}${d?.elapsedMs ? ` · ${d.elapsedMs}ms` : ''}`} style={{ marginBottom: 8 }} />
+        <Alert type="success" showIcon message={headerMsg} style={{ marginBottom: 8 }} />
         <Table
           size="small" rowKey={(_, i) => String(i)} scroll={{ x: 'max-content' }}
           columns={cols.map((c) => ({ title: c, dataIndex: c, key: c, render: (v: unknown) => <code>{v == null ? '' : String(v)}</code> }))}
@@ -168,12 +210,12 @@ export const ModelingFormPage = ({ onNavigate }: PageNavProps) => {
       <div className="page-header">
         <Space>
           <Button icon={<ArrowLeftOutlined />} onClick={() => onNavigate?.(DATASERVICE011_ROUTES.julyBusinessModeling)}>返回列表</Button>
-          <h2 style={{ margin: 0 }}>新建业务模型</h2>
+          <h2 style={{ margin: 0 }}>{id ? '编辑业务模型' : '新建业务模型'}</h2>
         </Space>
-        <p>接口 /julyBusinessModeling/v1/insert</p>
+        <p>{id ? `接口 /julyBusinessModeling/v1/update（id=${id}）` : '接口 /julyBusinessModeling/v1/insert'}</p>
       </div>
 
-      <Card>
+      <Card loading={loading}>
         <Tabs
           items={[
             {
@@ -183,13 +225,13 @@ export const ModelingFormPage = ({ onNavigate }: PageNavProps) => {
                 <Form form={form} layout="vertical" preserve={false} initialValues={{ status: '1' }}>
                   <Space size="large" wrap>
                     <Form.Item name="modelCode" label="模型编码" rules={[{ required: true, message: '请输入模型编码' }]} style={{ width: 240 }}>
-                      <Input placeholder="唯一，如 order_main" />
+                      <Input placeholder="唯一，如 order_main" disabled={!!id} />
                     </Form.Item>
                     <Form.Item name="modelName" label="模型名称" rules={[{ required: true, message: '请输入模型名称' }]} style={{ width: 240 }}>
                       <Input placeholder="如 订单主表" />
                     </Form.Item>
                     <Form.Item name="objectName" label="业务对象名" rules={[{ required: true, message: '请输入对象名' }]} style={{ width: 240 }}>
-                      <Input placeholder="物理表名，如 ord_order" />
+                      <Input placeholder="物理表名，如 ord_order" disabled={!!id} />
                     </Form.Item>
                   </Space>
                   <Space size="large" wrap>

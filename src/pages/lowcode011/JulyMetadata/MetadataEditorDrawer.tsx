@@ -114,7 +114,7 @@ const EditorBody = ({ node, onClose }: { node: JulyMetadataVo011 | null; onClose
           <Form.Item label="对象类型" name="objectType" rules={[{ required: true, message: '请选择对象类型' }]}>
             <Select options={OBJECT_TYPE_OPTIONS} placeholder="请选择" />
           </Form.Item>
-          <Form.Item label="对象描述" name="description">
+          <Form.Item label="对象描述" name="description" rules={[{ required: true, message: '请输入对象描述' }]}>
             <Input placeholder="如 系统用户" />
           </Form.Item>
           <Form.Item label="业务字段清单" name="businessField">

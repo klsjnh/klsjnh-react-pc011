@@ -1,13 +1,11 @@
 /**
  * 统一设置页（系统设置 + 参数设置合并）
+ * 路由：/settings、/settings/params、/business/params 均指向此页
  */
 import React, { useState } from 'react';
-import { Button, Card, Input, Select, Switch, Table, Tag, Typography, Tabs } from 'antd';
+import { Card, Switch, Table, Tag, Typography, Tabs } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { toast } from '@/utils/toast';
 import type { SettingItem } from '@/types/view/business';
-
-const { Title, Text } = Typography;
 
 /** 系统设置数据 */
 const INITIAL_SETTINGS: SettingItem[] = [
@@ -20,13 +18,13 @@ const INITIAL_SETTINGS: SettingItem[] = [
 
 /** 参数设置数据 */
 const INITIAL_PARAMS: SettingItem[] = [
-  { id: 1, name: '消息推送', value: true, type: 'toggle' },
-  { id: 2, name: '声音提醒', value: false, type: 'toggle' },
-  { id: 3, name: '自动登录', value: true, type: 'toggle' },
-  { id: 4, name: '错误上报', value: true, type: 'toggle' },
+  { id: 101, name: '消息推送', value: true, type: 'toggle' },
+  { id: 102, name: '声音提醒', value: false, type: 'toggle' },
+  { id: 103, name: '自动登录', value: true, type: 'toggle' },
+  { id: 104, name: '错误上报', value: true, type: 'toggle' },
 ];
 
-export const SettingsPage = () => {
+export const Demo011 = () => {
   const [settings, setSettings] = useState<SettingItem[]>(INITIAL_SETTINGS);
   const [params, setParams] = useState<SettingItem[]>(INITIAL_PARAMS);
 
@@ -50,8 +48,6 @@ export const SettingsPage = () => {
 
   const paramColumns: ColumnsType<SettingItem> = [
     { title: '参数名称', dataIndex: 'name' },
-    { title: '说明', dataIndex: 'description', ellipsis: true },
-    { title: '参数键', dataIndex: 'key', render: (v) => <code>{v}</code> },
     {
       title: '状态', key: 'enabled', width: 90,
       render: (_, p) => (
@@ -64,7 +60,7 @@ export const SettingsPage = () => {
     <div>
       <div className="page-header">
         <h2>系统设置</h2>
-        <p>系统参数配置</p>
+        <p>系统参数与运行参数配置</p>
       </div>
       <Tabs
         defaultActiveKey="system"

@@ -13,7 +13,6 @@ import {
   BookOutlined,
   CalculatorOutlined,
   ClockCircleOutlined,
-  ControlOutlined,
   DashboardOutlined,
   DatabaseOutlined,
   DesktopOutlined,
@@ -22,7 +21,6 @@ import {
   FileSearchOutlined,
   FileTextOutlined,
   FormOutlined,
-  HddOutlined,
   InfoCircleOutlined,
   KeyOutlined,
   LineChartOutlined,
@@ -31,7 +29,6 @@ import {
   NotificationOutlined,
   PieChartOutlined,
   QuestionCircleOutlined,
-  SearchOutlined,
   SettingOutlined,
   SmileOutlined,
   TeamOutlined,
@@ -43,9 +40,8 @@ import {
 import { SYSTEM011_ROUTES, DATASERVICE011_ROUTES, AI011_ROUTES, LOWCODE011_ROUTES } from '@/config/routes';
 import type { NavItem } from '@/types/view/layout';
 
-/** 菜单类型 */
+/** 菜单类型：菜单 / 按钮（无目录） */
 export const MENU_TYPE_OPTIONS = [
-  { value: '1', label: '目录' },
   { value: '2', label: '菜单' },
   { value: '3', label: '按钮' },
 ];
@@ -94,7 +90,8 @@ export const GLOBAL_MENUS: NavItem[] = [
       { path: '/business/monitor', label: '系统监控', icon: MonitorOutlined },
       { path: '/business/online', label: '在线用户', icon: UserSwitchOutlined },
       { path: '/business/cache', label: '缓存管理', icon: ThunderboltOutlined },
-      { path: '/business/storage', label: '存储中心', icon: HddOutlined },
+      { path: '/storageCenter/bucketList', label: '存储桶列表', icon: DatabaseOutlined },
+      { path: '/storageCenter/fileList', label: '文件列表', icon: FileTextOutlined },
       { path: '/business/template', label: '通知模板', icon: FormOutlined },
       { path: '/business/push', label: '消息推送', icon: NotificationOutlined },
       { path: '/business/stats', label: '数据统计', icon: BarChartOutlined },
@@ -103,7 +100,6 @@ export const GLOBAL_MENUS: NavItem[] = [
       { path: '/business/export', label: '数据导出', icon: ExportOutlined },
       { path: '/business/dashboard', label: '数据大屏', icon: DesktopOutlined },
       { path: '/business/calc', label: '数据计算', icon: CalculatorOutlined },
-      { path: '/business/query', label: '数据查询', icon: SearchOutlined },
       { path: '/business/servicelog', label: '服务日志', icon: FileTextOutlined },
       { path: '/business/markdown', label: 'Markdown 编辑器', icon: BookOutlined },
       { path: '/business/sql', label: 'SQL 编辑器', icon: FileSearchOutlined },
@@ -151,7 +147,6 @@ export const GLOBAL_MENUS: NavItem[] = [
       { path: '/notifications', label: '消息通知', icon: BellOutlined },
       { path: '/audit', label: '审计日志', icon: FileSearchOutlined },
       { path: '/settings', label: '系统设置', icon: SettingOutlined },
-      { path: '/settings/params', label: '参数设置', icon: ControlOutlined },
       { path: '/help', label: '帮助反馈', icon: QuestionCircleOutlined },
       { path: '/about', label: '关于系统', icon: InfoCircleOutlined },
     ],

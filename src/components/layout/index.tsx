@@ -9,16 +9,20 @@ import { Left } from '@/components/layout/Left';
 export const SidebarLayout = ({ children, currentPath, onNavigate }: SidebarLayoutProps) => {
   const menus = useNavMenus();
 
+  // 面包屑：一级菜单 + 其直接子级（只比对两层）
   const breadcrumb = (() => {
-    const parts: string[] = [];
+    const labels: string[] = [];
     menus.forEach((m) => {
-      if (m.path === currentPath) parts.push(m.label);
+      if (m.path === currentPath) labels.push(m.label);
       if (m.children) {
-        const child = m.children.find((c) => c.path === currentPath);
-        if (child) { parts.push(m.label); parts.push(child.label); }
+        const sub = m.children.find((c) => c.path === currentPath);
+        if (sub) {
+          labels.push(m.label);
+          labels.push(sub.label);
+        }
       }
     });
-    return parts.length > 0 ? parts.join(' / ') : '仪表盘';
+    return labels.length > 0 ? labels.join(' / ') : '仪表盘';
   })();
 
   return (
