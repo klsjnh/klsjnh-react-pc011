@@ -1,5 +1,6 @@
 /**
  * 帮助与反馈页 - PC 端（antd：FAQ 折叠 + 反馈表单 + 反馈历史）
+ * 位置：src/pages/home/help.tsx
  */
 import React, { useState } from 'react';
 import { Button, Card, Col, Collapse, Form, Input, Modal, Row, Segmented, Table, Tag } from 'antd';

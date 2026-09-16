@@ -18,6 +18,7 @@ export const DATASERVICE011_ROUTES = {
   julyDatasource: '/dataService011/julyDatasource',
   julyBusinessModeling: '/dataService011/JulyBusinessModeling',
   julyBusinessModelingNew: '/dataService011/JulyBusinessModeling/new',
+  julyBusinessModelingEdit: '/dataService011/JulyBusinessModeling/:id',
 } as const;
 
 /** AI 模块（ai011）路由 */
@@ -27,7 +28,9 @@ export const AI011_ROUTES = {
 
 /** 低代码模块（lowcode011）路由 */
 export const LOWCODE011_ROUTES = {
-  julyMetadata: '/lowcode011/julyMetadata',
+  julyMetadata: '/lowcode011/JulyMetadata',
+  julyMetadataNew: '/lowcode011/JulyMetadata/new',
+  julyMetadataEdit: '/lowcode011/JulyMetadata/:id',
 } as const;
 
 /** 默认落地页 */

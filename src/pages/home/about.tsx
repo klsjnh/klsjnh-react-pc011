@@ -1,6 +1,6 @@
 /**
  * 关于我们页 - PC 端（antd）
- * 图标统一取自 @ant-design/icons，不再使用 emoji。
+ * 位置：src/pages/home/about.tsx
  */
 import React from 'react';
 import { Card, Col, Row, Tag, Typography } from 'antd';

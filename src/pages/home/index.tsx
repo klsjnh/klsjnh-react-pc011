@@ -39,8 +39,8 @@ const JulyBusinessModelingPage = lazy(() => import('@/pages/dataService011/JulyB
 const JulyBusinessModelingFormPage = lazy(() => import('@/pages/dataService011/JulyBusinessModeling/ModelingFormPage').then(m => ({ default: m.ModelingFormPage })));
 const JulyAiModelProviderPage = lazy(() => import('@/pages/ai011/JulyAiModelProvider').then(m => ({ default: m.JulyAiModelProvider })));
 const JulyMetadataPage = lazy(() => import('@/pages/lowcode011/JulyMetadata').then(m => ({ default: m.JulyMetadata })));
-const StoragePage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.StoragePage })));
-const ParamsPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.ParamsPage })));
+const JulyMetadataFormPage = lazy(() => import('@/pages/lowcode011/JulyMetadata/MetadataFormPage').then(m => ({ default: m.MetadataFormPage })));
+const ParamsPage = lazy(() => import('@/pages/demo16/demo011').then(m => ({ default: m.Demo011 })));
 const TemplatePage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.TemplatePage })));
 const PushPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.PushPage })));
 const StatsPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.StatsPage })));
@@ -49,7 +49,6 @@ const ChartsPage = lazy(() => import('@/pages/business-pages').then(m => ({ defa
 const ExportPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.ExportPage })));
 const DashboardScreenPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.DashboardScreenPage })));
 const CalcPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.CalcPage })));
-const QueryPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.QueryPage })));
 const ServiceLogPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.ServiceLogPage })));
 const MarkdownEditorPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.MarkdownEditorPage })));
 const SqlEditorPage = lazy(() => import('@/pages/business-pages').then(m => ({ default: m.SqlEditorPage })));
@@ -57,10 +56,13 @@ const SqlEditorPage = lazy(() => import('@/pages/business-pages').then(m => ({ d
 // 其他页面
 const ReportsPage = lazy(() => import('@/pages/ReportsPage').then(m => ({ default: m.ReportsPage })));
 const NotificationsPage = lazy(() => import('@/pages/NotificationsPage').then(m => ({ default: m.NotificationsPage })));
-const HelpPage = lazy(() => import('@/pages/HelpPage').then(m => ({ default: m.HelpPage })));
-const AboutPage = lazy(() => import('@/pages/AboutPage').then(m => ({ default: m.AboutPage })));
+const HelpPage = lazy(() => import('@/pages/home/help').then(m => ({ default: m.HelpPage })));
+const AboutPage = lazy(() => import('@/pages/home/about').then(m => ({ default: m.AboutPage })));
 const ProfilePage = lazy(() => import('@/pages/ProfilePage').then(m => ({ default: m.ProfilePage })));
-const SettingsPage = lazy(() => import('@/pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
+const SettingsPage = lazy(() => import('@/pages/demo16/demo011').then(m => ({ default: m.Demo011 })));
+// 存储中心独立路由
+const BucketListPage = lazy(() => import('@/pages/storageCenter/BucketListPage').then(m => ({ default: m.BucketListPage })));
+const FileListPage = lazy(() => import('@/pages/storageCenter/FileListPage').then(m => ({ default: m.FileListPage })));
 
 // 数据宝宝（暂用 BusinessPage 占位）
 const DataOverviewPage = lazy(() => import('@/pages/BusinessPage').then(m => ({ default: m.BusinessPage })));
@@ -68,16 +70,15 @@ const DataQueryPage = lazy(() => import('@/pages/BusinessPage').then(m => ({ def
 
 // 个人中心
 const MyProfilePage = lazy(() => import('@/pages/ProfilePage').then(m => ({ default: m.ProfilePage })));
-const MySettingsPage = lazy(() => import('@/pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
+const MySettingsPage = lazy(() => import('@/pages/demo16/demo011').then(m => ({ default: m.Demo011 })));
 
 const BUSINESS_PAGES: Record<string, PageComponent> = {
   config: JulyConfigPage, scheduler: JulySchedulerPage, dict: DictPage,
   monitor: MonitorPage, online: OnlineUsersPage, cache: CachePage,
-  datasource: JulyDatasourcePage, storage: StoragePage, params: ParamsPage,
+  datasource: JulyDatasourcePage, storage: BucketListPage, params: ParamsPage,
   template: TemplatePage, push: PushPage, stats: StatsPage,
   trend: TrendPage, charts: ChartsPage, export: ExportPage,
-  dashboard: DashboardScreenPage, calc: CalcPage, query: QueryPage,
-  servicelog: ServiceLogPage, markdown: MarkdownEditorPage, sql: SqlEditorPage,
+  dashboard: DashboardScreenPage, calc: CalcPage, servicelog: ServiceLogPage, markdown: MarkdownEditorPage, sql: SqlEditorPage,
 };
 
 const DATA_BABY_PAGES: Record<string, PageComponent> = {
@@ -104,6 +105,8 @@ const PAGE_MAP: Record<string, PageComponent> = {
   [DATASERVICE011_ROUTES.julyBusinessModelingNew]: JulyBusinessModelingFormPage,
   [AI011_ROUTES.julyAiModelProvider]: JulyAiModelProviderPage,
   [LOWCODE011_ROUTES.julyMetadata]: JulyMetadataPage,
+  [LOWCODE011_ROUTES.julyMetadataNew]: JulyMetadataFormPage,
+  '/demo016/demo011': SettingsPage,
   '/audit': AuditPage,
   '/settings': SettingsPage,
   '/settings/params': SettingsPage,
@@ -113,6 +116,8 @@ const PAGE_MAP: Record<string, PageComponent> = {
   '/help': HelpPage,
   '/about': AboutPage,
   '/profile': ProfilePage,
+  '/storageCenter/bucketList': BucketListPage,
+  '/storageCenter/fileList': FileListPage,
 };
 
 export const Home = () => {
@@ -143,6 +148,20 @@ export const Home = () => {
       const action = currentPath.split('/')[2] || '';
       const RealPage = PERSONAL_PAGES[action];
       return RealPage ? <RealPage /> : <DashboardPage />;
+    }
+    // 元数据编辑动态路由：/lowcode011/JulyMetadata/:id（id 不是 'new'，'new' 已被上面静态路由覆盖）
+    if (currentPath !== LOWCODE011_ROUTES.julyMetadata && currentPath.startsWith(LOWCODE011_ROUTES.julyMetadata + '/')) {
+      const suffix = currentPath.slice(LOWCODE011_ROUTES.julyMetadata.length + 1);
+      if (suffix && suffix !== 'new') {
+        return <JulyMetadataFormPage id={suffix} onNavigate={(p: string) => navigate(p)} />;
+      }
+    }
+    // 业务建模编辑动态路由：/dataService011/JulyBusinessModeling/:id
+    if (currentPath !== DATASERVICE011_ROUTES.julyBusinessModeling && currentPath.startsWith(DATASERVICE011_ROUTES.julyBusinessModeling + '/')) {
+      const suffix = currentPath.slice(DATASERVICE011_ROUTES.julyBusinessModeling.length + 1);
+      if (suffix && suffix !== 'new') {
+        return <JulyBusinessModelingFormPage id={suffix} onNavigate={(p: string) => navigate(p)} />;
+      }
     }
     const PageComponent = PAGE_MAP[currentPath] || DashboardPage;
     return <PageComponent onNavigate={(p: string) => navigate(p)} />;

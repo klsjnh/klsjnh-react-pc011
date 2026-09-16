@@ -62,7 +62,6 @@ export const BusinessPage = ({ onNavigate }: BusinessPageProps) => {
         { icon: ExportOutlined, label: '数据导出', path: '/business/export', color: '#e6fffb' },
         { icon: DesktopOutlined, label: '数据大屏', path: '/business/dashboard', color: '#fff1f0' },
         { icon: CalculatorOutlined, label: '数据计算', path: '/business/calc', color: '#fffbe6' },
-        { icon: SearchOutlined, label: '数据查询', path: '/business/query', color: '#f0f5ff' },
       ],
     },
     {

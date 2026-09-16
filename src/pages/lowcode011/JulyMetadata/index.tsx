@@ -1,22 +1,23 @@
 /**
  * 元数据管理（lowcode011 / julyMetadata）—— 列表页。
- * 主表 CRUD + 批量删除；编辑走右侧抽屉（一主三子整体编辑，见 MetadataEditorDrawer）。
+ * 主表 CRUD + 批量删除；编辑 / 新增走路由跳转（一主三子整体编辑，见 MetadataFormPage）。
  *
  * 工具栏对齐 julyUser / julyConfig 标准：.page-toolbar > .toolbar-right（卡片之外、左对齐一行按钮）。
  * 卡头高度遵循 antd6 Card.headerHeight（项目统一 46）。
  * 注：元数据无「导出 / 备份」类操作（后端 julyMetadata 无对应接口），工具栏不放置。
  */
 import React, { useEffect, useState } from 'react';
+import { App } from 'antd';
 import { Button, Card, Input, Popconfirm, Space, Table, Tag } from 'antd';
 import { DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import { useMetadataState } from '@/stores/lowcode011/julyMetadataStore';
+import { useMetadataState, julyMetadataStore } from '@/stores/lowcode011/julyMetadataStore';
 import {
-  fetchMetadataPage, getMetadataById, removeMetadata, removeMetadataBatch,
+  fetchMetadataPage, removeMetadata, removeMetadataBatch,
 } from '@/services/lowcode011';
-import { toast } from '@/utils/toast';
+import { LOWCODE011_ROUTES } from '@/config/routes';
 import { PAGE_SIZE_OPTIONS } from '@/utils/pageSizePref';
-import { MetadataEditorDrawer } from './MetadataEditorDrawer';
+import type { PageNavProps } from '@/types/view/page';
 import type { JulyMetadataVo011 } from '@/types/lowcode011';
 
 const STATUS_TAG = (s?: string) => <Tag color={s === '1' ? 'green' : 'red'}>{s === '1' ? '启用' : '停用'}</Tag>;
@@ -24,11 +25,10 @@ const STATUS_TAG = (s?: string) => <Tag color={s === '1' ? 'green' : 'red'}>{s =
 const hdrCenter = (): React.HTMLAttributes<HTMLElement> => ({ style: { textAlign: 'center' } });
 const leftCell = { align: 'left' as const, onHeaderCell: hdrCenter };
 
-export const JulyMetadata = () => {
+export const JulyMetadata = ({ onNavigate }: PageNavProps) => {
   const { list, total, loading, query, selectedRowKeys } = useMetadataState();
   const [keyword, setKeyword] = useState('');
-  const [editor, setEditor] = useState<{ open: boolean; node: JulyMetadataVo011 | null }>({ open: false, node: null });
-  const [editLoadingId, setEditLoadingId] = useState<string | null>(null);
+  const { modal } = App.useApp();
 
   useEffect(() => { fetchMetadataPage({ pageIndex: 1 }); }, []);
 
@@ -37,37 +37,33 @@ export const JulyMetadata = () => {
     fetchMetadataPage({ keyword: kw || '', pageIndex: 1 });
   };
 
-  const handleEdit = async (row: JulyMetadataVo011) => {
-    setEditLoadingId(row.id);
-    try {
-      // 列表行只含主表概要，编辑需拉全量（含三子）
-      const full = await getMetadataById(row.id);
-      setEditor({ open: true, node: full });
-    } catch (e) {
-      toast.error((e as Error)?.message || '加载详情失败');
-    } finally {
-      setEditLoadingId(null);
-    }
-  };
-
   const handleRemove = async (id: string) => {
-    try {
-      await removeMetadata(id);
-      toast.success(`delete ${id} success ...`);
-    } catch (e) {
-      toast.error((e as Error)?.message || '删除失败');
-    }
+    modal.confirm({
+      title: '删除确认',
+      content: `确定要删除元数据 ${id} 吗？会级联删除其全部字段/显示列/服务。`,
+      okText: '删除',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk: async () => {
+        await removeMetadata(id);
+        await fetchMetadataPage(query);
+      },
+    });
   };
 
   const handleBatchRemove = async () => {
     if (!selectedRowKeys.length) return;
-    try {
-      await removeMetadataBatch(selectedRowKeys);
-      toast.success(`batch delete ${selectedRowKeys.length} success ...`);
-      julyMetadataStore.setState({ selectedRowKeys: [] });
-    } catch (e) {
-      toast.error((e as Error)?.message || '批量删除失败');
-    }
+    modal.confirm({
+      title: '批量删除确认',
+      content: `确定要删除选中的 ${selectedRowKeys.length} 条元数据吗？会级联删除全部字段/显示列/服务。`,
+      okText: '删除',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk: async () => {
+        await removeMetadataBatch(selectedRowKeys);
+        await fetchMetadataPage(query);
+      },
+    });
   };
 
   const columns: ColumnsType<JulyMetadataVo011> = [
@@ -82,7 +78,7 @@ export const JulyMetadata = () => {
       title: '操作', key: 'action', width: 150, align: 'center', onHeaderCell: hdrCenter,
       render: (_, r) => (
         <Space size="small">
-          <Button type="link" size="small" icon={<EditOutlined />} loading={editLoadingId === r.id} onClick={() => handleEdit(r)}>编辑</Button>
+          <Button type="link" size="small" icon={<EditOutlined />} onClick={() => onNavigate?.(`${LOWCODE011_ROUTES.julyMetadata}/${r.id}`)}>编辑</Button>
           <Popconfirm title="删除该元数据会级联删除其全部字段/显示列/服务，确定吗？" okText="删除" cancelText="取消" okButtonProps={{ danger: true }} onConfirm={() => handleRemove(r.id)}>
             <Button type="link" size="small" danger icon={<DeleteOutlined />}>删除</Button>
           </Popconfirm>
@@ -108,7 +104,7 @@ export const JulyMetadata = () => {
           onSearch={handleSearch}
         />
         <div className="toolbar-right">
-          <Button color="primary" variant="filled" icon={<PlusOutlined />} onClick={() => setEditor({ open: true, node: null })}>新建元数据</Button>
+          <Button color="primary" variant="filled" icon={<PlusOutlined />} onClick={() => onNavigate?.(LOWCODE011_ROUTES.julyMetadataNew)}>新建元数据</Button>
           <Button color="default" variant="filled" icon={<ReloadOutlined />} onClick={() => fetchMetadataPage({ pageIndex: 1 })}>刷新</Button>
           <Button danger icon={<DeleteOutlined />} disabled={!selectedRowKeys.length} onClick={handleBatchRemove}>批量删除</Button>
         </div>
@@ -133,12 +129,6 @@ export const JulyMetadata = () => {
           }}
         />
       </Card>
-
-      <MetadataEditorDrawer
-        open={editor.open}
-        node={editor.node}
-        onClose={() => setEditor({ open: false, node: null })}
-      />
     </div>
   );
 };
