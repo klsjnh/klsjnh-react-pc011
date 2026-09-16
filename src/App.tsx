@@ -7,7 +7,8 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ConfigProvider, App as AntdApp } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
-import { antdTheme } from '@/config/theme';
+import { buildTheme } from '@/config/theme';
+import { useThemeKey } from '@/stores/themeStore';
 import { MessageBridge } from '@/components/MessageBridge';
 import { Home } from '@/pages/home';
 import { LoginPage } from '@/pages/home/login';
@@ -16,8 +17,9 @@ import { DEFAULT_ROUTE } from '@/config/routes';
 
 export const App = () => {
   const isAuthenticated = useIsAuthenticated();
+  const themeKey = useThemeKey();
   return (
-    <ConfigProvider locale={zhCN} theme={antdTheme}>
+    <ConfigProvider locale={zhCN} theme={buildTheme(themeKey)}>
       <AntdApp>
         <MessageBridge />
         <Routes>

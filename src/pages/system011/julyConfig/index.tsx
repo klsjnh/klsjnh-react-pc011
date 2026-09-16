@@ -5,12 +5,13 @@
  */
 import React, { useEffect, useState } from 'react';
 import { DatabaseOutlined, DeleteOutlined, DownloadOutlined, DownOutlined, PlusOutlined } from '@ant-design/icons';
-import { Button, Card, Dropdown, Form, Input, Modal, Popconfirm, Space, Table, Tag } from 'antd';
+import { Button, Card, Dropdown, Input, Popconfirm, Space, Table, Tag } from 'antd';
 import type { MenuProps } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useConfigState } from '@/stores/system011/julyConfigStore';
-import { fetchConfigPage, saveConfig, removeConfig, removeConfigs, exportConfig, backupConfig011 } from '@/services/system011';
+import { fetchConfigPage, removeConfig, removeConfigs, exportConfig, backupConfig011 } from '@/services/system011';
 import { toast } from '@/utils/toast';
+import { ConfigFormModal } from '@/pages/system011/julyConfig/ConfigFormModal';
 import type { JulyConfigVo011 } from '@/types/system011/julyConfig';
 
 /** 表头单元格水平居中 */
@@ -22,8 +23,6 @@ const leftCell = { align: 'left' as const, onHeaderCell: hdrCenter };
 export const JulyConfig = () => {
   const { list, total, loading, query } = useConfigState();
   const [modal, setModal] = useState<{ open: boolean; node: JulyConfigVo011 | null }>({ open: false, node: null });
-  const [form] = Form.useForm();
-  const [saving, setSaving] = useState(false);
   const [actionLoading, setActionLoading] = useState<'export' | 'backup' | null>(null);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [batchDeleting, setBatchDeleting] = useState(false);
@@ -65,25 +64,7 @@ export const JulyConfig = () => {
     onClick: ({ key }) => handleExport(key as 'json' | 'csv'),
   };
 
-  // 表单初始值：编辑回填无需 setFieldsValue 副作用（用 key 重挂载保证每次打开都是干净初始值）
-  const formInitialValues = {
-    code: modal.node?.code || '',
-    data: modal.node?.data || '',
-  };
-
-  const handleSave = async () => {
-    try {
-      const v = await form.validateFields();
-      setSaving(true);
-      const savedId = await saveConfig({ id: modal.node?.id, code: v.code, data: v.data });
-      toast.success(modal.node?.id ? `update ${modal.node.id} success ...` : `insert ${savedId} success ...`);
-      setModal({ open: false, node: null });
-    } catch (e) {
-      toast.error((e as Error)?.message || '保存失败，请检查输入');
-    } finally {
-      setSaving(false);
-    }
-  };
+  // 表单初始值逻辑已收敛到 ConfigFormModal（destroyOnClose + initialValues）
 
   const handleRemove = async (id: string) => {
     try {
@@ -135,7 +116,6 @@ export const JulyConfig = () => {
     <div>
       <div className="page-header">
         <h2>配置管理</h2>
-        <p>共 {total} 条配置 · 接口 /julyConfig/v1/selectListByPage</p>
       </div>
 
       <div className="page-toolbar" style={{ display: 'block' }}>
@@ -148,7 +128,7 @@ export const JulyConfig = () => {
           />
         </div>
         <div className="toolbar-right">
-          <Button icon={<PlusOutlined />} onClick={() => { form.resetFields(); setModal({ open: true, node: null }); }}
+          <Button icon={<PlusOutlined />} onClick={() => setModal({ open: true, node: null })}
             style={{ background: '#52c41a', borderColor: '#52c41a', color: '#fff' }}>新建配置</Button>
           <Popconfirm
             title={`确定要删除选中的 ${selectedRowKeys.length} 条配置吗？`}
@@ -198,17 +178,12 @@ export const JulyConfig = () => {
         />
       </Card>
 
-      <Modal title={modal.node ? '编辑配置' : '新建配置'} key={modal.node?.id ?? 'new'} open={modal.open} onCancel={() => setModal({ open: false, node: null })}
-        onOk={handleSave} okText="保存" cancelText="取消" confirmLoading={saving} destroyOnClose>
-        <Form form={form} layout="vertical" preserve={false} initialValues={formInitialValues}>
-          <Form.Item name="code" label="配置键" rules={[{ required: true, message: '请输入配置键' }]}>
-            <Input disabled={!!modal.node} placeholder="如 site.name" />
-          </Form.Item>
-          <Form.Item name="data" label="配置值" rules={[{ required: true, message: '请输入配置值' }]}>
-            <Input placeholder="请输入配置值" />
-          </Form.Item>
-        </Form>
-      </Modal>
+      <ConfigFormModal
+        open={modal.open}
+        node={modal.node}
+        onClose={() => setModal({ open: false, node: null })}
+        onSaved={() => {}}
+      />
     </div>
   );
 };

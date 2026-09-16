@@ -53,6 +53,10 @@ export const JulyMenu = () => {
   const [createForm] = Form.useForm();
   const [createModal, setCreateModal] = useState(false);
 
+  /** 监听 menuType，按类型（1目录/2菜单/3按钮）联动显隐 路由/组件/权限编码 */
+  const editType = Form.useWatch('menuType', form);
+  const createType = Form.useWatch('menuType', createForm);
+
   /** 计算节点深度 */
   function getNodeDepth(nodes: JulyMenuVo011[], id: string, depth: number): number {
     for (const n of nodes) {
@@ -124,6 +128,8 @@ export const JulyMenu = () => {
         parentId: selectedNode.parentId || '',
         status: selectedNode.status,
         sortOrder: selectedNode.sortOrder,
+        permissionCode: selectedNode.permissionCode ?? '',
+        component: selectedNode.component ?? '',
       });
     }
   }, [selectedId, menus, selectedNode, form]);
@@ -177,21 +183,28 @@ export const JulyMenu = () => {
 
   const openCreate = (parentId: string) => {
     createForm.resetFields();
-    createForm.setFieldsValue({ parentId, menuCode: '', menuType: '2', menuIcon: DEFAULT_MENU_ICON, status: '1' });
+    createForm.setFieldsValue({
+      parentId, menuCode: '', menuType: '2', menuIcon: DEFAULT_MENU_ICON, status: '1',
+      permissionCode: '', component: '',
+    });
     setCreateModal(true);
   };
 
   const handleCreate = async () => {
     const v = await createForm.validateFields();
     try {
+      const isDir = v.menuType === '1';
+      const isButton = v.menuType === '3';
       await addMenu({
         parentId: v.parentId,
         menuCode: v.menuCode,
         menuName: v.menuName,
         menuIcon: v.menuIcon,
-        menuRoute: v.menuRoute,
         menuType: v.menuType,
         status: v.status || '1',
+        menuRoute: isButton ? '' : (v.menuRoute || ''),
+        component: isDir || isButton ? null : (v.component || null),
+        permissionCode: isDir ? null : (v.permissionCode || null),
       });
       if (v.parentId) uiStore.setMenuTreeExpandedIds(Array.from(new Set([...expandedKeys, v.parentId])));
       if (!isMockMode()) await reloadMenus();
@@ -206,15 +219,21 @@ export const JulyMenu = () => {
     if (!selectedNode) return;
     try {
       const v = await form.validateFields();
+      const isDir = v.menuType === '1';
+      const isButton = v.menuType === '3';
       await updateMenu(selectedNode.id, {
         menuCode: v.menuCode,
         menuName: v.menuName,
         menuIcon: v.menuIcon,
-        menuRoute: v.menuRoute,
         menuType: v.menuType,
         parentId: v.parentId || '',
         status: v.status,
         sortOrder: v.sortOrder,
+        // 按类型规整：目录无路由/组件/权限；按钮无路由/组件；菜单三者齐全
+        // （对齐后端 JulyMenuUpdateVo011：update 不含 status，后端会忽略该字段）
+        menuRoute: isButton ? '' : (v.menuRoute || ''),
+        component: isDir || isButton ? null : (v.component || null),
+        permissionCode: isDir ? null : (v.permissionCode || null),
       });
       if (v.parentId !== selectedNode.parentId) await moveMenu(selectedNode.id, v.parentId || '');
       if (!isMockMode()) await reloadMenus();
@@ -317,13 +336,39 @@ export const JulyMenu = () => {
                     </Form.Item>
                   </Col>
                   <Col span={12}>
-                    <Form.Item name="menuRoute" label="路由路径" rules={[{ required: true, message: '请输入路由路径' }]}>
-                      <Input />
+                    <Form.Item
+                      name="menuRoute"
+                      label="路由路径"
+                      hidden={editType === '3'}
+                      rules={editType === '3' ? [] : [{ required: true, message: '请输入路由路径' }]}
+                    >
+                      <Input placeholder="如 /business/newpage" />
                     </Form.Item>
                   </Col>
                   <Col span={12}>
                     <Form.Item name="parentId" label="上级菜单">
                       <Select allowClear placeholder="（顶级菜单）" options={buildParentOptions(selectedNode)} />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item
+                      name="component"
+                      label="前端组件"
+                      hidden={editType !== '2'}
+                      tooltip="菜单类型对应的页面组件路径，如 pages/business/NewPage"
+                    >
+                      <Input placeholder="如 pages/business/NewPage" />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item
+                      name="permissionCode"
+                      label="权限编码"
+                      hidden={editType === '1'}
+                      tooltip="接口权限标识；目录节点留空，保存时置为 null"
+                      rules={editType === '3' ? [{ required: true, message: '按钮必须填写权限编码' }] : []}
+                    >
+                      <Input placeholder="如 biz:newpage:view" />
                     </Form.Item>
                   </Col>
                   <Col span={12}>
@@ -382,8 +427,36 @@ export const JulyMenu = () => {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="menuRoute" label="路由路径" rules={[{ required: true, message: '请输入路由路径' }]}>
+              <Form.Item
+                name="menuRoute"
+                label="路由路径"
+                hidden={createType === '3'}
+                rules={createType === '3' ? [] : [{ required: true, message: '请输入路由路径' }]}
+              >
                 <Input placeholder="如 /business/newpage" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={12}>
+            <Col span={12}>
+              <Form.Item
+                name="component"
+                label="前端组件"
+                hidden={createType !== '2'}
+                tooltip="菜单类型对应的页面组件路径"
+              >
+                <Input placeholder="如 pages/business/NewPage" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="permissionCode"
+                label="权限编码"
+                hidden={createType === '1'}
+                tooltip="接口权限标识；目录节点留空"
+                rules={createType === '3' ? [{ required: true, message: '按钮必须填写权限编码' }] : []}
+              >
+                <Input placeholder="如 biz:newpage:view" />
               </Form.Item>
             </Col>
           </Row>

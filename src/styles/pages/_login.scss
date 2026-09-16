@@ -1,0 +1,17 @@
+/* ==================== 登录页 ==================== */
+
+.login-page {
+  position: relative;
+  height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+}
+/* 主题色氛围光：换肤时登录页同步变化（深底 + 主色辉光，不破坏登录页质感） */
+.login-page::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(760px 460px at 16% 8%, var(--primary) 0%, transparent 62%);
+  opacity: .34;
+}
+.login-card { width: 400px; position: relative; z-index: 1; }
+.login-brand { text-align: center; margin-bottom: 16px; position: relative; z-index: 1; }
+.login-brand-title { font-size: 22px; font-weight: 700; }
+.login-tip { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 12px; }

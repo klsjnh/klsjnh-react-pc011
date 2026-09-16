@@ -1,5 +1,6 @@
-/* Klsjnh Markdown 011 - Editor Styles */
-
+/* Klsjnh Markdown 011 - Editor Styles
+   说明：中性色 / 主色统一走 src/styles/_tokens.scss 的主题变量（--primary / --text-muted / --border 等），
+   换肤时 Markdown 正文的链接、引用条、行内代码底色会同步变化。 */
 .klsjnh-markdown011-body h1,
 .klsjnh-markdown011-body h2,
 .klsjnh-markdown011-body h3,
@@ -14,20 +15,20 @@
 
 .klsjnh-markdown011-body h1 {
   font-size: 2em;
-  border-bottom: 1px solid #eaecef;
+  border-bottom: 1px solid var(--border);
   padding-bottom: 0.3em;
 }
 
 .klsjnh-markdown011-body h2 {
   font-size: 1.5em;
-  border-bottom: 1px solid #eaecef;
+  border-bottom: 1px solid var(--border);
   padding-bottom: 0.3em;
 }
 
 .klsjnh-markdown011-body h3 { font-size: 1.25em; }
 .klsjnh-markdown011-body h4 { font-size: 1em; }
 .klsjnh-markdown011-body h5 { font-size: 0.875em; }
-.klsjnh-markdown011-body h6 { font-size: 0.85em; color: #6a737d; }
+.klsjnh-markdown011-body h6 { font-size: 0.85em; color: var(--text-muted); }
 
 .klsjnh-markdown011-body p {
   margin-top: 0;
@@ -36,11 +37,12 @@
 }
 
 .klsjnh-markdown011-body a {
-  color: #aa3bff;
+  color: var(--primary);
   text-decoration: none;
 }
 
 .klsjnh-markdown011-body a:hover {
+  color: var(--primary-hover);
   text-decoration: underline;
 }
 
@@ -58,7 +60,7 @@
 .klsjnh-markdown011-body code {
   padding: 0.2em 0.4em;
   font-size: 85%;
-  background-color: rgba(170, 58, 255, 0.08);
+  background-color: var(--primary-bg);
   border-radius: 3px;
   font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
 }
@@ -68,7 +70,7 @@
   overflow: auto;
   font-size: 85%;
   line-height: 1.45;
-  background-color: #f6f8fa;
+  background-color: var(--border-light);
   border-radius: 6px;
   margin-bottom: 16px;
 }
@@ -80,8 +82,8 @@
 
 .klsjnh-markdown011-body blockquote {
   padding: 0 1em;
-  color: #6a737d;
-  border-left: 0.25em solid #aa3bff;
+  color: var(--text-muted);
+  border-left: 0.25em solid var(--primary);
   margin-bottom: 16px;
 }
 
@@ -93,12 +95,12 @@
 
 .klsjnh-markdown011-body th,
 .klsjnh-markdown011-body td {
-  border: 1px solid #dfe2e5;
+  border: 1px solid var(--border);
   padding: 8px 12px;
 }
 
 .klsjnh-markdown011-body th {
-  background-color: #f6f8fa;
+  background-color: var(--border-light);
   font-weight: 600;
 }
 

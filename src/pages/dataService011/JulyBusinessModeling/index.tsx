@@ -1,0 +1,102 @@
+/**
+ * 业务建模（低代码）管理页面（dataservice011 · julyBusinessModeling）- 对齐后端 JulyBusinessModelingController
+ * 字段：modelCode/modelName/objectName/dataSourceCode/status/remark + 字段子表 fieldData
+ * 行内「SQL 调试」可快速跳转；弹窗内含字段子表 + SQL 调试。表头居中、内容左对齐。
+ */
+import React, { useEffect, useState } from 'react';
+import { CodeOutlined } from '@ant-design/icons';
+import { Button, Card, Input, Popconfirm, Space, Table, Tag } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import { useBusinessModelingState } from '@/stores/dataservice011/julyBusinessModelingStore';
+import { fetchModelingPage, removeModeling } from '@/services/dataservice011';
+import { toast } from '@/utils/toast';
+import { ModelingFormModal } from '@/pages/dataService011/JulyBusinessModeling/ModelingFormModal';
+import type { JulyBusinessModelingItem } from '@/types/dataservice011/businessModeling';
+import { STATUS_LABEL } from '@/config/constants';
+
+const hdrCenter = (): React.HTMLAttributes<HTMLElement> => ({ style: { textAlign: 'center' } });
+const leftCell = { align: 'left' as const, onHeaderCell: hdrCenter };
+
+export const JulyBusinessModeling = () => {
+  const { list, total, loading, query } = useBusinessModelingState();
+  const [modal, setModal] = useState<{ open: boolean; node: JulyBusinessModelingItem | null }>({ open: false, node: null });
+
+  useEffect(() => { fetchModelingPage({ pageIndex: 1, pageSize: 10 }); }, []);
+
+  const handleRemove = async (id: string) => {
+    try { await removeModeling(id); toast.success(`delete ${id} success ...`); }
+    catch (e) { toast.error((e as Error)?.message || '删除失败，请重试'); }
+  };
+
+  const columns: ColumnsType<JulyBusinessModelingItem> = [
+    { ...leftCell, title: '模型编码', dataIndex: 'modelCode', width: 150, render: (v) => <code>{v}</code> },
+    { ...leftCell, title: '模型名称', dataIndex: 'modelName', width: 150 },
+    { ...leftCell, title: '对象名', dataIndex: 'objectName', width: 150, render: (v) => <code>{v}</code> },
+    { ...leftCell, title: '数据源', dataIndex: 'dataSourceCode', width: 130, render: (v) => v ? <Tag color="blue">{v}</Tag> : <span style={{ color: '#9ca3af' }}>—</span> },
+    { ...leftCell, title: '字段数', dataIndex: 'fieldData', width: 90, render: (v: JulyBusinessModelingItem['fieldData']) => <Tag color="geekblue">{v?.length || 0}</Tag> },
+    { ...leftCell, title: '状态', dataIndex: 'status', width: 90, render: (s) => <Tag color={s === '1' ? 'green' : 'red'}>{STATUS_LABEL[s] || s}</Tag> },
+    { ...leftCell, title: '备注', dataIndex: 'remark', width: 160, ellipsis: true },
+    {
+      title: '操作', key: 'action', width: 160, align: 'left',
+      render: (_, r) => (
+        <Space size="small" wrap>
+          <Button type="link" size="small" icon={<CodeOutlined />} onClick={() => setModal({ open: true, node: r })}>设计</Button>
+          <Popconfirm title="确定删除该业务模型吗？" okText="删除" cancelText="取消" okButtonProps={{ danger: true }} onConfirm={() => handleRemove(r.id)}>
+            <Button type="link" size="small" danger>删除</Button>
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
+
+  return (
+    <div>
+      <div className="page-header">
+        <h2>业务建模（低代码）</h2>
+        <p>共 {total} 个业务模型 · 接口 /julyBusinessModeling/v1/selectListByPage</p>
+      </div>
+
+      <div className="page-toolbar">
+        <div className="toolbar-left">
+          <Input.Search
+            allowClear
+            placeholder="搜索模型编码 / 名称 / 对象名"
+            className="search-input"
+            onSearch={(v) => fetchModelingPage({ pageIndex: 1, keyword: v || undefined })}
+          />
+        </div>
+        <div className="toolbar-right">
+          <Button type="primary" onClick={() => setModal({ open: true, node: null })}>+ 新建业务模型</Button>
+        </div>
+      </div>
+
+      <Card className="table-wrapper" styles={{ body: { padding: 0 } }}>
+        <Table<JulyBusinessModelingItem>
+          rowKey="id"
+          columns={columns}
+          dataSource={list}
+          loading={loading}
+          scroll={{ x: 1040 }}
+          pagination={{
+            current: query.pageIndex,
+            pageSize: query.pageSize,
+            total,
+            showSizeChanger: true,
+            pageSizeOptions: [10, 50, 100],
+            showTotal: (t) => `共 ${t} 条`,
+            onChange: (pageIndex, pageSize) => fetchModelingPage({ pageIndex, pageSize }),
+          }}
+        />
+      </Card>
+
+      <ModelingFormModal
+        open={modal.open}
+        node={modal.node}
+        onClose={() => setModal({ open: false, node: null })}
+        onSaved={() => {}}
+      />
+    </div>
+  );
+};
+
+export default JulyBusinessModeling;
