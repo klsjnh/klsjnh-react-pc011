@@ -286,14 +286,13 @@ export const JulyMenu = () => {
     <div>
       <div className="page-header">
         <h2>菜单管理</h2>
-        <p>左树右编辑 · 右键新建 · 拖拽调整层级</p>
       </div>
 
       <div className="menu-layout">
         <Card
           className="menu-sider"
           title="菜单"
-          styles={{ body: { padding: 8, maxHeight: 560, overflowY: 'auto' } }}
+          styles={{ body: { padding: 8, minHeight: 670, maxHeight: 670, overflowY: 'auto' } }}
         >
           {menus.length === 0
             ? <Empty description="暂无菜单" />
@@ -312,7 +311,7 @@ export const JulyMenu = () => {
             )}
         </Card>
 
-        <div className="menu-main">
+        <div className="menu-main" >
           {selectedNode ? (
             <Card
               title={<span><MenuIcon value={selectedNode.menuIcon} /> 编辑菜单 - {selectedNode.menuName}</span>}

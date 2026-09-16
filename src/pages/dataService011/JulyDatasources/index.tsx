@@ -4,7 +4,7 @@
  * Toast：insert {id} success ... / update {id} success ... / delete {id} success ...
  * 布局参照老前端：表格每行「测试」+ 弹窗底部「测试连接」，双列表单；表头居中、内容左对齐。
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ApiOutlined } from '@ant-design/icons';
 import { Button, Card, Input, Popconfirm, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -15,6 +15,8 @@ import { TestFeedbackAlert, type TestFeedback } from '@/components/system011/Tes
 import { DatasourceFormModal } from '@/pages/dataService011/JulyDatasources/DatasourceFormModal';
 import type { DataSourceItem, JulyDatasourceTestResultVo011 } from '@/types/dataservice011/datasource';
 import { STATUS_LABEL } from '@/config/constants';
+import { useTableFillHeight } from '@/hooks/useTableFillHeight';
+import { PAGE_SIZE_OPTIONS } from '@/utils/pageSizePref';
 
 /** 表头单元格水平居中 */
 const hdrCenter = (): React.HTMLAttributes<HTMLElement> => ({ style: { textAlign: 'center' } });
@@ -46,8 +48,11 @@ export const JulyDatasource = () => {
   const [modal, setModal] = useState<{ open: boolean; node: DataSourceItem | null }>({ open: false, node: null });
   const [rowTestingId, setRowTestingId] = useState<string | null>(null);
   const [pageTest, setPageTest] = useState<TestFeedback | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const tableBodyHeight = useTableFillHeight(cardRef, `${total}-${loading}`);
 
-  useEffect(() => { fetchDatasourcePage({ pageIndex: 1, pageSize: 10 }); }, []);
+  // 只重置 pageIndex：pageSize 是用户偏好（存在 store 里），传值会把它覆盖回默认值
+  useEffect(() => { fetchDatasourcePage({ pageIndex: 1 }); }, []);
 
   /** 表格行内测试（对已保存数据源重测），结果展示在页面顶部 Alert */
   const handleRowTest = async (row: DataSourceItem) => {
@@ -97,7 +102,7 @@ export const JulyDatasource = () => {
   ];
 
   return (
-    <div>
+    <div className="page-fill">
       <div className="page-header">
         <h2>数据源</h2>
         <p>共 {total} 个数据源 · 接口 /julyDatasource/v1/selectListByPage</p>
@@ -119,19 +124,19 @@ export const JulyDatasource = () => {
 
       {pageTest && <TestFeedbackAlert data={pageTest} />}
 
-      <Card className="table-wrapper" styles={{ body: { padding: 0 } }}>
+      <Card className="table-wrapper" ref={cardRef} styles={{ body: { padding: 0 } }}>
         <Table<DataSourceItem>
           rowKey="id"
           columns={columns}
           dataSource={list}
           loading={loading}
-          scroll={{ x: 1100 }}
+          scroll={{ x: 1100, y: tableBodyHeight }}
           pagination={{
             current: query.pageIndex,
             pageSize: query.pageSize,
             total,
             showSizeChanger: true,
-            pageSizeOptions: [10, 50, 100],
+            pageSizeOptions: PAGE_SIZE_OPTIONS,
             showTotal: (t) => `共 ${t} 条`,
             onChange: (pageIndex, pageSize) => fetchDatasourcePage({ pageIndex, pageSize }),
           }}

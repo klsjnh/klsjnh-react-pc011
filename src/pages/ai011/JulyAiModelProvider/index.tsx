@@ -4,7 +4,7 @@
  * 行内「测试」+ 弹窗底部「测试连接」双测试；表头居中、内容左对齐。
  * 子表（API 密钥）管理见 ProviderFormModal。
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ApiOutlined } from '@ant-design/icons';
 import { Button, Card, Input, Popconfirm, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -15,6 +15,8 @@ import { TestFeedbackAlert, type TestFeedback } from '@/components/system011/Tes
 import { ProviderFormModal } from '@/pages/ai011/JulyAiModelProvider/ProviderFormModal';
 import type { AiModelProviderItem, AiModelProviderTestResultVo011 } from '@/types/ai011/aiModelProvider/vo';
 import { STATUS_LABEL } from '@/config/constants';
+import { useTableFillHeight } from '@/hooks/useTableFillHeight';
+import { PAGE_SIZE_OPTIONS } from '@/utils/pageSizePref';
 
 const hdrCenter = (): React.HTMLAttributes<HTMLElement> => ({ style: { textAlign: 'center' } });
 const leftCell = { align: 'left' as const, onHeaderCell: hdrCenter };
@@ -33,8 +35,11 @@ export const JulyAiModelProvider = () => {
   const [modal, setModal] = useState<{ open: boolean; node: AiModelProviderItem | null }>({ open: false, node: null });
   const [rowTestingId, setRowTestingId] = useState<string | null>(null);
   const [pageTest, setPageTest] = useState<TestFeedback | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const tableBodyHeight = useTableFillHeight(cardRef, `${total}-${loading}`);
 
-  useEffect(() => { fetchProviderPage({ pageIndex: 1, pageSize: 10 }); }, []);
+  // 只重置 pageIndex：pageSize 是用户偏好（存在 store 里），传值会把它覆盖回默认值
+  useEffect(() => { fetchProviderPage({ pageIndex: 1 }); }, []);
 
   const handleRowTest = async (row: AiModelProviderItem) => {
     setRowTestingId(row.id);
@@ -74,7 +79,7 @@ export const JulyAiModelProvider = () => {
   ];
 
   return (
-    <div>
+    <div className="page-fill">
       <div className="page-header">
         <h2>AI 模型供应商</h2>
         <p>共 {total} 个供应商 · 接口 /julyAiModelProvider/v1/selectListByPage</p>
@@ -96,19 +101,19 @@ export const JulyAiModelProvider = () => {
 
       {pageTest && <TestFeedbackAlert data={pageTest} />}
 
-      <Card className="table-wrapper" styles={{ body: { padding: 0 } }}>
+      <Card className="table-wrapper" ref={cardRef} styles={{ body: { padding: 0 } }}>
         <Table<AiModelProviderItem>
           rowKey="id"
           columns={columns}
           dataSource={list}
           loading={loading}
-          scroll={{ x: 1080 }}
+          scroll={{ x: 1080, y: tableBodyHeight }}
           pagination={{
             current: query.pageIndex,
             pageSize: query.pageSize,
             total,
             showSizeChanger: true,
-            pageSizeOptions: [10, 50, 100],
+            pageSizeOptions: PAGE_SIZE_OPTIONS,
             showTotal: (t) => `共 ${t} 条`,
             onChange: (pageIndex, pageSize) => fetchProviderPage({ pageIndex, pageSize }),
           }}

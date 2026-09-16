@@ -3,7 +3,7 @@
  * 字段：modelCode/modelName/objectName/dataSourceCode/status/remark + 字段子表 fieldData
  * 行内「SQL 调试」可快速跳转；弹窗内含字段子表 + SQL 调试。表头居中、内容左对齐。
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { CodeOutlined } from '@ant-design/icons';
 import { Button, Card, Input, Popconfirm, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -13,6 +13,8 @@ import { toast } from '@/utils/toast';
 import { ModelingFormModal } from '@/pages/dataService011/JulyBusinessModeling/ModelingFormModal';
 import type { JulyBusinessModelingItem } from '@/types/dataservice011/businessModeling';
 import { STATUS_LABEL } from '@/config/constants';
+import { useTableFillHeight } from '@/hooks/useTableFillHeight';
+import { PAGE_SIZE_OPTIONS } from '@/utils/pageSizePref';
 
 const hdrCenter = (): React.HTMLAttributes<HTMLElement> => ({ style: { textAlign: 'center' } });
 const leftCell = { align: 'left' as const, onHeaderCell: hdrCenter };
@@ -20,8 +22,11 @@ const leftCell = { align: 'left' as const, onHeaderCell: hdrCenter };
 export const JulyBusinessModeling = () => {
   const { list, total, loading, query } = useBusinessModelingState();
   const [modal, setModal] = useState<{ open: boolean; node: JulyBusinessModelingItem | null }>({ open: false, node: null });
+  const cardRef = useRef<HTMLDivElement>(null);
+  const tableBodyHeight = useTableFillHeight(cardRef, `${total}-${loading}`);
 
-  useEffect(() => { fetchModelingPage({ pageIndex: 1, pageSize: 10 }); }, []);
+  // 只重置 pageIndex：pageSize 是用户偏好（存在 store 里），传值会把它覆盖回默认值
+  useEffect(() => { fetchModelingPage({ pageIndex: 1 }); }, []);
 
   const handleRemove = async (id: string) => {
     try { await removeModeling(id); toast.success(`delete ${id} success ...`); }
@@ -50,7 +55,7 @@ export const JulyBusinessModeling = () => {
   ];
 
   return (
-    <div>
+    <div className="page-fill">
       <div className="page-header">
         <h2>业务建模（低代码）</h2>
         <p>共 {total} 个业务模型 · 接口 /julyBusinessModeling/v1/selectListByPage</p>
@@ -70,19 +75,19 @@ export const JulyBusinessModeling = () => {
         </div>
       </div>
 
-      <Card className="table-wrapper" styles={{ body: { padding: 0 } }}>
+      <Card className="table-wrapper" ref={cardRef} styles={{ body: { padding: 0 } }}>
         <Table<JulyBusinessModelingItem>
           rowKey="id"
           columns={columns}
           dataSource={list}
           loading={loading}
-          scroll={{ x: 1040 }}
+          scroll={{ x: 1040, y: tableBodyHeight }}
           pagination={{
             current: query.pageIndex,
             pageSize: query.pageSize,
             total,
             showSizeChanger: true,
-            pageSizeOptions: [10, 50, 100],
+            pageSizeOptions: PAGE_SIZE_OPTIONS,
             showTotal: (t) => `共 ${t} 条`,
             onChange: (pageIndex, pageSize) => fetchModelingPage({ pageIndex, pageSize }),
           }}

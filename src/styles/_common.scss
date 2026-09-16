@@ -16,6 +16,31 @@
   box-shadow: var(--shadow); overflow: hidden;
 }
 
+/* 卡片 body 设了 padding:0（表体通版、横向滚动贴边）时，分页条会顶到卡片左右边缘。
+   只给分页补上左右内边距，对齐表格单元格的 16px（tablePaddingHorizontal），
+   表体与 fixed 列保持通版不动。 */
+.table-wrapper .ant-table-pagination.ant-pagination { padding-inline: 16px; }
+
+/* 主子表：主表选中行高亮（antd 无内置「行选中」态，需自绘）。
+   antd 的 CSS-in-JS 在运行时注入、与外链 CSS 同权重时按文档顺序后置生效，
+   故这里用 !important 压过 tbody 的 hover/斑马纹背景。 */
+.table-wrapper .ant-table-tbody > tr.master-row-selected > td { background: var(--primary-bg) !important; }
+/* 行编辑子表：脏行（改过但没点保存）浅底标记 —— 退出编辑态后改动仍留在草稿里，靠这层底色 + 顶部提示告知未保存 */
+.table-wrapper .ant-table-tbody > tr.draft-row-dirty > td { background: var(--primary-bg) !important; }
+/* 行编辑子表：待删除行（已标记删除、随「保存」一起提交）——置灰 + 删除线（操作列不划线，留住「撤销删除」） */
+.table-wrapper .ant-table-tbody > tr.draft-row-deleted > td { background: var(--bg-hover) !important; }
+.table-wrapper .ant-table-tbody > tr.draft-row-deleted > td:not(:last-child) {
+  color: var(--text-muted) !important; text-decoration: line-through;
+}
+
+/* ==================== 表格自适应填充（页面根加 .page-fill） ====================
+   .page-fill 把页面变成 flex 列：卡片 flex:1 吃满剩余高度、min-height:0 允许被压，
+   于是卡片高度只由容器决定（与数据量无关，无循环依赖）。
+   表格体的具体高度由 JS 实测后交给 antd 的 scroll.y（见 julyUser 的 useTableFillHeight），
+   卡片 overflow:hidden 兜底：测量误差只会被裁掉，不会外溢成外层滚动条。 */
+.page-fill { flex: 1 1 auto; min-height: 0; min-width: 0; display: flex; flex-direction: column; }
+.page-fill > .table-wrapper { flex: 1 1 0; min-height: 0; }
+
 .text-muted { color: var(--text-muted); }
 .text-secondary { color: var(--text-secondary); }
 .text-primary { color: var(--primary); }

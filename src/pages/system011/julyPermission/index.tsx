@@ -139,14 +139,15 @@ export const JulyPermission = () => {
 
   return (
     <div>
-      <div className="page-header"><h2>权限管理</h2><p>共 {roles.length} 个角色 · 左侧选择角色配置菜单权限</p></div>
+      <div className="page-header">
+        <h2>权限管理</h2>
+      </div>
 
       <div className="permission-layout">
         <Card
           className="permission-sider"
           title="角色"
-          styles={{ body: { padding: 0 } }}
-          // 操作按钮集中在卡片头：+ 新建（primary）/ 编辑（link，默认置灰，选中角色后可用）。
+          styles={{ body: { padding: 8, minHeight: 670, overflowY: 'auto' } }}
           extra={
             <Space size="small">
               <Button type="primary" onClick={() => setEditModal({ open: true, role: null })}>+ 新建</Button>
@@ -184,7 +185,9 @@ export const JulyPermission = () => {
           {!selectedRole ? (
             <Card className="permission-empty"><Empty description="请从左侧选择一个角色配置权限" /></Card>
           ) : (
-            <Card title={selectedRole.roleName}>
+            <Card
+              title={selectedRole.roleName}
+              styles={{ body: { padding: 8, minHeight: 670, maxHeight: 670, overflowY: 'auto' } }}>
               <Tabs
                 activeKey={activeTab}
                 onChange={(k) => setActiveTab(k as 'perms' | 'users')}

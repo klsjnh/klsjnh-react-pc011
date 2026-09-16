@@ -18,3 +18,18 @@ export interface DictionaryState {
   items: JulyDictionaryItemVo011[];
   itemsLoading: boolean;
 }
+
+/**
+ * 明细行草稿（子表行编辑模型，见 components/DictionaryItemTable）
+ *  - `_isNew`   未落库的新行（「取消」= 直接丢弃该行，已落库行「取消」= 还原服务端原值）
+ *  - `_editing` 该行处于编辑态（同一时刻全局只允许一行）
+ *  - `_dirty`   有未保存改动（行底色标记 + 顶部「有 N 处改动未保存」）
+ *  - `_deleted` 已标记删除，随「保存」一起提交（未提交前可「撤销删除」）
+ */
+export type DictionaryItemDraft = JulyDictionaryItemVo011 & {
+  _key: string;
+  _isNew?: boolean;
+  _editing?: boolean;
+  _dirty?: boolean;
+  _deleted?: boolean;
+};

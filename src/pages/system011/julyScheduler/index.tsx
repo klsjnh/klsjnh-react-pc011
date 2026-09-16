@@ -3,7 +3,7 @@
  * 列表读 julySchedulerStore；分页/保存/启停调 julySchedulerService。
  * 字段直接对齐后端：schedulerCode/schedulerName/schedulerHandler/schedulerCron/status。
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button, Card, Col, Form, Input, Modal, Popconfirm, Row, Select, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useSchedulerState } from '@/stores/system011/julySchedulerStore';
@@ -11,6 +11,8 @@ import {
   fetchSchedulerPage, saveScheduler, runSchedulerOnce, removeSchedulers,
 } from '@/services/system011';
 import { STATUS_OPTIONS } from '@/config/constants';
+import { useTableFillHeight } from '@/hooks/useTableFillHeight';
+import { PAGE_SIZE_OPTIONS } from '@/utils/pageSizePref';
 import { toast } from '@/utils/toast';
 import type { JulySchedulerVo011 } from '@/types/system011/julyScheduler';
 
@@ -18,8 +20,11 @@ export const JulyScheduler = () => {
   const { list, total, loading, query } = useSchedulerState();
   const [modal, setModal] = useState<{ open: boolean; node: JulySchedulerVo011 | null }>({ open: false, node: null });
   const [form] = Form.useForm();
+  const cardRef = useRef<HTMLDivElement>(null);
+  const tableBodyHeight = useTableFillHeight(cardRef, `${total}-${loading}`);
 
-  useEffect(() => { fetchSchedulerPage({ pageIndex: 1, pageSize: 10 }); }, []);
+  // 只重置 pageIndex：pageSize 是用户偏好（存在 store 里），传值会把它覆盖回默认值
+  useEffect(() => { fetchSchedulerPage({ pageIndex: 1 }); }, []);
 
   // 表单初始值：编辑回填无需 setFieldsValue 副作用（用 key 重挂载保证每次打开都是干净初始值）
   const formInitialValues = {
@@ -87,7 +92,7 @@ export const JulyScheduler = () => {
   ];
 
   return (
-    <div>
+    <div className="page-fill">
       <div className="page-header">
         <h2>定时任务</h2>
         <p>共 {total} 个任务 · 接口 /julyScheduler/v1/selectListByPage</p>
@@ -103,23 +108,23 @@ export const JulyScheduler = () => {
           />
         </div>
         <div className="toolbar-right">
-          <Button type="primary" onClick={() => { form.resetFields(); setModal({ open: true, node: null }); }}>+ 新建任务</Button>
+          <Button color="primary" variant="filled" onClick={() => { form.resetFields(); setModal({ open: true, node: null }); }}>+ 新建任务</Button>
         </div>
       </div>
 
-      <Card className="table-wrapper" styles={{ body: { padding: 0 } }}>
+      <Card className="table-wrapper" ref={cardRef} styles={{ body: { padding: 0 } }}>
         <Table<JulySchedulerVo011>
           rowKey="id"
           columns={columns}
           dataSource={list}
           loading={loading}
-          scroll={{ x: 1100 }}
+          scroll={{ x: 1100, y: tableBodyHeight }}
           pagination={{
             current: query.pageIndex,
             pageSize: query.pageSize,
             total,
             showSizeChanger: true,
-            pageSizeOptions: [10, 50, 100],
+            pageSizeOptions: PAGE_SIZE_OPTIONS,
             showTotal: (t) => `共 ${t} 条`,
             onChange: (pageIndex, pageSize) => fetchSchedulerPage({ pageIndex, pageSize }),
           }}

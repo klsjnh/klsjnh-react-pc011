@@ -184,6 +184,10 @@ export function buildTheme(key: ThemeKey): ThemeConfig {
     components: {
       Layout: { headerHeight: 56, headerBg: '#fff', siderBg: '#fff' },
 
+      // 卡头高度 46 = Tabs 导航条高度（padding 12×2 + 行高 22）。
+      // 主子表这类「一张卡用 title、另一张卡用 Tabs」的页面靠它对齐头部行高（原 antd 默认 56 → 差 10px）。
+      Card: { headerHeight: 46 },
+
       Menu: {
         itemHeight: 40,
         itemBorderRadius: 8,
