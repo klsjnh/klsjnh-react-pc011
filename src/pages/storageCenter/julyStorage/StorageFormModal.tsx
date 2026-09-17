@@ -105,22 +105,22 @@ export const StorageFormModal = ({ open, node, onClose, onSaved }: Props) => {
     >
       <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
         <Row gutter={16}>
-          <Col span={12}>
-            {!node && (
-              <Form.Item name="storageCode" label="编码" rules={[{ required: true, message: '请输入唯一编码' }]}>
-                <Input placeholder="唯一编码，如 st_minio" />
-              </Form.Item>
-            )}
+          <Col span={8}>
+            <Form.Item name="storageCode" label="编码" rules={[{ required: true, message: '请输入唯一编码' }]}>
+              <Input placeholder="唯一编码，如 st_minio" disabled={!!node} />
+            </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col span={8}>
             <Form.Item name="storageName" label="名称" rules={[{ required: true, message: '请输入名称' }]}>
               <Input placeholder="显示名称" />
             </Form.Item>
           </Col>
+          <Col span={8}>
+            <Form.Item name="provider" label="类型" rules={[{ required: true, message: '请选择类型' }]}>
+              <Select options={PROVIDER_OPTIONS} />
+            </Form.Item>
+          </Col>
         </Row>
-        <Form.Item name="provider" label="类型" rules={[{ required: true, message: '请选择类型' }]}>
-          <Select options={PROVIDER_OPTIONS} />
-        </Form.Item>
         {provider === 'local011' ? (
           <Form.Item name="basePath" label="本地根路径" rules={[{ required: true, message: '请输入本地根路径' }]}>
             <Input placeholder="D:/Klsjnh/upload" />
@@ -137,7 +137,7 @@ export const StorageFormModal = ({ open, node, onClose, onSaved }: Props) => {
                 </Form.Item>
               </Col>
               <Col span={8}>
-                <Form.Item name="secretKey" label="Secret Key" rules={[{ required: true, message: '请输入 Secret Key' }]}>
+                <Form.Item name="secretKey" label="Secret Key" rules={node ? [] : [{ required: true, message: '请输入 Secret Key' }]}>
                   <Input.Password placeholder={node ? '留空保持原值' : ''} />
                 </Form.Item>
               </Col>
