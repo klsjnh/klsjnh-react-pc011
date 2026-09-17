@@ -3,12 +3,12 @@
  * 路由：/storageCenter/bucketList
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, Card, Input, Popconfirm, Space, Table, Tag } from 'antd';
+import { Button, Card, Input, Popconfirm, Space, Table, Tag, Tabs } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { PlusOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTableFillHeight } from '@/hooks/useTableFillHeight';
 import { toast } from '@/utils/toast';
-import type { JulyStorage } from '@/types/storage011';
+import type { JulyStorage, JulyStorageConnect } from '@/types/storage011';
 import {
   fetchStoragePage, listStorages, removeStorage, removeStorages, testStorageConnection,
 } from '@/services/storage011/julyStorageService';
@@ -34,8 +34,6 @@ const PROVIDER_META: Record<string, { label: string; color: string }> = {
 export const BucketListPage = () => {
   const { list, total, loading, query } = useStorageState();
   const [modal, setModal] = useState<{ open: boolean; node: JulyStorage | null }>({ open: false, node: null });
-  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-  const [batchDeleting, setBatchDeleting] = useState(false);
   const [testingId, setTestingId] = useState<string | null>(null);
   const [keyword, setKeyword] = useState('');
   const [selectedCode, setSelectedCode] = useState<string | undefined>();
@@ -49,7 +47,10 @@ export const BucketListPage = () => {
   const handleTest = async (row: JulyStorage) => {
     setTestingId(row.id);
     try {
-      const res = await testStorageConnection({ ...row, secretKey: undefined });
+      // 后端 testConnection 入参是 JulyStorageConnectVo011（只接受 id 或连接字段）
+      // 已保存实例只传 id —— 让后端按库里的连接配置测；secretKey 列表页默认不回显，拼草稿字段也不可信
+      const payload: JulyStorageConnect = { id: row.id };
+      const res = await testStorageConnection(payload);
       if (res?.success) toast.success(`连接成功${res.message ? '：' + res.message : ''}`);
       else toast.error(`连接失败：${res?.message || '未知原因'}`);
     } catch (e) {
@@ -68,18 +69,9 @@ export const BucketListPage = () => {
     }
   };
 
-  const handleBatchRemove = async () => {
-    if (!selectedRowKeys.length) return;
-    setBatchDeleting(true);
-    try {
-      const res = await removeStorages(selectedRowKeys.map(String));
-      setSelectedRowKeys([]);
-      toast.success(`批量删除成功 ${res.success} 条，失败 ${res.failed} 条`);
-    } catch (e) {
-      toast.error((e as Error)?.message || '批量删除失败，请重试');
-    } finally {
-      setBatchDeleting(false);
-    }
+  /** 点击行切右侧桶子表 */
+  const handleRowClick = (row: JulyStorage) => {
+    setSelectedCode(row.storageCode);
   };
 
   const columns: ColumnsType<JulyStorage> = [
@@ -119,29 +111,19 @@ export const BucketListPage = () => {
   ];
 
   return (
-    <div className="page-fill">
+    <div>
       <div className="page-header">
         <h2>存储管理</h2>
       </div>
 
-      <div className="page-toolbar">
+      <div className="page-toolbar" style={{ flexWrap: 'wrap' }}>
         <div className="toolbar-left">
           <Input.Search allowClear placeholder="搜索编码 / 名称" style={{ width: 320 }} onSearch={search} />
         </div>
-        <div className="toolbar-right">
+        <div className="toolbar-right" style={{ marginTop: 8 }}>
           <Button color="primary" variant="filled" icon={<PlusOutlined />} onClick={() => setModal({ open: true, node: null })}>
             新建存储实例
           </Button>
-          <Popconfirm
-            title={`确定要删除选中的 ${selectedRowKeys.length} 条存储实例吗？`}
-            okText="删除" cancelText="取消" okButtonProps={{ danger: true }}
-            onConfirm={handleBatchRemove}
-            disabled={!selectedRowKeys.length}
-          >
-            <Button color="danger" variant="filled" icon={<DeleteOutlined />} disabled={!selectedRowKeys.length} loading={batchDeleting}>
-              批量删除
-            </Button>
-          </Popconfirm>
           <Button
             color="default" variant="filled" icon={<ReloadOutlined />}
             onClick={() => void fetchStoragePage({ pageIndex: 1, keyword: keyword || undefined })}
@@ -149,17 +131,11 @@ export const BucketListPage = () => {
         </div>
       </div>
 
-      <Card className="table-wrapper" ref={cardRef} styles={{ body: { padding: 0 } }}>
+      <Card className="table-wrapper" styles={{ body: { padding: 0 } }} title="存储实例">
         <Table<JulyStorage>
           rowKey="id"
           columns={columns}
-          rowSelection={{ selectedRowKeys, onChange: (keys) => {
-            setSelectedRowKeys(keys);
-            if (keys.length > 0) {
-              const row = list.find((item) => item.id === keys[0]);
-              if (row) setSelectedCode(row.storageCode);
-            }
-          }}}
+          onRow={(r) => ({ onClick: () => handleRowClick(r), style: { cursor: 'pointer' } })}
           dataSource={list}
           loading={loading}
           scroll={{ x: 1160, y: tableBodyHeight }}
@@ -175,18 +151,33 @@ export const BucketListPage = () => {
         />
       </Card>
 
+      <div style={{ marginTop: 16 }} className="bucket-detail">
+        <Card className="table-wrapper" styles={{ body: { padding: 0 } }}>
+          <Tabs
+            className="detail-tabs"
+            items={[
+              {
+                key: 'buckets',
+                label: selectedCode ? `存储桶（${selectedCode}）` : '存储桶',
+                children: selectedCode ? (
+                  <StorageBucketPane key={selectedCode} defaultStorageCode={selectedCode} />
+                ) : (
+                  <div style={{ padding: '40px 0', textAlign: 'center', color: '#999' }}>
+                    请在上方选中一个存储实例
+                  </div>
+                ),
+              },
+            ]}
+          />
+        </Card>
+      </div>
+
       <StorageFormModal
         open={modal.open}
         node={modal.node}
         onClose={() => setModal({ open: false, node: null })}
-        onSaved={() => setSelectedRowKeys([])}
+        onSaved={() => setSelectedCode(undefined)}
       />
-
-      {selectedCode && (
-        <div style={{ marginTop: 16 }}>
-          <StorageBucketPane defaultStorageCode={selectedCode} />
-        </div>
-      )}
     </div>
   );
 };

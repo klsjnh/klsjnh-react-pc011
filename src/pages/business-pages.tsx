@@ -266,6 +266,29 @@ export const MonitorPage = () => {
     { label: '网络使用率', value: metrics.network, color: '#13c2c2' },
   ];
 
+  const [users, setUsers] = useState<OnlineUser[]>([
+    { id: 1, username: 'admin', realName: '张三', ip: '192.168.1.100', location: '北京市', loginTime: '09:30', browser: 'Chrome' },
+    { id: 2, username: 'manager', realName: '李四', ip: '192.168.1.101', location: '上海市', loginTime: '09:15', browser: 'Safari' },
+    { id: 3, username: 'editor01', realName: '王五', ip: '172.16.0.10', location: '深圳市', loginTime: '08:50', browser: 'Edge' },
+  ]);
+
+  const columns: ColumnsType<OnlineUser> = [
+    { title: '用户名', dataIndex: 'username' },
+    { title: '姓名', dataIndex: 'realName' },
+    { title: 'IP', dataIndex: 'ip' },
+    { title: '位置', dataIndex: 'location' },
+    { title: '登录时间', dataIndex: 'loginTime' },
+    { title: '浏览器', dataIndex: 'browser' },
+    {
+      title: '操作', key: 'action', width: 100,
+      render: (_, u) => (
+        <Popconfirm title={`确定将「${u.realName}」强制下线吗？`} okText="确定" cancelText="取消" okButtonProps={{ danger: true }}
+          onConfirm={() => setUsers((prev) => prev.filter((x) => x.id !== u.id))}>
+          <Button type="link" size="small" danger>强制下线</Button>
+        </Popconfirm>
+      ),
+    },]
+
   return (
     <div>
       <div className="page-header"><h2>系统监控</h2><p>实时运行状态 · 每 2 秒自动刷新</p></div>
@@ -291,46 +314,15 @@ export const MonitorPage = () => {
           ))}
         </Row>
       </Card>
-    </div>
-  );
-};
-
-// ==================== 在线用户（演示） ====================
-
-export const OnlineUsersPage = () => {
-  const [users, setUsers] = useState<OnlineUser[]>([
-    { id: 1, username: 'admin', realName: '张三', ip: '192.168.1.100', location: '北京市', loginTime: '09:30', browser: 'Chrome' },
-    { id: 2, username: 'manager', realName: '李四', ip: '192.168.1.101', location: '上海市', loginTime: '09:15', browser: 'Safari' },
-    { id: 3, username: 'editor01', realName: '王五', ip: '172.16.0.10', location: '深圳市', loginTime: '08:50', browser: 'Edge' },
-  ]);
-
-  const columns: ColumnsType<OnlineUser> = [
-    { title: '用户名', dataIndex: 'username' },
-    { title: '姓名', dataIndex: 'realName' },
-    { title: 'IP', dataIndex: 'ip' },
-    { title: '位置', dataIndex: 'location' },
-    { title: '登录时间', dataIndex: 'loginTime' },
-    { title: '浏览器', dataIndex: 'browser' },
-    {
-      title: '操作', key: 'action', width: 100,
-      render: (_, u) => (
-        <Popconfirm title={`确定将「${u.realName}」强制下线吗？`} okText="确定" cancelText="取消" okButtonProps={{ danger: true }}
-          onConfirm={() => setUsers((prev) => prev.filter((x) => x.id !== u.id))}>
-          <Button type="link" size="small" danger>强制下线</Button>
-        </Popconfirm>
-      ),
-    },
-  ];
-
-  return (
-    <div>
-      <div className="page-header"><h2>在线用户</h2><p>{users.length} 人在线</p></div>
       <Card className="table-wrapper" styles={{ body: { padding: 0 } }}>
         <Table<OnlineUser> rowKey="id" columns={columns} dataSource={users} pagination={false} />
       </Card>
     </div>
   );
 };
+
+// ==================== 在线用户（演示） ====================
+
 
 // ==================== 缓存管理（演示） ====================
 

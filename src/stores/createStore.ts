@@ -18,8 +18,8 @@ export function createStore<T extends object>(initial: T): StoreController<T> {
     api,
     getSnapshot: api.getState,
     subscribe: (listener) => api.subscribe(listener),
-    setState: (patch) => api.setState(patch),
-    replace: (next) => api.setState(next, true),
+    setState: (patch) => api.setState(patch as object) as object,
+    replace: (next) => api.setState(next as T, true),
     emit: () => api.setState((s) => ({ ...s })),
   };
 }

@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { FileTextOutlined } from '@ant-design/icons';
-import { StorageObjectPane } from './index';
+import { StorageObjectPane } from '@/pages/storageCenter/julyStorage';
 
 export const FileListPage = () => {
   const Header = <div className="page-header"><h2><FileTextOutlined /> 文件列表</h2></div>;

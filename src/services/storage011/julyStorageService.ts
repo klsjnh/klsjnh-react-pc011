@@ -76,8 +76,8 @@ export async function removeStorages(ids: string[]): Promise<BatchDeleteResultVo
   return res;
 }
 
-/** 连接测试（恒 200，连通与否看 data.success；传 id 测已保存实例，或传 JulyStorageConnect 草稿字段） */
-export function testStorageConnection(data: Partial<JulyStorage> | JulyStorageConnect): Promise<StorageTestResult> {
+/** 连接测试（恒 200，连通与否看 data.success）；入参只接受 JulyStorageConnectVo011 的字段（id + 连接字段），多余字段会导致 400 */
+export function testStorageConnection(data: JulyStorageConnect): Promise<StorageTestResult> {
   return api.post<StorageTestResult>(STORAGE_ACTIONS.testConnection, data, STORAGECENTER_BASE);
 }
 

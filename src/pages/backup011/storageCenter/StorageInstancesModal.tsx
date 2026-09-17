@@ -57,7 +57,8 @@ export const StorageInstancesModal = ({ open, onClose, onChanged }: Props) => {
   const handleTest = async (row: JulyStorage) => {
     setTestingId(row.id);
     try {
-      const res = await testStorageConnection({ ...row, secretKey: undefined });
+      // 后端 testConnection 入参是 JulyStorageConnectVo011：已保存实例只 id，secretKey 默认不回显所以不能拿整行测
+      const res = await testStorageConnection({ id: row.id });
       if (res?.success) toast.success(`连接成功${res.message ? '：' + res.message : ''}`);
       else toast.error(`连接失败：${res?.message || '未知原因'}`);
     } catch (e) {

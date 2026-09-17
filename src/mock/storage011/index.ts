@@ -3,8 +3,8 @@
  * 严格对齐后端 24 动作的**真实返回形状**（核对于实时 OpenAPI 2026-09-17）：
  *   - julyStorage 无 selectList；分页查询字段是 keyword
  *   - bucket 的 selectBucketList|selectBucketListByPage 返回 **桶名字符串数组**
- *   - object 的 selectObjectList 返回 **对象键字符串数组**；
- *     selectObjectListByPage 返回 **MapStringObject 数组**（带 key/size/lastModified/contentType）
+ *   - object 的 selectObjectList|selectObjectListByPage 均返回 **对象键字符串数组**
+ *     （size/lastModified/contentType 靠 object/stat 补齐）
  *   - stat / readText / presignObjectUrl / downloadObject 都是 GET（本 mock 按 action 派发，不区分方法）
  * 经 src/mock/system011/index.ts 聚合注册（与其它模块共用同一信封解包逻辑）。
  */
@@ -43,6 +43,7 @@ export const mockObjects: {
 }[] = [
   { storageCode: 'st_local', bucketName: 'default', objectName: 'docs/存储中心说明.md', size: 96, contentType: 'text/markdown', content: '# 本地存储\nlocal011 适配器下的 mock 文本对象。', lastModified: '2026-09-16 10:05:00' },
   { storageCode: 'st_local', bucketName: 'default', objectName: 'sql/storage011_init.sql', size: 320, contentType: 'text/plain', content: '-- storage011 初始化\nCREATE TABLE july_storage (\n  id VARCHAR(64) PRIMARY KEY,\n  storage_code VARCHAR(64) NOT NULL\n);', lastModified: '2026-09-16 10:06:00' },
+  { storageCode: 'st_local', bucketName: 'default', objectName: 'sql/legacy/deprecated.sql', size: 88, contentType: 'text/plain', content: '-- deprecated', lastModified: '2026-09-16 10:06:30' },
   { storageCode: 'st_local', bucketName: 'default', objectName: 'export/2026091610.log', size: 512, contentType: 'text/plain', content: '[10:00:00] storage011 mock log', lastModified: '2026-09-16 10:07:00' },
   { storageCode: 'st_minio', bucketName: 'klsjnh', objectName: 'readme.md', size: 128, contentType: 'text/markdown', content: '# 存储中心\n这是一个 mock 文本对象。', lastModified: '2026-09-16 10:10:00' },
   { storageCode: 'st_minio', bucketName: 'klsjnh', objectName: 'init.sql', size: 256, contentType: 'text/plain', content: 'CREATE TABLE t_demo (id BIGINT PRIMARY KEY);', lastModified: '2026-09-16 10:11:00' },
@@ -70,22 +71,6 @@ function objectKeys(body?: Record<string, string>): string[] {
 function bucketNames(body?: Record<string, string>): string[] {
   const rows = mockBuckets.filter((r) => !body?.storageCode || r.storageCode === body.storageCode);
   return rows.map((r) => r.bucketName);
-}
-
-/** 对象 MapStringObject 列表（selectObjectListByPage 用） */
-function objectMapList(body?: Record<string, string>): Array<Record<string, unknown>> {
-  let rows = mockObjects.filter(
-    (r) => (!body?.storageCode || r.storageCode === body.storageCode) && (!body?.bucketName || r.bucketName === body.bucketName),
-  );
-  if (body?.prefix) rows = rows.filter((r) => r.objectName.startsWith(body.prefix));
-  return rows.map((r) => ({
-    key: r.objectName,
-    bucket: r.bucketName,
-    storageCode: r.storageCode,
-    size: r.size,
-    lastModified: toBackendTime(r.lastModified),
-    contentType: r.contentType,
-  }));
 }
 
 export const handlers: Record<string, Handler> = {
@@ -226,9 +211,10 @@ export const handlers: Record<string, Handler> = {
   },
 
   // ===================== 对象 julyObject =====================
+  // 新后端：selectObjectListByPage 与 selectObjectList 同形，都只回 List<String>
   '/julyObject/v1/selectObjectListByPage': async (body) => {
     await delay(250);
-    return ok(pageResult(objectMapList(body), body?.pageIndex || 1, body?.pageSize || 10));
+    return ok(pageResult(objectKeys(body), body?.pageIndex || 1, body?.pageSize || 10));
   },
   '/julyObject/v1/selectObjectList': async (body) => {
     await delay(150);

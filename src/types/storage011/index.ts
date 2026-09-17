@@ -5,10 +5,8 @@
  *   1) provider 取值是 local011/minio011/cos011/tos011/oss011/s3011，不是 S3/LOCAL
  *   2) secure 是 boolean（不是 '0'/'1' 字符串）
  *   3) 列表查询字段是 keyword（不是 storageCode/storageName）
- *   4) bucket 的 selectBucketList|selectBucketListByPage 返回 **桶名字符串数组**；
- *      object 的 selectObjectList 仍返回 **对象键字符串数组**，
- *      但 selectObjectListByPage 返回的是 **MapStringObject 数组**（带 key/size/lastModified/contentType 等）。
- *      size/lastModified/contentType 仍可另调 object/stat 补。
+ *   4) object 的 selectObjectList|selectObjectListByPage 均返回 **对象键字符串数组**
+ *      （size/lastModified/contentType 需另调 object/stat 补齐）。
  */
 import type { BaseVo011 } from '@/types/common';
 

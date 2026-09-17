@@ -3,7 +3,7 @@
  * 主表：modelCode/modelName/objectName/dataSourceCode/remark/status + 子表 fieldData
  * 子表字段（JulyBusinessModelingFieldVo011）：fieldCode/fieldName/columnName/dataType/length/主键/可空/必填/默认值/备注
  * SQL 探测 / 执行：probe / executeSql / executeSqlByPage / getModelData
- * 后端 response 在 Swagger 未建模（仅 */*），前端对执行结果做兼容解析。
+ * 后端 response 在 Swagger 未建模，前端对执行结果做兼容解析。
  */
 
 /** 状态：0 停用 / 1 启用 */

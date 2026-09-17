@@ -13,8 +13,8 @@ interface Props {
   open: boolean;
   /** 可选存储实例（来源于 storage/selectList） */
   storages: JulyStorage[];
-  /** 默认选中的存储实例（来自桶页当前筛选） */
-  defaultStorageCode?: string;
+  /** 当前选中的存储实例编码（来自主表选中行，不可更改） */
+  storageCode: string;
   onClose: () => void;
 }
 
@@ -27,16 +27,15 @@ const PROVIDER_META: Record<string, { label: string; color: string }> = {
   s3011: { label: '通用 S3', color: 'geekblue' },
 };
 
-export const BucketFormModal = ({ open, storages, defaultStorageCode, onClose }: Props) => {
+export const BucketFormModal = ({ open, storages, storageCode, onClose }: Props) => {
   const [form] = Form.useForm();
-  const storageCode = Form.useWatch('storageCode', form);
   const selected = useMemo(() => storages.find((s) => s.storageCode === storageCode), [storages, storageCode]);
 
   useEffect(() => {
     if (!open) return;
     form.resetFields();
-    form.setFieldsValue({ storageCode: defaultStorageCode, region: '' });
-  }, [open, defaultStorageCode, form]);
+    form.setFieldsValue({ storageCode, region: '' });
+  }, [open, storageCode, form]);
 
   const handleOk = async () => {
     const { storageCode, bucketName, region } = await form.validateFields();
@@ -55,6 +54,7 @@ export const BucketFormModal = ({ open, storages, defaultStorageCode, onClose }:
         <Form.Item name="storageCode" label="存储实例" rules={[{ required: true, message: '请选择存储实例' }]}>
           <Select
             placeholder="请选择"
+            disabled
             options={storages.map((s) => ({ value: s.storageCode, label: `${s.storageName} (${s.storageCode})` }))}
           />
         </Form.Item>
