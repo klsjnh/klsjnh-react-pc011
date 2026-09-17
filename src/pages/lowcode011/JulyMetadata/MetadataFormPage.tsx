@@ -2,15 +2,15 @@
  * 元数据（低代码）设计器页（lowcode011 · JulyMetadata/new 或 /JulyMetadata/:id）
  *
  * 结构对齐老项目 `MetadataDesigner`（6 Tab + 顶部动作条），按本项目约定重排：
- *   ① 字段定义 ② 显示列 ③ 服务        —— 走**真实接口**（一主三子整体提交）
- *   ④ 数据初始化 / 同步 ⑤ 开放 API ⑥ JSON  —— 依赖**后端尚未实现**的能力，见下
+ *   ① 字段定义 ② 显示列 ③ 服务        —— 真实接口（一主三子整体提交）
+ *   ④ 数据初始化 / 同步 ⑤ 开放 API ⑥ JSON
  *   顶部动作：保存 / 发布建表（DDL 预览）/ 发布菜单 / 运行时页
  *
  * ★ 分流口径（用户要求：接口有的对上，没有的说明是 mock）：
- *   - ③ 之前 + 保存：真实接口 `lowcode011/julyMetadata/v1/*`
- *   - 发布建表 / DDL / 数据同步 / 开放 API / 发布菜单：**PENDING-BACKEND**
- *     （后端 docs 038「本期只做 CRUD」、033「publish 定案不做」；
- *     占位实现见 `src/mock/lowcode011/pendingBackend.ts`，界面上以 🧪 角标提示）
+ *   - ①②③ + 保存：真实接口 `lowcode011/julyMetadata/v1/*`（038 CRUD）
+ *   - **DDL 预览**：真实接口 `v1/previewDdl`（039 一期，2026-09-17 后端上线）—— 已不再前端生成
+ *   - 发布建表（真正执行 DDL）/ 数据同步 / 开放 API / 发布菜单 / 运行时菜单：**PENDING-BACKEND**
+ *     （039 二期、三期未实装；占位实现见 `src/mock/lowcode011/pendingBackend.ts`，界面以 🧪 角标提示）
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -452,7 +452,7 @@ export const MetadataFormPage = ({ id, onNavigate }: Props) => {
                     message={importState?.dataInitialized
                       ? '已初始化：按主键比对字段变化并增量同步'
                       : '首次：按 SQL 分页(100)拉取并写入物理表'}
-                    description="后端尚未实现（docs 033 定为「后期功能」），当前为前端占位实现。"
+                    description="后端 039 二期未实装（数据初始化 / 同步），当前为前端占位实现；依赖「发布建表」先落物理表。"
                   />
                   <Space wrap style={{ marginBottom: 12 }}>
                     <Tag color={importState?.dataInitialized ? 'green' : 'blue'}>
@@ -464,7 +464,7 @@ export const MetadataFormPage = ({ id, onNavigate }: Props) => {
                   <div>
                     <Space wrap>
                       <Button
-                        type="primary" icon={<CloudUploadOutlined />} loading={importRunning} disabled={pendingDisabled}
+                        color="primary" variant="filled" icon={<CloudUploadOutlined />} loading={importRunning} disabled={pendingDisabled}
                         onClick={() => runImportBatch(false)}
                       >
                         {importState?.dataInitialized ? '增量同步' : '首次初始化'}
@@ -550,7 +550,7 @@ export const MetadataFormPage = ({ id, onNavigate }: Props) => {
                       </Text>
                     )}
                     <Space wrap>
-                      <Button type="primary" loading={openApiSaving} disabled={pendingDisabled || publishStatus !== 'published'} onClick={handleSaveOpenApi}>
+                      <Button color="primary" variant="filled" loading={openApiSaving} disabled={pendingDisabled || publishStatus !== 'published'} onClick={handleSaveOpenApi}>
                         保存开放 API
                       </Button>
                       <Button
@@ -591,15 +591,15 @@ export const MetadataFormPage = ({ id, onNavigate }: Props) => {
         width={720}
       >
         <Alert
-          type="warning" showIcon style={{ marginBottom: 12 }}
-          message="后端尚未实现建表能力（docs 038「本期只做 CRUD」、033「publish 不做」）"
-          description="下方 DDL 由前端按元数据占位生成，仅供预览；后端实现后以服务端生成为准。"
+          type="info" showIcon style={{ marginBottom: 12 }}
+          message="下方 DDL 由后端生成（与发布共用同一生成器），所见即发布将执行的语句"
+          description={`生成规则：表名统一 lc_ 前缀 + IF NOT EXISTS；首个 id 类型字段作主键，缺失时自动补 \`id VARCHAR(33)\`；非法标识符或无字段会报错。⚠️ 真正执行建表的 publish 属后端二期（未实装），当前仍是占位，不会真的建表。`}
         />
         <Checkbox checked={migrateData} onChange={(e) => setMigrateData(e.target.checked)}>
           迁移数据（旧表 rename 后按同名列 INSERT）
         </Checkbox>
         <Paragraph type="secondary" style={{ marginTop: 8 }}>
-          若物理表已存在，将重命名为 {objectName}_bak_* 后创建新表。
+          若物理表已存在，将重命名为 lc_{objectName}_bak_* 后创建新表。
         </Paragraph>
         <pre style={{ background: 'var(--bg-hover)', padding: 12, maxHeight: 320, overflow: 'auto' }}>{ddlPreview}</pre>
       </Modal>

@@ -10,8 +10,11 @@
  *
  * 数据 CRUD 为何是占位：老项目打 `/klsjnh/runtime/{objectName}/*`
  * （老 `services/july011/runtimeCrud.ts`），新后端**无此端点**；
- * docs 038「本期只做 CRUD（不生成物理表 / 代码 / 页面）」把 runtime 划在边界外。
+ * 后端 039 分三期（`docs/requirement011/039.topic-lowcode-designer-runtime.md`），
+ * 运行时动态 CRUD 属**三期**（⏳ 未实装，规划路径 `/runtime/<objectName>`）。
  * 占位实现见 `src/mock/lowcode011/pendingRuntime.ts`（内存态，刷新即重置）。
+ *
+ * 一期（✅ 2026-09-17 上线）已可直接用：`listModels` / `load` / `save` / `previewDdl`。
  *
  * 后端补齐后：把本文件 4 个 `pending*` 调用换成
  * `api.post('/runtime/{objectName}/selectListByPage', ...)`（base 另传 `/klsjnh`）即可，页面无需改动。

@@ -7,6 +7,7 @@ import { LOWCODE011_ACTIONS } from '@/services/lowcode011/actions';
 import { julyMetadataStore } from '@/stores/lowcode011/julyMetadataStore';
 import type {
   JulyMetadataVo011, JulyMetadataQueryVo011, JulyMetadataSaveVo011,
+  JulyMetadataMetaDto011, JulyMetadataModelRow011,
 } from '@/types/lowcode011';
 import type { PageResult011, IdVo011 } from '@/types/common';
 
@@ -69,4 +70,45 @@ export async function removeMetadata(id: string): Promise<void> {
 export async function removeMetadataBatch(ids: string[]): Promise<void> {
   await api.post<IdVo011>(LOWCODE011_ACTIONS.metadata.logicDeleteBatch, { ids }, BASE);
   await fetchMetadataPage(julyMetadataStore.getSnapshot().query);
+}
+
+/* ==================== 设计器（039 一期，2026-09-17 后端上线，MetaDTO 口径） ==================== */
+
+/**
+ * 模型列表（GET /listModels）—— 无入参，一次回全量（后端内部固定 pageSize=1000）。
+ * ⚠️ 返回的 publishStatus / version 由后端硬编码为 'draft' / ''，非真实发布态。
+ */
+export function listMetadataModels(): Promise<JulyMetadataModelRow011[]> {
+  return api.get<JulyMetadataModelRow011[]>(LOWCODE011_ACTIONS.metadata.listModels, undefined, BASE);
+}
+
+/**
+ * 载入模型为 MetaDTO（GET /load?objectName=）。
+ * ⚠️ 后端未做必填校验：缺 objectName 回 **500**（MissingServletRequestParameterException 未映射为 400），
+ * 调用方须自行保证传参。
+ */
+export function loadMetadataDto(objectName: string): Promise<JulyMetadataMetaDto011> {
+  return api.get<JulyMetadataMetaDto011>(LOWCODE011_ACTIONS.metadata.load, { objectName }, BASE);
+}
+
+/**
+ * 保存模型（POST /save，MetaDTO 口径）—— 后端按 objectName 判 insert / update，**前端不传 id**。
+ * 三子为整体替换语义，必须回传全部三子。
+ * @returns 对象主键 id
+ */
+export async function saveMetadataDto(body: JulyMetadataMetaDto011): Promise<string> {
+  const res = await api.post<{ id?: string }>(LOWCODE011_ACTIONS.metadata.designerSave, body, BASE);
+  await fetchMetadataPage(julyMetadataStore.getSnapshot().query);
+  return res?.id || '';
+}
+
+/**
+ * 预览建表 DDL（GET /previewDdl?objectName=）—— 后端返回 `{ ddl }`，此处解包为字符串。
+ * 与 publish 共用同一 DDL 生成器，故预览结果即发布将执行的语句。
+ * 后端规则：表名统一 `lc_` 前缀；首个 `id` 类型字段作主键，无则自动补 `id VARCHAR(33)`；
+ * 非法标识符 / 无字段 → 400。
+ */
+export async function previewMetadataDdl(objectName: string): Promise<string> {
+  const res = await api.get<{ ddl?: string }>(LOWCODE011_ACTIONS.metadata.previewDdl, { objectName }, BASE);
+  return res?.ddl || '';
 }

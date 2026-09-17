@@ -11,8 +11,9 @@
  *
  * ★ 分流口径（接口有的对上，没有的说明是 mock）：
  *   - 元数据（列 / 表单 / 查询区 / 服务开关）→ **真实接口** getByObjectName
+ *   - 缺 objectName 时的可选对象列表 → **真实接口** listModels（039 一期，2026-09-17 上线）
  *   - 数据 CRUD（分页 / 新增 / 修改 / 删除）→ **PENDING-BACKEND** 占位
- *     （老项目打 /klsjnh/runtime/{objectName}/*，新后端无此端点；docs 038 划在边界外）
+ *     （后端 039 三期规划为 /runtime/<objectName>，未实装）
  *     页面上以橙色 Alert 明示，占位实现见 src/mock/lowcode011/pendingRuntime.ts。
  *
  * ⚠️ 老项目的 displays 带 `scene: list|form|query` 三态，本项目后端 `JulyMetadataDisplayVo011`
@@ -32,11 +33,11 @@ import { LOWCODE011_ROUTES } from '@/config/routes';
 import { useTableFillHeight } from '@/hooks/useTableFillHeight';
 import { loadPageSize, PAGE_SIZE_OPTIONS } from '@/utils/pageSizePref';
 import {
-  deleteRuntime, getRuntimeMeta, insertRuntime, pageRuntime, updateRuntime,
+  deleteRuntime, getRuntimeMeta, insertRuntime, listMetadataModels, pageRuntime, updateRuntime,
   type RuntimeRow,
 } from '@/services/lowcode011';
 import { toast } from '@/utils/toast';
-import type { JulyMetadataVo011 } from '@/types/lowcode011';
+import type { JulyMetadataModelRow011, JulyMetadataVo011 } from '@/types/lowcode011';
 
 const { Text } = Typography;
 
@@ -176,8 +177,8 @@ function renderFormControl(fieldType: string): React.ReactNode {
 /** 每页条数偏好 scope（key 约定同 utils/pageSizePref：pc011-<scope>-pageSize） */
 const PAGE_SIZE_SCOPE = 'schemaRuntime';
 
-const PENDING_TEXT = '运行时数据接口 /klsjnh/runtime/{objectName}/* 新后端未实现'
-  + '（docs 038 划为边界外）；下方列表数据为内存占位，刷新即重置。元数据本身走真实接口。';
+const PENDING_TEXT = '运行时动态 CRUD 属后端 039 三期（未实装，后端规划为 /runtime/<objectName>）；'
+  + '下方列表数据为内存占位、刷新即重置。对象元数据与模型列表走真实接口（getByObjectName / listModels）。';
 
 export const SchemaRuntimePage = () => {
   const location = useLocation();
@@ -189,6 +190,10 @@ export const SchemaRuntimePage = () => {
 
   const [meta, setMeta] = useState<JulyMetadataVo011 | null>(null);
   const [metaLoading, setMetaLoading] = useState(!!objectName);
+
+  // 缺 objectName 时用它列出可选模型（真实接口 listModels）
+  const [models, setModels] = useState<JulyMetadataModelRow011[]>([]);
+  const [modelsLoading, setModelsLoading] = useState(!objectName);
 
   const [rows, setRows] = useState<RuntimeRow[]>([]);
   const [total, setTotal] = useState(0);
@@ -213,6 +218,16 @@ export const SchemaRuntimePage = () => {
       .then(setMeta)
       .catch((e) => toast.error((e as Error)?.message || '加载对象元数据失败'))
       .finally(() => setMetaLoading(false));
+  }, [objectName]);
+
+  /* ---------------- 模型列表（真实接口 listModels；仅缺 objectName 时取） ---------------- */
+  useEffect(() => {
+    if (objectName) return;
+    setModelsLoading(true);
+    listMetadataModels()
+      .then(setModels)
+      .catch((e) => toast.error((e as Error)?.message || '加载模型列表失败'))
+      .finally(() => setModelsLoading(false));
   }, [objectName]);
 
   /* ---------------- 查询条件 → filters ---------------- */
@@ -279,6 +294,11 @@ export const SchemaRuntimePage = () => {
       toast.error((e as Error)?.message || '删除失败');
     }
   }, [objectName, fetchPage, pageIndex, pageSize]);
+
+  /** 切对象走 query（保留在同一路由，避免页面重挂载丢偏好） */
+  const enterModel = useCallback((name: string) => {
+    navigate(`${LOWCODE011_ROUTES.schemaRuntime}?objectName=${encodeURIComponent(name)}`);
+  }, [navigate]);
 
   const openAdd = useCallback(() => { setEditing(null); setModalOpen(true); }, []);
   const openEdit = useCallback((record: RuntimeRow) => { setEditing(record); setModalOpen(true); }, []);
@@ -357,17 +377,67 @@ export const SchemaRuntimePage = () => {
     return cols;
   }, [columnDefs, actionWidth, canUpdate, canDelete, openEdit, handleDelete]);
 
-  /* ---------------- 缺参兜底 ---------------- */
+  /* ---------------- 缺参兜底：用真实接口 listModels 列出可选对象 ---------------- */
   if (!objectName) {
+    const modelColumns: ColumnsType<JulyMetadataModelRow011> = [
+      {
+        title: '对象名', dataIndex: 'objectName', key: 'objectName', width: 280,
+        render: (v: string) => <Button type="link" size="small" onClick={() => enterModel(v)}>{v}</Button>,
+      },
+      {
+        title: '描述', dataIndex: 'description', key: 'description',
+        render: (v: string | null) => v || <Text type="secondary">—</Text>,
+      },
+      {
+        title: '对象类型', dataIndex: 'objectType', key: 'objectType', width: 150,
+        render: (v: string | null) => v || <Text type="secondary">—</Text>,
+      },
+      {
+        title: '操作', key: 'action', width: 120, align: 'center', fixed: 'right',
+        render: (_: unknown, r: JulyMetadataModelRow011) => (
+          <Button type="link" size="small" onClick={() => enterModel(r.objectName)}>进入运行时</Button>
+        ),
+      },
+    ];
     return (
       <div className="page-fill">
-        <div className="page-header"><h2>运行时页</h2></div>
-        <Alert
-          type="warning" showIcon
-          message="缺少 objectName 参数"
-          description="本页需从「元数据管理 → 编辑 → 运行时页」进入，或手动访问 /lowcode011/schemaRuntime?objectName=sys_user。"
-          action={<Button size="small" onClick={() => navigate(LOWCODE011_ROUTES.julyMetadata)}>去元数据管理</Button>}
-        />
+        <div className="page-header">
+          <h2>运行时页</h2>
+          <p>未指定对象：从下方模型列表选一个进入（数据来自 /julyMetadata/v1/listModels）。</p>
+        </div>
+        <div className="page-toolbar">
+          <div className="toolbar-left">
+            <Text type="secondary">共 {models.length} 个模型</Text>
+          </div>
+          <div className="toolbar-right">
+            <Button
+              color="default" variant="filled" icon={<ReloadOutlined />}
+              onClick={() => {
+                setModelsLoading(true);
+                listMetadataModels()
+                  .then(setModels)
+                  .catch((e) => toast.error((e as Error)?.message || '加载模型列表失败'))
+                  .finally(() => setModelsLoading(false));
+              }}
+            >
+              刷新
+            </Button>
+            <Button color="primary" variant="filled" onClick={() => navigate(LOWCODE011_ROUTES.julyMetadata)}>
+              去元数据管理
+            </Button>
+          </div>
+        </div>
+        <Card className="table-wrapper" styles={{ body: { padding: 0 } }}>
+          <Table<JulyMetadataModelRow011>
+            rowKey="objectName"
+            columns={modelColumns}
+            dataSource={models}
+            loading={modelsLoading}
+            pagination={false}
+            locale={{ emptyText: '暂无模型，请先在「元数据管理」中新建' }}
+            onRow={(r) => ({ onClick: () => enterModel(r.objectName), style: { cursor: 'pointer' } })}
+          />
+        </Card>
       </div>
     );
   }
