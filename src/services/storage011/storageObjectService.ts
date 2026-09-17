@@ -38,10 +38,17 @@ export type ObjectEditorKind = 'sql' | 'markdown' | 'text';
 /** 读取结果：后端 StorageTextContent + 前端推断的编辑器类型 */
 export type ReadTextResult = StorageTextContent & { editorKind: ObjectEditorKind };
 
-function resolveEditorKind(objectName: string): ObjectEditorKind {
+/**
+ * 扩展名 → 在线编辑器类型。**唯一事实源**：页面 / 弹窗都必须调这里，不得各留一份规则
+ * （历史上页面另有一份 editorKindOf，改一处漏一处就会出现「标题标 Markdown、实际给纯文本域」）。
+ *   .sql                     → SQL 编辑器
+ *   .md / .markdown / .txt   → Markdown 编辑器（txt 也走 Markdown，用户约定）
+ *   其余文本类（json/csv/log…）→ 纯文本域
+ */
+export function resolveEditorKind(objectName: string): ObjectEditorKind {
   const lower = objectName.trim().toLowerCase();
   if (lower.endsWith('.sql')) return 'sql';
-  if (lower.endsWith('.md') || lower.endsWith('.markdown')) return 'markdown';
+  if (lower.endsWith('.md') || lower.endsWith('.markdown') || lower.endsWith('.txt')) return 'markdown';
   return 'text';
 }
 

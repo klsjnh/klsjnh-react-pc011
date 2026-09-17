@@ -22,7 +22,21 @@ export const SidebarLayout = ({ children, currentPath, onNavigate }: SidebarLayo
         }
       }
     });
-    return labels.length > 0 ? labels.join(' / ') : '仪表盘';
+    if (labels.length > 0) return labels.join(' / ');
+
+    // 前缀兜底：二级页自己派生的子页面（如 /storageCenter/fileList/edit）没有独立菜单项，
+    // 取「菜单路径是当前路径前缀」里最长的那个，归到它的菜单名下 —— 否则会回退成「仪表盘」。
+    const candidates: { parent: string; child: string; len: number }[] = [];
+    menus.forEach((m) => {
+      (m.children || []).forEach((c) => {
+        if (c.path && currentPath.startsWith(`${c.path}/`)) {
+          candidates.push({ parent: m.label, child: c.label, len: c.path.length });
+        }
+      });
+    });
+    candidates.sort((a, b) => b.len - a.len);
+    const hit = candidates[0];
+    return hit ? `${hit.parent} / ${hit.child}` : '仪表盘';
   })();
 
   return (

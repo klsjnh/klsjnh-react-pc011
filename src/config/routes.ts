@@ -51,6 +51,8 @@ export const LOWCODE011_ROUTES = {
 export const STORAGE011_ROUTES = {
   bucketList: '/storageCenter/bucketList',
   fileList: '/storageCenter/fileList',
+  /** 对象在线编辑（整页）：参数走 query（storageCode / bucketName / objectName / prefix） */
+  fileEdit: '/storageCenter/fileList/edit',
 } as const;
 
 /* ---------------- 通用业务 / 子模块 ---------------- */
@@ -169,6 +171,7 @@ const SettingsPage = lazy(() => import('@/pages/demo16/demo011').then((m) => ({ 
 // 存储中心独立路由页
 const BucketListPage = lazy(() => import('@/pages/storageCenter/julyStorage/BucketListPage').then((m) => ({ default: m.BucketListPage })));
 const FileListPage = lazy(() => import('@/pages/storageCenter/julyFileList/FileListPage').then((m) => ({ default: m.FileListPage })));
+const FileEditorPage = lazy(() => import('@/pages/storageCenter/julyFileList/FileEditorPage').then((m) => ({ default: m.FileEditorPage })));
 
 // 数据宝宝（暂用 BusinessPage 占位）
 const DataOverviewPage = lazy(() => import('@/pages/BusinessPage').then((m) => ({ default: m.BusinessPage })));
@@ -245,6 +248,7 @@ export const PAGE_MAP: Record<string, PageComponent> = {
 
   [STORAGE011_ROUTES.bucketList]: BucketListPage,
   [STORAGE011_ROUTES.fileList]: FileListPage,
+  [STORAGE011_ROUTES.fileEdit]: FileEditorPage,
 
   [COMMON_ROUTES.audit]: AuditPage,
   [COMMON_ROUTES.settings]: SettingsPage,
