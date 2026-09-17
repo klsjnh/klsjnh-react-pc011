@@ -5,11 +5,14 @@
  * 工具栏对齐 julyUser / julyConfig 标准：.page-toolbar > .toolbar-right（卡片之外、左对齐一行按钮）。
  * 卡头高度遵循 antd6 Card.headerHeight（项目统一 46）。
  * 注：元数据无「导出 / 备份」类操作（后端 julyMetadata 无对应接口），工具栏不放置。
+ *
+ * 支持 `?objectName=xxx` 预置搜索：业务建模页按对象名跳过来时直接定位（见 JulyBusinessModeling）。
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { App } from 'antd';
 import { Button, Card, Input, Popconfirm, Space, Table, Tag } from 'antd';
-import { DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditOutlined, PlayCircleOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useMetadataState, julyMetadataStore } from '@/stores/lowcode011/julyMetadataStore';
 import {
@@ -27,10 +30,20 @@ const leftCell = { align: 'left' as const, onHeaderCell: hdrCenter };
 
 export const JulyMetadata = ({ onNavigate }: PageNavProps) => {
   const { list, total, loading, query, selectedRowKeys } = useMetadataState();
-  const [keyword, setKeyword] = useState('');
+  const location = useLocation();
   const { modal } = App.useApp();
 
-  useEffect(() => { fetchMetadataPage({ pageIndex: 1 }); }, []);
+  /** 业务建模页跳转过来时带的定位参数 */
+  const presetObjectName = useMemo(
+    () => new URLSearchParams(location.search).get('objectName') || '',
+    [location.search],
+  );
+  const [keyword, setKeyword] = useState(presetObjectName);
+
+  useEffect(() => {
+    setKeyword(presetObjectName);
+    fetchMetadataPage({ pageIndex: 1, keyword: presetObjectName || undefined });
+  }, [presetObjectName]);
 
   const handleSearch = (kw?: string) => {
     setKeyword(kw || '');
@@ -75,10 +88,16 @@ export const JulyMetadata = ({ onNavigate }: PageNavProps) => {
     { title: '路由', dataIndex: 'routerPath', ...leftCell, render: (v) => v || '-' },
     { title: '状态', dataIndex: 'status', width: 90, align: 'center', onHeaderCell: hdrCenter, render: STATUS_TAG },
     {
-      title: '操作', key: 'action', width: 150, align: 'center', onHeaderCell: hdrCenter,
+      title: '操作', key: 'action', width: 220, align: 'center', fixed: 'right', onHeaderCell: hdrCenter,
       render: (_, r) => (
         <Space size="small">
           <Button type="link" size="small" icon={<EditOutlined />} onClick={() => onNavigate?.(`${LOWCODE011_ROUTES.julyMetadata}/${r.id}`)}>编辑</Button>
+          <Button
+            type="link" size="small" icon={<PlayCircleOutlined />}
+            onClick={() => onNavigate?.(`${LOWCODE011_ROUTES.schemaRuntime}?objectName=${encodeURIComponent(r.objectName)}`)}
+          >
+            运行
+          </Button>
           <Popconfirm title="删除该元数据会级联删除其全部字段/显示列/服务，确定吗？" okText="删除" cancelText="取消" okButtonProps={{ danger: true }} onConfirm={() => handleRemove(r.id)}>
             <Button type="link" size="small" danger icon={<DeleteOutlined />}>删除</Button>
           </Popconfirm>
@@ -116,7 +135,7 @@ export const JulyMetadata = ({ onNavigate }: PageNavProps) => {
           columns={columns}
           dataSource={list}
           loading={loading}
-          scroll={{ x: 1100 }}
+          scroll={{ x: 1180 }}
           rowSelection={{ selectedRowKeys, onChange: (keys) => julyMetadataStore.setState({ selectedRowKeys: keys as string[] }) }}
           pagination={{
             current: query.pageIndex,

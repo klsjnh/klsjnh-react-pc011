@@ -5,11 +5,11 @@
  */
 import { createStore, useStoreState } from '@/stores/createStore';
 import { loadPageSize, persistPageSize } from '@/utils/pageSizePref';
-import type { JulyBusinessModelingItem, JulyBusinessModelingQueryVo011 } from '@/types/dataservice011/businessModeling';
+import type { JulyBusinessModelingVo011, JulyBusinessModelingQueryVo011 } from '@/types/dataservice011/businessModeling';
 
 /** store 状态 */
 export interface BusinessModelingState {
-  list: JulyBusinessModelingItem[];
+  list: JulyBusinessModelingVo011[];
   total: number;
   totalPages: number;
   loading: boolean;

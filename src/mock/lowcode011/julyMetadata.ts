@@ -160,14 +160,14 @@ export const handlers: Record<string, Handler> = {
 };
 
 /** 清理前端草稿标记（_key/_isNew/_editing/_dirty/_deleted），新行剔除 id */
-function cleanSub<T extends { id?: string }>(rows?: any[]): T[] {
+function cleanSub<T extends { id?: string }>(rows?: Record<string, unknown>[]): T[] {
   if (!Array.isArray(rows)) return [];
   return rows
     .filter((r) => !r._deleted)
     .map((r) => {
       const { _key, _isNew, _editing, _dirty, _deleted, ...rest } = r;
-      const o: any = { ...rest };
+      const o: Record<string, unknown> = { ...rest };
       if (_isNew) delete o.id; // 新行不带主键
-      return o as T;
+      return o as unknown as T;
     });
 }
