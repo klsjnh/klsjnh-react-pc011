@@ -1,13 +1,16 @@
 /**
  * 低代码元数据「设计器」相关类型（发布建表 / 数据同步 / 开放 API / 运行时菜单 / 菜单挂载）
  *
- * ⚠️ **PENDING-BACKEND**：这些能力后端**尚未实现** ——
- *   - docs 038.topic-lowcode-core（2026-09-16 定案）：「本期**只做 CRUD**（不生成物理表 / 代码 / 页面）」
- *   - docs 033.topic-business-modeling（2026-09-15 定案）：「`publish` / 发布语义 —— 定案**不做**」
- *   - 实证：`previewDdl|publishMenu|openApiConfig|importDataFromSql|rotateApiKey|syncData` 在
- *     `D:\Source\java17\klsjnh-java17-framework011` 源码中**零命中**
+ * ⚠️ **PENDING-BACKEND**：本文件承载的能力按后端 039 分期分发（`java17/docs/requirement011/
+ * 039.topic-lowcode-designer-runtime.md`，2026-09-17 定案「全链路做，分三期」）：
+ *   - **一期（✅ 2026-09-17 上线）设计闭环、零改库**：`listModels` / `load` / `save` / `previewDdl`
+ *     —— 已于同期切到真实接口，**不再走本文件的占位**；
+ *   - **二期（⏳）发布闭环**：`publish` / `syncData` / `importDataFromSql` / `importStatus`
+ *     （`MetadataDdlExecutorPort` 未实装）；
+ *   - **三期（⏳）运行时 + 开放 API**：`publishMenu` / `listRuntimeMenus` / `initialize` + 动态 CRUD
+ *     + `openApiConfig` / `saveOpenApiConfig` / `rotateApiKey`。
  *
- * 因此前端先按老项目（`klsjnh-react-dev011_20260909_011/src/services/july011/metadata.ts`）
+ * 二 / 三期部分前端先按老项目（`klsjnh-react-dev011_20260909_011/src/services/july011/metadata.ts`）
  * 的契约定型做成**本地占位实现**（`src/mock/lowcode011/pendingBackend.ts`）。
  * 后端补齐后，只需把 `services/lowcode011/metadataDesignerService.ts` 的分流切到真实 action，类型无需改动。
  */

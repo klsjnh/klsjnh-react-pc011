@@ -133,3 +133,105 @@ export interface JulyMetadataSaveVo011 {
   /** 服务列表（整体替换） */
   services: JulyMetadataServiceVo011[];
 }
+
+/* ==================== 设计器 MetaDTO 契约（039 一期，2026-09-17 新增） ==================== */
+
+/**
+ * 设计器 MetaDTO —— 与上面「一主三子」是**两套口径**，勿混用：
+ *  - 一主三子（JulyMetadataVo011 / JulyMetadataSaveVo011）：038 的 CRUD 口径，子表键名是 `fieldCode/fieldName/...`
+ *  - MetaDTO（本组类型）：对齐老项目，**三子在顶层**（不嵌 metaData），键名是短名 `code/name/...`
+ *
+ * 来源：`JulyMetadataDesignerController`（listModels / load / save / previewDdl），
+ * 映射实现见后端 `JulyMetadataDesignerUseCase#toMetaDto`。
+ * 例：`GET /klsjnh/lowcode011/julyMetadata/v1/load?objectName=xxx`
+ *
+ * ⚠️ `metaData.publishStatus` / `metaData.version` 当前由后端**硬编码**为 `'draft'` / `''`
+ * （发布态列已建但 UseCase 未读取），**不可当作真实发布状态**。
+ */
+
+/** MetaDTO 字段行（fieldData[]） */
+export interface JulyMetadataMetaField011 {
+  /** 字段编码 */
+  code: string;
+  /** 字段名称 */
+  name: string;
+  /** 字段类型（FieldType011） */
+  fieldType: string;
+  /** 长度（后端落 0 表示未指定） */
+  length?: number;
+  /** 是否必填 */
+  notNull?: boolean;
+  /** 默认值 */
+  defaultValue?: string | null;
+  /** 排序 */
+  sort?: number;
+}
+
+/** MetaDTO 显示列行（displayData[]） */
+export interface JulyMetadataMetaDisplay011 {
+  code: string;
+  name: string;
+  /** left / center / right（后端为空时回落 left） */
+  align?: string;
+  width?: number | null;
+  /** 组件类型（后端为空时回落 input） */
+  componentType?: string;
+  /** 显示类型（DisplayType011，后端为空时回落 all） */
+  displayType?: string;
+  /** 扩展参数 */
+  param011?: string | null;
+  sort?: number;
+}
+
+/** MetaDTO 服务行（serviceData[]） */
+export interface JulyMetadataMetaService011 {
+  code: string;
+  name: string;
+  description?: string | null;
+  /** ServiceObjectType011 */
+  objectType?: string;
+  /** ServiceParamType011 */
+  paramType?: string;
+  /** SQL / 脚本内容 */
+  serviceContent?: string | null;
+  /** 是否启用 */
+  enabled?: boolean;
+  sort?: number;
+}
+
+/** MetaDTO 头（metaData） */
+export interface JulyMetadataMetaHeader011 {
+  /** 对象名（唯一且不可变；save 时必传） */
+  objectName: string;
+  objectType?: string;
+  description?: string | null;
+  /** 业务字段（MetaDTO 口径的 businessField） */
+  businessField?: string | null;
+  packageName?: string | null;
+  routerPath?: string | null;
+  remark?: string | null;
+  sortOrder?: number | null;
+  /** ⚠️ 后端硬编码 'draft'，非真实发布态 */
+  publishStatus?: string;
+  /** ⚠️ 后端硬编码 ''，非真实版本 */
+  version?: string;
+}
+
+/** 设计器 MetaDTO（load / save 的载体） */
+export interface JulyMetadataMetaDto011 {
+  metaData: JulyMetadataMetaHeader011;
+  fieldData: JulyMetadataMetaField011[];
+  displayData: JulyMetadataMetaDisplay011[];
+  serviceData: JulyMetadataMetaService011[];
+}
+
+/** 模型列表行（listModels） */
+export interface JulyMetadataModelRow011 {
+  objectName: string;
+  description?: string | null;
+  objectType?: string | null;
+  /** ⚠️ 后端硬编码 'draft' */
+  publishStatus?: string;
+  /** ⚠️ 后端硬编码 '' */
+  version?: string;
+}

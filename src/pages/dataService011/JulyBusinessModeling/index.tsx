@@ -40,7 +40,7 @@ export const JulyBusinessModeling = ({ onNavigate }: PageNavProps) => {
     { ...leftCell, title: '模型编码', dataIndex: 'modelCode', width: 150, render: (v) => <code>{v}</code> },
     { ...leftCell, title: '模型名称', dataIndex: 'modelName', width: 150 },
     { ...leftCell, title: '对象名', dataIndex: 'objectName', width: 150, render: (v) => <code>{v}</code> },
-    { ...leftCell, title: '数据源', dataIndex: 'dataSourceCode', width: 130, render: (v) => v ? <Tag color="blue">{v}</Tag> : <span style={{ color: '#9ca3af' }}>—</span> },
+    { ...leftCell, title: '数据源', dataIndex: 'dataSourceCode', width: 130, render: (v) => v ? <Tag color="blue">{v}</Tag> : <span style={{ color: 'var(--text-muted)' }}>—</span> },
     { ...leftCell, title: '字段数', key: 'fieldCount', width: 90, render: (_: unknown, r: JulyBusinessModelingVo011) => <Tag color="geekblue">{r.metaData?.fieldData?.length || 0}</Tag> },
     { ...leftCell, title: '状态', dataIndex: 'status', width: 90, render: (s) => <Tag color={s === '1' ? 'green' : 'red'}>{STATUS_LABEL[s] || s}</Tag> },
     { ...leftCell, title: '备注', dataIndex: 'remark', width: 160, ellipsis: true },
@@ -85,7 +85,7 @@ export const JulyBusinessModeling = ({ onNavigate }: PageNavProps) => {
           />
         </div>
         <div className="toolbar-right">
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => onNavigate?.(DATASERVICE011_ROUTES.julyBusinessModelingNew)}>新建业务模型</Button>
+          <Button color="primary" variant="filled" icon={<PlusOutlined />} onClick={() => onNavigate?.(DATASERVICE011_ROUTES.julyBusinessModelingNew)}>新建业务模型</Button>
         </div>
       </div>
 

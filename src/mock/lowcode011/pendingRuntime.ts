@@ -3,7 +3,7 @@
  *
  * 【为什么在这里】老项目运行时页打的是 `/klsjnh/runtime/{objectName}/*`
  * （见老项目 `services/july011/runtimeCrud.ts`），新后端**无此端点** ——
- * docs 038 的「边界外（本期不做）」明确包含「生成物理表 / 代码 / 页面」。
+ * 后端 039 分三期，运行时动态 CRUD 属**三期**（⏳ 未实装，规划路径 `/runtime/<objectName>`）。
  * 为让「元数据 → 运行时页」可被演示，前端先落到内存占位。
  *
  * 【状态是内存态】刷新即重置。
@@ -76,13 +76,15 @@ export async function pendingRuntimePage(
   }
 
   const rows = filtered.slice((pageIndex - 1) * pageSize, pageIndex * pageSize);
-  return {
+  // 显式标注返回类型，不靠 as 断言掩盖字段缺失（PageResult011 必填五项）
+  const result: PageResult011<Record<string, unknown>> = {
     rows,
     total: filtered.length,
     pageIndex,
     pageSize,
     totalPages: Math.max(1, Math.ceil(filtered.length / pageSize)),
-  } as PageResult011<Record<string, unknown>>;
+  };
+  return result;
 }
 
 /** 新增（占位） */
