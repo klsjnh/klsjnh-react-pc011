@@ -1,9 +1,11 @@
 /**
- * Mock：存储中心（storage011 全模块）
- * 严格对齐后端 24 动作的**真实返回形状**（核对于 java17-web011 controller + application UseCase）：
- *   - storage 无 selectList；分页查询字段是 keyword
- *   - bucket/object 的列表只返回「名字 / 键」字符串数组，元数据靠 object/stat
- *   - stat / readText / presignedUrl / download 都是 GET（本 mock 按 action 派发，不区分方法）
+ * Mock：存储中心（storagecenter 全模块）
+ * 严格对齐后端 24 动作的**真实返回形状**（核对于实时 OpenAPI 2026-09-17）：
+ *   - julyStorage 无 selectList；分页查询字段是 keyword
+ *   - bucket 的 selectBucketList|selectBucketListByPage 返回 **桶名字符串数组**
+ *   - object 的 selectObjectList 返回 **对象键字符串数组**；
+ *     selectObjectListByPage 返回 **MapStringObject 数组**（带 key/size/lastModified/contentType）
+ *   - stat / readText / presignObjectUrl / downloadObject 都是 GET（本 mock 按 action 派发，不区分方法）
  * 经 src/mock/system011/index.ts 聚合注册（与其它模块共用同一信封解包逻辑）。
  */
 import { ok, fail, delay, pageResult, type Handler } from '@/mock/system011/common';
@@ -47,6 +49,14 @@ export const mockObjects: {
   { storageCode: 'st_minio', bucketName: 'reports', objectName: 'report-202609.pdf', size: 2048, contentType: 'application/pdf', content: '', lastModified: '2026-09-16 10:12:00' },
 ];
 
+/**
+ * 后端 lastModified 由 LocalDateTime 序列化而来，形如 `2026-09-15T20:48:36.1933758`
+ * （带 T、带 7 位小数秒）。mock 按同样形状回，好让前端的时间归一化分支在 mock 模式下也被覆盖。
+ */
+function toBackendTime(v: string): string {
+  return `${v.replace(' ', 'T')}.1933758`;
+}
+
 /** 对象键（对外列表形态） */
 function objectKeys(body?: Record<string, string>): string[] {
   let rows = mockObjects.filter(
@@ -62,9 +72,25 @@ function bucketNames(body?: Record<string, string>): string[] {
   return rows.map((r) => r.bucketName);
 }
 
+/** 对象 MapStringObject 列表（selectObjectListByPage 用） */
+function objectMapList(body?: Record<string, string>): Array<Record<string, unknown>> {
+  let rows = mockObjects.filter(
+    (r) => (!body?.storageCode || r.storageCode === body.storageCode) && (!body?.bucketName || r.bucketName === body.bucketName),
+  );
+  if (body?.prefix) rows = rows.filter((r) => r.objectName.startsWith(body.prefix));
+  return rows.map((r) => ({
+    key: r.objectName,
+    bucket: r.bucketName,
+    storageCode: r.storageCode,
+    size: r.size,
+    lastModified: toBackendTime(r.lastModified),
+    contentType: r.contentType,
+  }));
+}
+
 export const handlers: Record<string, Handler> = {
-  // ===================== 存储实例 storage（8 动作，无 selectList） =====================
-  '/storage/selectListByPage': async (body) => {
+  // ===================== 存储实例 julyStorage（8 动作，无 selectList） =====================
+  '/julyStorage/v1/selectListByPage': async (body) => {
     await delay(300);
     const kw = (body?.keyword || '').trim().toLowerCase();
     let rows = [...mockStorages];
@@ -73,18 +99,18 @@ export const handlers: Record<string, Handler> = {
     if (body?.status) rows = rows.filter((r) => r.status === body.status);
     return ok(pageResult(rows, body?.pageIndex || 1, body?.pageSize || 10));
   },
-  '/storage/getById': async (body) => {
+  '/julyStorage/v1/getById': async (body) => {
     await delay(150);
     const item = mockStorages.find((s) => s.id === body?.id);
     return item ? ok(structuredClone(item)) : fail(`record not found, id=${body?.id}`, 404);
   },
   // 后端签名是 getByCode(@RequestParam("code"))，参数名就是 code
-  '/storage/getByCode': async (body) => {
+  '/julyStorage/v1/getByCode': async (body) => {
     await delay(150);
     const item = mockStorages.find((s) => s.storageCode === body?.code);
     return item ? ok(structuredClone(item)) : fail(`record not found, code=${body?.code}`, 404);
   },
-  '/storage/insert': async (body) => {
+  '/julyStorage/v1/insert': async (body) => {
     await delay(400);
     const storageCode = (body?.storageCode || '').trim();
     const storageName = (body?.storageName || '').trim();
@@ -104,7 +130,7 @@ export const handlers: Record<string, Handler> = {
     mockStorages.unshift(item);
     return ok({ id: item.id });
   },
-  '/storage/update': async (body) => {
+  '/julyStorage/v1/update': async (body) => {
     await delay(400);
     const item = mockStorages.find((s) => s.id === body?.id);
     if (!item) return fail(`record not found, id=${body?.id}`, 404);
@@ -124,14 +150,14 @@ export const handlers: Record<string, Handler> = {
     item.updateTime = '2026-09-16 10:00:00';
     return ok({ id: item.id });
   },
-  '/storage/logicDelete': async (body) => {
+  '/julyStorage/v1/logicDelete': async (body) => {
     await delay(300);
     const i = mockStorages.findIndex((s) => s.id === body?.id);
     if (i < 0) return fail(`record not found, id=${body?.id}`, 404);
     const [removed] = mockStorages.splice(i, 1);
     return ok({ id: removed.id });
   },
-  '/storage/logicDeleteBatch': async (body) => {
+  '/julyStorage/v1/logicDeleteBatch': async (body) => {
     await delay(500);
     const ids: string[] = body?.ids || [];
     let success = 0;
@@ -144,7 +170,7 @@ export const handlers: Record<string, Handler> = {
     }
     return ok({ total: ids.length, success, failed: errors.length, errors });
   },
-  '/storage/testConnection': async (body) => {
+  '/julyStorage/v1/testConnection': async (body) => {
     await delay(800);
     const item = body?.id ? mockStorages.find((s) => s.id === body.id) : undefined;
     const endpoint = item?.endpoint || body?.endpoint || '';
@@ -156,24 +182,24 @@ export const handlers: Record<string, Handler> = {
       : ok({ success: false, message: '无法连接到该存储' });
   },
 
-  // ===================== 存储桶 bucket（列表只回桶名） =====================
-  '/bucket/selectListByPage': async (body) => {
+  // ===================== 存储桶 julyStorage（列表只回桶名） =====================
+  '/julyStorage/v1/selectBucketListByPage': async (body) => {
     await delay(250);
     const kw = (body?.keyword || '').trim().toLowerCase();
     let names = bucketNames(body);
     if (kw) names = names.filter((n) => n.toLowerCase().includes(kw));
     return ok(pageResult(names, body?.pageIndex || 1, body?.pageSize || 10));
   },
-  '/bucket/selectList': async (body) => {
+  '/julyStorage/v1/selectBucketList': async (body) => {
     await delay(150);
     return ok(bucketNames(body));
   },
   // 后端返回 Response011<Boolean>
-  '/bucket/getByName': async (body) => {
+  '/julyStorage/v1/getBucket': async (body) => {
     await delay(150);
     return ok(mockBuckets.some((r) => r.storageCode === body?.storageCode && r.bucketName === body?.bucketName));
   },
-  '/bucket/insert': async (body) => {
+  '/julyStorage/v1/insertBucket': async (body) => {
     await delay(350);
     const storageCode = body?.storageCode;
     const bucketName = (body?.bucketName || '').trim();
@@ -184,14 +210,14 @@ export const handlers: Record<string, Handler> = {
     mockBuckets.push({ storageCode: storageCode || '', bucketName });
     return ok(bucketName);
   },
-  '/bucket/remove': async (body) => {
+  '/julyStorage/v1/removeBucket': async (body) => {
     await delay(300);
     const i = mockBuckets.findIndex((b) => b.storageCode === body?.storageCode && b.bucketName === body?.bucketName);
     if (i < 0) return fail('bucket not found', 404);
     mockBuckets.splice(i, 1);
     return ok(body?.bucketName);
   },
-  '/bucket/testConnection': async (body) => {
+  '/julyStorage/v1/testBucketConnection': async (body) => {
     await delay(600);
     const has = mockStorages.some((s) => s.storageCode === body?.storageCode && s.status === '1');
     return has
@@ -199,24 +225,24 @@ export const handlers: Record<string, Handler> = {
       : ok({ success: false, message: '所属存储实例不可用' });
   },
 
-  // ===================== 对象 object（列表只回对象键） =====================
-  '/object/selectListByPage': async (body) => {
+  // ===================== 对象 julyObject =====================
+  '/julyObject/v1/selectObjectListByPage': async (body) => {
     await delay(250);
-    return ok(pageResult(objectKeys(body), body?.pageIndex || 1, body?.pageSize || 10));
+    return ok(pageResult(objectMapList(body), body?.pageIndex || 1, body?.pageSize || 10));
   },
-  '/object/selectList': async (body) => {
+  '/julyObject/v1/selectObjectList': async (body) => {
     await delay(150);
     return ok(objectKeys(body));
   },
-  '/object/stat': async (body) => {
+  '/julyObject/v1/statObject': async (body) => {
     await delay(200);
     const item = mockObjects.find((o) => o.storageCode === body?.storageCode && o.bucketName === body?.bucketName && o.objectName === body?.objectName);
     // ObjectStat: { bucket, key, size, lastModified, contentType }
     return item
-      ? ok({ bucket: item.bucketName, key: item.objectName, size: item.size, lastModified: item.lastModified, contentType: item.contentType })
+      ? ok({ bucket: item.bucketName, key: item.objectName, size: item.size, lastModified: toBackendTime(item.lastModified), contentType: item.contentType })
       : fail(`record not found, ${body?.objectName}`, 404);
   },
-  '/object/upload': async (body) => {
+  '/julyObject/v1/uploadObject': async (body) => {
     await delay(400);
     const storageCode = body?.storageCode;
     const bucketName = (body?.bucketName || '').trim();
@@ -236,12 +262,12 @@ export const handlers: Record<string, Handler> = {
     // 后端回的是落库后的对象键
     return ok(objectName);
   },
-  '/object/download': async (body) => {
+  '/julyObject/v1/downloadObject': async (body) => {
     await delay(200);
     const item = mockObjects.find((o) => o.storageCode === body?.storageCode && o.bucketName === body?.bucketName && o.objectName === body?.objectName);
     return item ? ok({ objectName: item.objectName, size: item.size }) : fail('object not found', 404);
   },
-  '/object/readText': async (body) => {
+  '/julyObject/v1/readObjectText': async (body) => {
     await delay(300);
     const item = mockObjects.find((o) => o.storageCode === body?.storageCode && o.bucketName === body?.bucketName && o.objectName === body?.objectName);
     if (!item) return fail('object not found', 404);
@@ -252,7 +278,7 @@ export const handlers: Record<string, Handler> = {
     };
     return ok(payload);
   },
-  '/object/saveText': async (body) => {
+  '/julyObject/v1/saveObjectText': async (body) => {
     await delay(300);
     const item = mockObjects.find((o) => o.storageCode === body?.storageCode && o.bucketName === body?.bucketName && o.objectName === body?.objectName);
     if (!item) return fail('object not found', 404);
@@ -260,7 +286,7 @@ export const handlers: Record<string, Handler> = {
     item.size = item.content.length;
     return ok(item.objectName);
   },
-  '/object/remove': async (body) => {
+  '/julyObject/v1/removeObject': async (body) => {
     await delay(250);
     const i = mockObjects.findIndex((o) => o.storageCode === body?.storageCode && o.bucketName === body?.bucketName && o.objectName === body?.objectName);
     if (i < 0) return fail('object not found', 404);
@@ -268,7 +294,7 @@ export const handlers: Record<string, Handler> = {
     return ok(body?.objectName);
   },
   // body: { storageCode, bucketName, objectNames[] }
-  '/object/batchRemove': async (body) => {
+  '/julyObject/v1/batchRemoveObject': async (body) => {
     await delay(400);
     const names: string[] = body?.objectNames || [];
     let success = 0;
@@ -279,7 +305,7 @@ export const handlers: Record<string, Handler> = {
     return ok('batch remove success');
   },
   // 后端回的是 URL 字符串本身
-  '/object/presignedUrl': async (body) => {
+  '/julyObject/v1/presignObjectUrl': async (body) => {
     await delay(200);
     return ok(`https://mock.storage/${body?.storageCode || ''}/${body?.bucketName || ''}/${body?.objectName || ''}?sig=mock`);
   },

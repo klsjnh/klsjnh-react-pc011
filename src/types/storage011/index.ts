@@ -1,13 +1,14 @@
 /**
- * 存储中心类型契约（storage011 模块）
- * 字段以后端 VO / Java 源码为准：
- *   java17-web011 的 vo/*.java + java17-application011 的 *UseCase.java（2026-09-17 核对）
+ * 存储中心类型契约（storagecenter 模块）
+ * 字段以后端 VO / Java 源码 + 实时 OpenAPI 为准（2026-09-17 核对）。
  * 关键差异（易错点）：
  *   1) provider 取值是 local011/minio011/cos011/tos011/oss011/s3011，不是 S3/LOCAL
  *   2) secure 是 boolean（不是 '0'/'1' 字符串）
  *   3) 列表查询字段是 keyword（不是 storageCode/storageName）
- *   4) bucket/object 的 selectList|selectListByPage 返回的是 **名称/键字符串数组**，
- *      size/lastModified/contentType 必须另调 object/stat 才有
+ *   4) bucket 的 selectBucketList|selectBucketListByPage 返回 **桶名字符串数组**；
+ *      object 的 selectObjectList 仍返回 **对象键字符串数组**，
+ *      但 selectObjectListByPage 返回的是 **MapStringObject 数组**（带 key/size/lastModified/contentType 等）。
+ *      size/lastModified/contentType 仍可另调 object/stat 补。
  */
 import type { BaseVo011 } from '@/types/common';
 
