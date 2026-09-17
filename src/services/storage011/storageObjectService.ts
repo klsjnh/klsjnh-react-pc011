@@ -1,12 +1,12 @@
 /**
  * 对象（文件）服务（storagecenter · julyObject/v1/*）
  * 后端契约（核对 Java 源码 + 实时 OpenAPI 2026-09-17）：
- *   POST /julyObject/v1/selectObjectList|selectObjectListByPage  → List<String> / PageResult011MapStringObject
+ *   POST /julyObject/v1/selectObjectList           → List<String>
+ *   POST /julyObject/v1/selectObjectListByPage     → PageResult011<String>（与 selectList 同形，仅多了分页）
  *   GET  /julyObject/v1/statObject|readObjectText|presignObjectUrl|downloadObject （query 传参）
  *   POST /julyObject/v1/uploadObject（multipart：query 带 storageCode/bucketName/objectName，part 名 file）
  *   POST /julyObject/v1/saveObjectText|removeObject|batchRemoveObject（JSON body）
- * ⚠️ 分页接口 selectObjectListByPage 返回的是 MapStringObject 数组（带对象键/元数据），不是纯字符串；
- *      selectObjectList 仍返回 List<String>。
+ * ⚠️ 列表与分页接口都只回对象键字符串数组；size/lastModified/contentType 必须靠 statObject 补齐。
  * 上传/下载绕过 api.post 信封（multipart / blob），需拼完整基址 + 手动带鉴权头。
  */
 import { api, ApiError } from '@/api/request';
@@ -44,19 +44,17 @@ function resolveEditorKind(objectName: string): ObjectEditorKind {
   return 'text';
 }
 
-/** 对象条目 → 行（分页接口返回 MapStringObject，这里抽成统一行） */
-function toObjectRows(items: Array<Record<string, unknown>> | null | undefined, storageCode?: string, bucketName?: string): StorageObject[] {
-  return (items || []).map((it) => {
-    const key = String(it.key ?? it.objectName ?? '');
-    return {
-      objectName: key,
-      bucketName: bucketName || String(it.bucketName ?? ''),
-      storageCode: storageCode || String(it.storageCode ?? ''),
-      size: typeof it.size === 'number' ? it.size : undefined,
-      lastModified: typeof it.lastModified === 'string' ? it.lastModified : undefined,
-      contentType: typeof it.contentType === 'string' ? it.contentType : undefined,
-    };
-  });
+/**
+ * 对象键字符串 → 统一行。
+ * 后端 selectList / selectListByPage 都只回 List<String>；storageCode / bucketName 由入参回填，
+ * size/lastModified/contentType 由调用方按需靠 statObject 补齐（详见 StorageObjectPane statMap）。
+ */
+function toObjectRows(keys: string[] | null | undefined, storageCode?: string, bucketName?: string): StorageObject[] {
+  return (keys || []).map((key) => ({
+    objectName: String(key),
+    bucketName: bucketName || '',
+    storageCode: storageCode || '',
+  }));
 }
 
 /** 触发浏览器下载（blob → a[download]） */
@@ -69,9 +67,9 @@ function triggerDownload(blob: Blob, fileName: string): void {
   URL.revokeObjectURL(url);
 }
 
-/** 分页查询：后端回 MapStringObject 数组，这里映射为行 */
+/** 分页查询：后端回 PageResult011<String>，抽成统一行 */
 export async function selectObjectListByPage(query: StorageObjectQuery = {}): Promise<PageResult011<StorageObject>> {
-  const res = await api.post<PageResult011<Array<Record<string, unknown>>>>(OBJECT_ACTIONS.selectListByPage, query, STORAGECENTER_BASE);
+  const res = await api.post<PageResult011<string[]>>(OBJECT_ACTIONS.selectListByPage, query, STORAGECENTER_BASE);
   return { ...res, rows: toObjectRows(res.rows, query.storageCode, query.bucketName) };
 }
 
@@ -90,7 +88,7 @@ export async function fetchObjectPage(patch: Partial<StorageObjectQuery> = {}): 
 /** 某桶下的对象键列表（树/前缀浏览用）：后端返回 List<String> */
 export async function listObjects(query: StorageObjectQuery): Promise<StorageObject[]> {
   const keys = await api.post<string[]>(OBJECT_ACTIONS.selectList, query, STORAGECENTER_BASE);
-  return toObjectRows(keys.map((k) => ({ key: k })), query.storageCode, query.bucketName);
+  return toObjectRows(keys, query.storageCode, query.bucketName);
 }
 
 /**

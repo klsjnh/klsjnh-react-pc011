@@ -14,8 +14,6 @@ export interface StorageBucketState {
   query: StorageBucketQuery;
 }
 
-export type { StorageBucketState };
-
 const SCOPE = 'storageBucket';
 
 const DEFAULT_QUERY: StorageBucketQuery = { pageIndex: 1, pageSize: loadPageSize(SCOPE) };

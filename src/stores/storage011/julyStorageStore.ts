@@ -14,8 +14,6 @@ export interface StorageState {
   query: JulyStorageQuery;
 }
 
-export type { StorageState };
-
 const SCOPE = 'julyStorage';
 
 const DEFAULT_QUERY: JulyStorageQuery = { pageIndex: 1, pageSize: loadPageSize(SCOPE) };

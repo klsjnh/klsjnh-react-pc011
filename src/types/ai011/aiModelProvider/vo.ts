@@ -3,7 +3,7 @@
  * 字段严格对齐后端 AiModelProviderController：
  *   主表 provider：providerCode/providerName/baseUrl/models/sortOrder/status/remark
  *   子表 api：providerCode/apiCode/apiName/apiKey/sortOrder/status/remark
- * 后端 response 在 Swagger 未建模（仅 */*），前端对测试连接 / 列表做兼容解析。
+ * 后端 response 在 Swagger 未建模，前端对测试连接 / 列表做兼容解析。
  */
 
 /** 状态：0 停用 / 1 启用 */
@@ -135,7 +135,7 @@ export interface AiModelProviderApiQueryVo011 {
   status?: string;
 }
 
-/** 测试连接出参（兼容：后端仅 */*，前端取 success/message） */
+/** 测试连接出参：后端仅回 success/message */
 export interface AiModelProviderTestResultVo011 {
   success?: boolean;
   message?: string;

@@ -14,10 +14,10 @@
  *    与随后的收窄请求并发，谁后返回谁写 store —— 实测出现过「桶列表混入其它实例的桶」。
  *    派生值 + ready 标记可保证落定后**只发一次**带完整条件的请求。
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  DatabaseOutlined, DeleteOutlined, FileTextOutlined, HddOutlined,
-  PlusOutlined, ReloadOutlined, UploadOutlined,
+  DatabaseOutlined, DeleteOutlined, FileOutlined, FileTextOutlined, FolderOutlined,
+  HddOutlined, HomeOutlined, PlusOutlined, ReloadOutlined, UploadOutlined,
 } from '@ant-design/icons';
 import { Button, Card, Input, Popconfirm, Segmented, Select, Space, Table, Tag, Upload } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -35,7 +35,7 @@ import {
 } from '@/services/storage011/storageObjectService';
 import { useStorageState } from '@/stores/storage011/julyStorageStore';
 import { useStorageBucketState } from '@/stores/storage011/storageBucketStore';
-import { useStorageObjectState } from '@/stores/storage011/storageObjectStore';
+import { useStorageObjectState, storageObjectStore } from '@/stores/storage011/storageObjectStore';
 import { StorageFormModal } from './StorageFormModal';
 import { BucketFormModal } from './BucketFormModal';
 import { TextEditorModal } from '../julyFileList/TextEditorModal';
@@ -147,7 +147,8 @@ export const StorageInstancePane = ({ onSelectInstance }: { onSelectInstance?: (
   const handleTest = async (row: JulyStorage) => {
     setTestingId(row.id);
     try {
-      const res = await testStorageConnection({ ...row, secretKey: undefined });
+      // 后端 testConnection 入参是 JulyStorageConnectVo011：已保存实例只 id，secretKey 默认不回显所以不能拿整行测
+      const res = await testStorageConnection({ id: row.id });
       if (res?.success) toast.success(`连接成功${res.message ? '：' + res.message : ''}`);
       else toast.error(`连接失败：${res?.message || '未知原因'}`);
     } catch (e) {
@@ -287,18 +288,12 @@ export const StorageInstancePane = ({ onSelectInstance }: { onSelectInstance?: (
 export const StorageBucketPane = ({ defaultStorageCode }: { defaultStorageCode?: string } = {}) => {
   const { list, total, loading, query } = useStorageBucketState();
   const { storages, ready } = useStorageOptions();
-  /** 用户显式选择；未选时派生为首个实例（不写回 state，避免多打一次全量请求） */
-  const [pickedCode, setPickedCode] = useState<string | undefined>(defaultStorageCode);
-
-  // useEffect(() => {
-  //   if (defaultStorageCode) setPickedCode(defaultStorageCode);
-  // }, [defaultStorageCode]);
   const [keyword, setKeyword] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const tableBodyHeight = useTableFillHeight(cardRef, `${total}-${loading}`);
 
-  const storageCode = pickedCode ?? storages[0]?.storageCode;
+  const storageCode = defaultStorageCode;
 
   // 实例列表就绪后才发首个查询：条件一次带全，不会出现「先全量、后被收窄覆盖」的竞态
   useEffect(() => {
@@ -363,14 +358,6 @@ export const StorageBucketPane = ({ defaultStorageCode }: { defaultStorageCode?:
   return (
     <>
       <div className="page-toolbar">
-        <div className="toolbar-left">
-          <Select
-            allowClear placeholder="全部存储实例" style={{ width: 260 }}
-            value={storageCode} onChange={(v) => setPickedCode(v)}
-            options={storages.map((s) => ({ value: s.storageCode, label: `${s.storageName} (${s.storageCode})` }))}
-          />
-          <Input.Search allowClear placeholder="搜索桶名" style={{ width: 240 }} onSearch={search} />
-        </div>
         <div className="toolbar-right">
           <Button color="primary" variant="filled" icon={<PlusOutlined />} disabled={!ready} onClick={() => setModalOpen(true)}>
             新建桶
@@ -386,22 +373,14 @@ export const StorageBucketPane = ({ defaultStorageCode }: { defaultStorageCode?:
           dataSource={list}
           loading={loading}
           scroll={{ x: 1200, y: tableBodyHeight }}
-          pagination={{
-            current: query.pageIndex,
-            pageSize: query.pageSize,
-            total,
-            showSizeChanger: true,
-            pageSizeOptions: PAGE_SIZE_OPTIONS,
-            showTotal: (t) => `共 ${t} 条`,
-            onChange: (pageIndex, pageSize) => reload({ pageIndex, pageSize }),
-          }}
+          pagination={false}
         />
       </Card>
 
       <BucketFormModal
         open={modalOpen}
         storages={storages}
-        defaultStorageCode={storageCode}
+        storageCode={storageCode}
         onClose={() => setModalOpen(false)}
         onSaved={() => reload()}
       />
@@ -420,24 +399,93 @@ interface EditorState {
   initial: ReadTextResult | null;
 }
 
-export const StorageObjectPane = () => {
+/**
+ * 当前层级的分层派生：把递归列表按当前 prefix 拆成「子文件夹」+「当层文件」。
+ * 后端恒递归 → 子文件夹 = 对象在当前 prefix 后的第一段 '/' 前缀（去重）；当层文件 = 当前 prefix 下没有 '/' 后缀的条目。
+ */
+interface FolderItem { name: string; prefix: string; isDir: true; }
+interface DerivedView {
+  folders: FolderItem[];
+  files: StorageObject[];
+}
+function deriveLevel(list: StorageObject[], currentPrefix: string): DerivedView {
+  const folderSet = new Set<string>();
+  const files: StorageObject[] = [];
+  for (const r of list) {
+    const name = r.objectName || '';
+    const rest = name.startsWith(currentPrefix) ? name.slice(currentPrefix.length) : name;
+    const slash = rest.indexOf('/');
+    if (slash > 0) {
+      folderSet.add(rest.slice(0, slash));
+    } else {
+      files.push(r);
+    }
+  }
+  const folders: FolderItem[] = [...folderSet].sort().map((n) => ({
+    name: n, prefix: `${currentPrefix}${n}/`, isDir: true,
+  }));
+  return { folders, files };
+}
+
+/** 面包屑项 */
+interface Crumb { label: string; prefix: string | undefined; }
+function buildCrumbs(bucketName: string, prefix: string | undefined): Crumb[] {
+  const crumbs: Crumb[] = [{ label: bucketName || '根目录', prefix: undefined }];
+  if (!prefix) return crumbs;
+  const clean = prefix.endsWith('/') ? prefix.slice(0, -1) : prefix;
+  const segs = clean.split('/').filter(Boolean);
+  let acc = '';
+  for (const s of segs) { acc += `${s}/`; crumbs.push({ label: s, prefix: acc }); }
+  return crumbs;
+}
+
+type DirRow = { _isDir: true; name: string; prefix: string };
+type FileRow = { _isDir: false; obj: StorageObject };
+type MergedRow = (DirRow | FileRow) & { __key: string };
+
+export const StorageObjectPane = ({ defaultStorageCode }: { defaultStorageCode?: string } = {}) => {
   const { list, total, loading, query } = useStorageObjectState();
   const { storages, ready: storagesReady } = useStorageOptions();
-  const [pickedCode, setPickedCode] = useState<string | undefined>();
-  const [bucketName, setBucketName] = useState<string | undefined>();
-  /** 桶列表连同「属于哪个实例」一起存：ready 由实例号比对派生，实例一换立刻为 false，无需回写 */
   const [bucketState, setBucketState] = useState<{ forCode?: string; rows: StorageBucket[] }>({ rows: [] });
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [uploading, setUploading] = useState(false);
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [editor, setEditor] = useState<EditorState>({ open: false, bucketName: '', objectName: '', kind: 'text', initial: null });
   const cardRef = useRef<HTMLDivElement>(null);
-  const tableBodyHeight = useTableFillHeight(cardRef, `${total}-${loading}`);
+  const currentPrefix = query.prefix || '';
 
-  const storageCode = pickedCode ?? storages[0]?.storageCode;
+  /** 当前优先用 store 里的 storageCode；只在 store 里没有且 defaultStorageCode 有值时回退（首次挂载/被父组件指定 */
+  const storageCode = query.storageCode ?? defaultStorageCode ?? storages[0]?.storageCode;
+  /** 当前选中的桶：store 里的 bucketName 若仍在桶列表中则用，否则回落到第一个桶（自动进入） */
   const bucketsReady = storagesReady && !!storageCode && bucketState.forCode === storageCode;
   const buckets = bucketsReady ? bucketState.rows : [];
-  const effectiveBucket = bucketName && buckets.some((b) => b.bucketName === bucketName) ? bucketName : buckets[0]?.bucketName;
+  const effectiveBucket = bucketsReady
+    ? (query.bucketName && buckets.some((b) => b.bucketName === query.bucketName) ? query.bucketName : buckets[0]?.bucketName)
+    : undefined;
+
+  const derived = useMemo(() => deriveLevel(list, currentPrefix), [list, currentPrefix]);
+  const crumbs = useMemo(() => buildCrumbs(effectiveBucket || '', effectiveBucket ? currentPrefix : undefined), [effectiveBucket, currentPrefix]);
+  /** 列表行键：挂靠 storage+bucket+objectName 保证跨桶/跨层切换时不撞键（避免 React 的同 key 警告） */
+  const fileKey = (obj: StorageObject) => `${storageCode || ''}|${effectiveBucket || ''}|${obj.objectName}`;
+  const mergedRows = useMemo<MergedRow[]>(() => {
+    const rows: MergedRow[] = [];
+    for (const f of derived.folders) rows.push({ _isDir: true, name: f.name, prefix: f.prefix, __key: `dir:${storageCode || ''}|${effectiveBucket || ''}|${f.prefix}` });
+    for (const obj of derived.files) rows.push({ _isDir: false, obj, __key: `file:${fileKey(obj)}` });
+    return rows;
+  }, [derived, storageCode, effectiveBucket]);
+  const tableBodyHeight = useTableFillHeight(cardRef, `${total}-${loading}`);
+  /** 文件夹进入下一层 */
+  const handleEnterDir = (prefix: string) => { storageObjectStore.navigateToPrefix(prefix); setSelectedRowKeys([]); };
+  /** 面包屑点击：prefix=undefined 回到根，否则退回对应上级 */
+  const handleCrumb = (prefix: string | undefined) => { storageObjectStore.setPrefix(prefix); setSelectedRowKeys([]); };
+
+  // 外部（BucketListPage 行点击）改了 defaultStorageCode → store 还没跟上，同步一次
+  useEffect(() => {
+    if (defaultStorageCode && query.storageCode !== defaultStorageCode) {
+      storageObjectStore.selectStorage(defaultStorageCode);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultStorageCode]);
 
   // 实例变化 → 拉该实例的桶列表（结果自带 forCode，过期响应直接丢弃）
   useEffect(() => {
@@ -454,16 +502,16 @@ export const StorageObjectPane = () => {
     return () => { alive = false; };
   }, [storageCode]);
 
-  // 实例 + 桶都落定后拉对象：一次带全三元组条件
+  // 实例 + 桶都落定后拉对象：一次带全三元组条件（加上 prefix）
   useEffect(() => {
     if (!bucketsReady) return;
-    void fetchObjectPage({ pageIndex: 1, storageCode, bucketName: effectiveBucket });
+    void fetchObjectPage({ pageIndex: 1, storageCode, bucketName: effectiveBucket, prefix: currentPrefix || undefined });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bucketsReady, storageCode, effectiveBucket]);
+  }, [bucketsReady, storageCode, effectiveBucket, currentPrefix]);
 
   /**
    * 对象元数据补齐。
-   * 后端 object/selectListByPage 返回的是 `List<String>`（只有对象键），
+   * 后端 object/selectObjectList|selectObjectListByPage 都只回 List<String>（对象键），
    * size / contentType / lastModified 必须另调 `object/stat`（GET + query）拿。
    * 这里只补当前页，限量并发；单条 404（对象刚被删）只让该行降级成 '-'，不影响整页。
    */
@@ -489,8 +537,8 @@ export const StorageObjectPane = () => {
   }, [list, storageCode, effectiveBucket]);
 
   const reload = useCallback((patch: { pageIndex?: number; pageSize?: number } = {}) => {
-    void fetchObjectPage({ pageIndex: patch.pageIndex ?? 1, pageSize: patch.pageSize, storageCode, bucketName: effectiveBucket });
-  }, [storageCode, effectiveBucket]);
+    void fetchObjectPage({ pageIndex: patch.pageIndex ?? 1, pageSize: patch.pageSize, storageCode, bucketName: effectiveBucket, prefix: currentPrefix || undefined });
+  }, [storageCode, effectiveBucket, currentPrefix]);
 
   /** 行键：桶 + 对象键即唯一（列表接口只回键，桶来自当前筛选条件） */
   const rowKeyOf = (r: StorageObject) => `${r.bucketName || effectiveBucket || ''}|${r.objectName}`;
@@ -501,9 +549,11 @@ export const StorageObjectPane = () => {
     if (!effectiveBucket) { toast.warning('请先选择目标桶'); return; }
     setUploading(true);
     try {
+      // 当前在子文件夹下 → 上传时自动把 prefix 拼到对象键前面
+      const objectName = currentPrefix ? `${currentPrefix}${file.name}` : file.name;
       // 后端 upload 返回的是落库后的对象键
-      const key = await uploadObject(storageCode, effectiveBucket, file);
-      toast.success(`上传成功：${key || file.name}`);
+      const key = await uploadObject(storageCode, effectiveBucket, file, objectName);
+      toast.success(`上传成功：${key || objectName}`);
       reload();
     } catch (e) {
       toast.error((e as Error)?.message || '上传失败');
@@ -579,48 +629,92 @@ export const StorageObjectPane = () => {
     }
   };
 
-  const columns: ColumnsType<StorageObject> = [
+  /** 表格列 + 行数据：文件夹（上层虚拟行）+ 文件（当层真实对象）走同一张表 */
+  const isRoot = !currentPrefix;
+  const columns: ColumnsType<MergedRow> = [
     {
-      ...leftCell, title: '对象键', dataIndex: 'objectName', width: 300, ellipsis: true,
-      render: (v, r) => {
-        if (isTextObject(v)) {
+      ...leftCell, title: '名称', key: 'name', width: 360, ellipsis: true,
+      render: (_, r) => {
+        if (r._isDir) {
           return (
-            <a
-              onClick={(e) => { e.preventDefault(); void handleEdit(r); }}
-              style={{ cursor: 'pointer' }}
-              title="点击编辑"
+            <span
+              style={{ cursor: 'pointer', color: '#1677ff', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              onClick={() => handleEnterDir(r.prefix)}
+              title="进入文件夹"
             >
-              <code>{v}</code>
-            </a>
+              <FolderOutlined style={{ color: '#faad14' }} />
+              <strong>{r.name}/</strong>
+            </span>
           );
         }
-        return <code>{v}</code>;
+        const obj = r.obj;
+        if (isTextObject(obj.objectName)) {
+          const kind = editorKindOf(obj.objectName);
+          const shortName = currentPrefix && obj.objectName.startsWith(currentPrefix)
+            ? obj.objectName.slice(currentPrefix.length) : obj.objectName;
+          const hint = kind === 'sql' ? 'SQL 编辑器' : (kind === 'markdown' ? 'Markdown 编辑器' : '文本编辑器');
+          return (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <FileTextOutlined style={{ color: '#8c8c8c' }} />
+              <a
+                onClick={(e) => { e.preventDefault(); void handleEdit(obj); }}
+                style={{ cursor: 'pointer', color: '#1677ff' }}
+                title={`点击用 ${hint} 打开`}
+              >
+                <code>{shortName}</code>
+              </a>
+            </span>
+          );
+        }
+        const shortName = currentPrefix && obj.objectName.startsWith(currentPrefix)
+          ? obj.objectName.slice(currentPrefix.length) : obj.objectName;
+        return (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <FileOutlined style={{ color: '#8c8c8c' }} />
+            <code>{shortName}</code>
+          </span>
+        );
       },
     },
-    { ...leftCell, title: '归属桶', key: 'bucketName', width: 150, render: (_, r) => bucketOf(r) || '-' },
     {
-      title: '大小', key: 'size', width: 120, align: 'center', onHeaderCell: hdrCenter,
-      render: (_, r) => formatBytes(statMap[r.objectName]?.size),
+      title: '大小', key: 'size', width: 110, align: 'center', onHeaderCell: hdrCenter,
+      render: (_, r) => (r._isDir ? '—' : formatBytes(statMap[r.obj.objectName]?.size)),
     },
-    { ...leftCell, title: '内容类型', key: 'contentType', width: 190, render: (_, r) => statMap[r.objectName]?.contentType || '-' },
-    { ...leftCell, title: '最后修改', key: 'lastModified', width: 190, render: (_, r) => formatDateTime(statMap[r.objectName]?.lastModified) },
+    {
+      ...leftCell, title: '内容类型', key: 'contentType', width: 200,
+      render: (_, r) => (r._isDir ? '文件夹' : (statMap[r.obj.objectName]?.contentType || '-')),
+    },
+    {
+      ...leftCell, title: '最后修改', key: 'lastModified', width: 190,
+      render: (_, r) => (r._isDir ? '—' : formatDateTime(statMap[r.obj.objectName]?.lastModified)),
+    },
     {
       title: '操作', key: 'action', width: 250, fixed: 'right', align: 'center', onHeaderCell: hdrCenter,
-      render: (_, r) => (
-        <Space size="small">
-          <Button type="link" size="small" loading={busyKey === rowKeyOf(r)} onClick={() => handleDownload(r)}>下载</Button>
-          {isTextObject(r.objectName) && (
-            <Button type="link" size="small" loading={busyKey === rowKeyOf(r)} onClick={() => handleEdit(r)}>编辑</Button>
-          )}
-          <Button type="link" size="small" loading={busyKey === rowKeyOf(r)} onClick={() => handleCopyUrl(r)}>链接</Button>
-          <Popconfirm
-            title="确定删除该对象吗？" okText="删除" cancelText="取消" okButtonProps={{ danger: true }}
-            onConfirm={() => handleRemove(r)}
-          >
-            <Button type="link" size="small" danger>删除</Button>
-          </Popconfirm>
-        </Space>
-      ),
+      render: (_, r) => {
+        if (r._isDir) {
+          return (
+            <Button type="link" size="small" onClick={() => handleEnterDir(r.prefix)}>
+              <FolderOutlined /> 打开
+            </Button>
+          );
+        }
+        const obj = r.obj;
+        return (
+          <Space size="small">
+            <Button type="link" size="small" loading={busyKey === rowKeyOf(obj)} onClick={() => handleDownload(obj)}>下载</Button>
+            {isTextObject(obj.objectName) && (
+              <Button type="link" size="small" loading={busyKey === rowKeyOf(obj)} onClick={() => handleEdit(obj)}>编辑</Button>
+            )}
+            <Button type="link" size="small" loading={busyKey === rowKeyOf(obj)} onClick={() => handleCopyUrl(obj)}>链接</Button>
+            <Popconfirm
+              title="确定删除该对象吗？" okText="删除" cancelText="取消" okButtonProps={{ danger: true }}
+              onConfirm={() => handleRemove(obj)}
+            >
+              <Button type="link" size="small" danger>删除</Button>
+            </Popconfirm>
+          </Space>
+        );
+      },
     },
   ];
 
@@ -631,13 +725,19 @@ export const StorageObjectPane = () => {
           <Select
             allowClear placeholder="存储实例" style={{ width: 240 }}
             value={storageCode}
-            onChange={(v) => { setPickedCode(v); setBucketName(undefined); setSelectedRowKeys([]); }}
+            onChange={(v) => {
+              storageObjectStore.selectStorage(v);
+              setSelectedRowKeys([]);
+            }}
             options={storages.map((s) => ({ value: s.storageCode, label: `${s.storageName} (${s.storageCode})` }))}
           />
           <Select
             allowClear placeholder={storageCode ? '选择桶' : '请先选存储实例'} style={{ width: 220 }}
             disabled={!storageCode} value={effectiveBucket}
-            onChange={(v) => { setBucketName(v); setSelectedRowKeys([]); }}
+            onChange={(v) => {
+              storageObjectStore.selectBucket(v);
+              setSelectedRowKeys([]);
+            }}
             options={buckets.map((b) => ({ value: b.bucketName, label: b.bucketName }))}
           />
         </div>
@@ -663,21 +763,50 @@ export const StorageObjectPane = () => {
         </div>
       </div>
 
+      {/* 面包屑：仅在选桶后显示；在子文件夹时可通过点击回到任一层 */}
+      {effectiveBucket && (
+        <div className="page-breadcrumb" style={{ padding: '0 0 8px 0', fontSize: 13, color: '#595959' }}>
+          <HomeOutlined style={{ marginRight: 4 }} />
+          {crumbs.map((c, idx) => (
+            <span key={c.prefix ?? 'root'}>
+              {idx > 0 && <span style={{ margin: '0 4px', color: '#bfbfbf' }}>/</span>}
+              {idx === crumbs.length - 1
+                ? (
+                  <span style={{ color: '#262626', fontWeight: 500 }}>{c.label}</span>
+                ) : (
+                  <a onClick={() => handleCrumb(c.prefix)} style={{ cursor: 'pointer' }}>{c.label}</a>
+                )
+              }
+            </span>
+          ))}
+          {currentPrefix && (
+            <span style={{ marginLeft: 8, fontSize: 12, color: '#8c8c8c' }}>
+              （当前：{currentPrefix}）
+            </span>
+          )}
+        </div>
+      )}
+
       <Card className="table-wrapper" ref={cardRef} styles={{ body: { padding: 0 } }}>
-        <Table<StorageObject>
-          rowKey={rowKeyOf}
+        <Table<MergedRow>
+          rowKey="__key"
           columns={columns}
-          rowSelection={{ selectedRowKeys, onChange: (keys) => setSelectedRowKeys(keys) }}
-          dataSource={list}
+          rowSelection={{
+            selectedRowKeys,
+            onChange: (keys) => setSelectedRowKeys(keys),
+            // 只允许勾选文件行，不让选文件夹
+            getCheckboxProps: (r): { disabled?: boolean } => ({ disabled: r._isDir }),
+          }}
+          dataSource={mergedRows}
           loading={loading}
-          scroll={{ x: 1200, y: tableBodyHeight }}
+          scroll={{ x: 1300, y: tableBodyHeight }}
           pagination={{
             current: query.pageIndex,
             pageSize: query.pageSize,
-            total,
+            total: mergedRows.length,
             showSizeChanger: true,
             pageSizeOptions: PAGE_SIZE_OPTIONS,
-            showTotal: (t) => `共 ${t} 条`,
+            showTotal: (t) => `共 ${t} 项（${derived.folders.length} 个文件夹 / ${derived.files.length} 个文件）`,
             onChange: (pageIndex, pageSize) => reload({ pageIndex, pageSize }),
           }}
         />

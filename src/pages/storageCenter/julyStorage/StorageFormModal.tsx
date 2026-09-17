@@ -68,17 +68,18 @@ export const StorageFormModal = ({ open, node, onClose, onSaved }: Props) => {
     setTesting(true);
     try {
       const values = form.getFieldsValue() as Partial<JulyStorage>;
-      // 已保存实例只传 id（后端用库里配置测）；草稿才按 JulyStorageConnectVo011 传字段
-      const payload: JulyStorageConnect = node ? { id: node.id } : {
+      // 对齐当前表单数据测试：编辑态带 id 同时传当前字段值（secretKey 留空=保持原值）
+      const payload: JulyStorageConnect = {
+        ...(node ? { id: node.id } : {}),
         provider: values.provider,
         basePath: values.basePath,
         endpoint: values.endpoint,
         accessKey: values.accessKey,
-        secretKey: values.secretKey,
         secure: values.secure,
         defaultBucket: values.defaultBucket,
         presignExpirySeconds: values.presignExpirySeconds,
       };
+      if (values.secretKey) payload.secretKey = values.secretKey;
       const res: StorageTestResult = await testStorageConnection(payload);
       if (res?.success) toast.success(`连接成功${res.message ? '：' + res.message : ''}`);
       else toast.error(`连接失败：${res?.message || '未知原因'}`);
