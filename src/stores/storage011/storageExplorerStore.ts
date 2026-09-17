@@ -1,9 +1,12 @@
 /**
- * 存储中心「浏览位置」store：跨页共享 存储实例 / 桶 / 对象前缀。
+ * 存储中心「浏览位置」store：跨页共享 存储实例 / 桶 / 对象前缀，并**持久化到 localStorage**。
  *
- * 用途：存储桶页点「进入文件」→ 文件列表页沿用它选定的实例 + 桶；
- *       两页各自的下拉也回写这里，来回切换不丢选择。
- * 分层约定：store 只管 UI 选择状态，不落盘、不调 service。
+ * 用途：文件列表页 / 存储管理页共用同一份选择态 —— 选过的存储实例与桶要「记住」：
+ *       刷新页面、切走再切回、从存储管理跳到文件列表，都延续上次的实例 + 桶。
+ * 分层约定：store 只管 UI 选择状态 + 本地持久化，不落盘业务数据、不调 service。
+ *
+ * 持久化键：`pc011-storage-explorer`（与 pageSizePref 的 `pc011-<scope>-pageSize` 同前缀）。
+ * 读取时逐字段做类型校验，脏数据静默丢弃 → 回落到「未选」，由页面派生第一个可用实例。
  */
 import { createStore, useStoreState } from '@/stores/createStore';
 
@@ -12,11 +15,42 @@ export interface StorageExplorerState {
   storageCode?: string;
   /** 当前桶名 */
   bucketName?: string;
-  /** 对象前缀过滤（文件列表页，点「查询」时才写入） */
+  /** 对象前缀过滤（文件列表页，进入文件夹 / 点查询时写入） */
   prefix?: string;
 }
 
-const base = createStore<StorageExplorerState>({ prefix: '' });
+const STORAGE_KEY = 'pc011-storage-explorer';
+
+/** 只保留字符串型字段，其余（含 JSON 损坏）一律回落到缺省值 */
+function loadPersisted(): StorageExplorerState {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { prefix: '' };
+    const parsed = JSON.parse(raw) as StorageExplorerState | null;
+    return {
+      storageCode: typeof parsed?.storageCode === 'string' && parsed.storageCode ? parsed.storageCode : undefined,
+      bucketName: typeof parsed?.bucketName === 'string' && parsed.bucketName ? parsed.bucketName : undefined,
+      prefix: typeof parsed?.prefix === 'string' ? parsed.prefix : '',
+    };
+  } catch {
+    return { prefix: '' };
+  }
+}
+
+const base = createStore<StorageExplorerState>(loadPersisted());
+
+/** 选择态变化即落盘（订阅一次，避免每个方法各写一遍） */
+let lastRaw = JSON.stringify(base.getSnapshot());
+base.subscribe((state) => {
+  const raw = JSON.stringify({
+    storageCode: state?.storageCode,
+    bucketName: state?.bucketName,
+    prefix: state?.prefix ?? '',
+  });
+  if (raw === lastRaw) return;
+  lastRaw = raw;
+  try { localStorage.setItem(STORAGE_KEY, raw); } catch { /* 存储不可用 → 仅内存生效 */ }
+});
 
 export const storageExplorerStore = {
   getSnapshot: base.getSnapshot,
@@ -34,9 +68,14 @@ export const storageExplorerStore = {
     base.setState({ bucketName, prefix: '' });
   },
 
-  /** 设置前缀过滤 */
-  setPrefix(prefix: string) {
-    base.setState({ prefix });
+  /** 设置前缀过滤（面包屑跳转：传 undefined 回桶根目录） */
+  setPrefix(prefix?: string) {
+    base.setState({ prefix: prefix ?? '' });
+  },
+
+  /** 进入子文件夹：prefix 统一以 '/' 结尾 */
+  navigateToPrefix(prefix: string) {
+    base.setState({ prefix: prefix.endsWith('/') ? prefix : `${prefix}/` });
   },
 
   /** 存储桶页「进入文件」：一次性带上实例 + 桶 */

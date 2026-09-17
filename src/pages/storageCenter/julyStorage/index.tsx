@@ -13,8 +13,14 @@
  *    「先 setState 再靠 effect 触发查询」会让首个请求带着 undefined 打出去（全量），
  *    与随后的收窄请求并发，谁后返回谁写 store —— 实测出现过「桶列表混入其它实例的桶」。
  *    派生值 + ready 标记可保证落定后**只发一次**带完整条件的请求。
+ *
+ * ⚠️ 「存储实例 / 桶 / 目录前缀」的选中态统一放在 storageExplorerStore（**已持久化**），
+ *    对象视图与存储桶视图共用一份，刷新 / 切页回来都记得上次浏览位置。
+ *    对象在线编辑已改为**整页路由** STORAGE011_ROUTES.fileEdit（见 julyFileList/FileEditorPage），
+ *    本文件不再挂编辑弹窗。
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   DatabaseOutlined, DeleteOutlined, FileOutlined, FileTextOutlined, FolderOutlined,
   HddOutlined, HomeOutlined, PlusOutlined, ReloadOutlined, UploadOutlined,
@@ -24,21 +30,22 @@ import type { ColumnsType } from 'antd/es/table';
 import { PAGE_SIZE_OPTIONS } from '@/utils/pageSizePref';
 import { useTableFillHeight } from '@/hooks/useTableFillHeight';
 import { toast } from '@/utils/toast';
+import { STORAGE011_ROUTES } from '@/config/routes';
 import type { JulyStorage, StorageBucket, StorageObject } from '@/types/storage011';
 import {
   fetchStoragePage, listStorages, removeStorage, removeStorages, testStorageConnection,
 } from '@/services/storage011/julyStorageService';
 import { fetchBucketPage, listBuckets, removeBucket } from '@/services/storage011/storageBucketService';
 import {
-  batchRemoveObjects, downloadObject, fetchObjectPage, presignedUrl, readObjectText, removeObject, uploadObject,
-  type ObjectEditorKind, type ReadTextResult,
+  batchRemoveObjects, downloadObject, fetchObjectPage, presignedUrl, removeObject, resolveEditorKind, uploadObject,
+  type ObjectEditorKind,
 } from '@/services/storage011/storageObjectService';
 import { useStorageState } from '@/stores/storage011/julyStorageStore';
 import { useStorageBucketState } from '@/stores/storage011/storageBucketStore';
-import { useStorageObjectState, storageObjectStore } from '@/stores/storage011/storageObjectStore';
+import { useStorageObjectState } from '@/stores/storage011/storageObjectStore';
+import { storageExplorerStore, useStorageExplorer } from '@/stores/storage011/storageExplorerStore';
 import { StorageFormModal } from '@/pages/storageCenter/julyStorage/StorageFormModal';
 import { BucketFormModal } from '@/pages/storageCenter/julyStorage/BucketFormModal';
-import { TextEditorModal } from '@/pages/storageCenter/julyFileList/TextEditorModal';
 
 /** 表头单元格水平居中 */
 const hdrCenter = (): React.HTMLAttributes<HTMLElement> => ({ style: { textAlign: 'center' } });
@@ -83,13 +90,8 @@ const PROVIDER_META: Record<string, { label: string; color: string }> = {
 const TEXT_OBJECT_RE = /\.(sql|md|markdown|txt|json|csv|yml|yaml|log|xml|properties|conf|ini)$/i;
 const isTextObject = (objectName: string): boolean => TEXT_OBJECT_RE.test(objectName.trim());
 
-/** 对象 editorKind（用于弹窗标题上的类型标签） */
-const editorKindOf = (objectName: string): ObjectEditorKind => {
-  const lower = objectName.trim().toLowerCase();
-  if (lower.endsWith('.sql')) return 'sql';
-  if (lower.endsWith('.md') || lower.endsWith('.markdown')) return 'markdown';
-  return 'text';
-};
+/** 对象 editorKind（名称列提示用）—— 规则唯一事实源在 service，这里只做本页短别名 */
+const editorKindOf = (objectName: string): ObjectEditorKind => resolveEditorKind(objectName);
 
 /** 复制文本：优先 Clipboard API，非安全上下文回退到临时 textarea */
 async function copyText(text: string): Promise<void> {
@@ -393,15 +395,6 @@ export const StorageBucketPane = ({ defaultStorageCode }: { defaultStorageCode?:
 
 /* ==================== 视图三：对象（文件） ==================== */
 
-interface EditorState {
-  open: boolean;
-  storageCode?: string;
-  bucketName: string;
-  objectName: string;
-  kind: ObjectEditorKind;
-  initial: ReadTextResult | null;
-}
-
 /**
  * 当前层级的分层派生：把递归列表按当前 prefix 拆成「子文件夹」+「当层文件」。
  * 后端恒递归 → 子文件夹 = 对象在当前 prefix 后的第一段 '/' 前缀（去重）；当层文件 = 当前 prefix 下没有 '/' 后缀的条目。
@@ -447,23 +440,25 @@ type FileRow = { _isDir: false; obj: StorageObject };
 type MergedRow = (DirRow | FileRow) & { __key: string };
 
 export const StorageObjectPane = ({ defaultStorageCode }: { defaultStorageCode?: string } = {}) => {
+  const navigate = useNavigate();
   const { list, total, loading, query } = useStorageObjectState();
+  const explorer = useStorageExplorer();
   const { storages, ready: storagesReady } = useStorageOptions();
   const [bucketState, setBucketState] = useState<{ forCode?: string; rows: StorageBucket[] }>({ rows: [] });
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [uploading, setUploading] = useState(false);
   const [busyKey, setBusyKey] = useState<string | null>(null);
-  const [editor, setEditor] = useState<EditorState>({ open: false, bucketName: '', objectName: '', kind: 'text', initial: null });
   const cardRef = useRef<HTMLDivElement>(null);
-  const currentPrefix = query.prefix || '';
 
-  /** 当前优先用 store 里的 storageCode；只在 store 里没有且 defaultStorageCode 有值时回退（首次挂载/被父组件指定 */
-  const storageCode = query.storageCode ?? defaultStorageCode ?? storages[0]?.storageCode;
+  /** 浏览位置统一读 storageExplorerStore（已持久化）：刷新 / 切页回来仍停在上次的实例 + 桶 + 目录 */
+  const currentPrefix = explorer.prefix || '';
+  /** 当前优先用 store 里的 storageCode；只在 store 里没有且 defaultStorageCode 有值时回退（首次挂载/被父组件指定） */
+  const storageCode = explorer.storageCode ?? defaultStorageCode ?? storages[0]?.storageCode;
   /** 当前选中的桶：store 里的 bucketName 若仍在桶列表中则用，否则回落到第一个桶（自动进入） */
   const bucketsReady = storagesReady && !!storageCode && bucketState.forCode === storageCode;
   const buckets = bucketsReady ? bucketState.rows : [];
   const effectiveBucket = bucketsReady
-    ? (query.bucketName && buckets.some((b) => b.bucketName === query.bucketName) ? query.bucketName : buckets[0]?.bucketName)
+    ? (explorer.bucketName && buckets.some((b) => b.bucketName === explorer.bucketName) ? explorer.bucketName : buckets[0]?.bucketName)
     : undefined;
 
   const derived = useMemo(() => deriveLevel(list, currentPrefix), [list, currentPrefix]);
@@ -478,14 +473,14 @@ export const StorageObjectPane = ({ defaultStorageCode }: { defaultStorageCode?:
   }, [derived, storageCode, effectiveBucket]);
   const tableBodyHeight = useTableFillHeight(cardRef, `${total}-${loading}`);
   /** 文件夹进入下一层 */
-  const handleEnterDir = (prefix: string) => { storageObjectStore.navigateToPrefix(prefix); setSelectedRowKeys([]); };
+  const handleEnterDir = (prefix: string) => { storageExplorerStore.navigateToPrefix(prefix); setSelectedRowKeys([]); };
   /** 面包屑点击：prefix=undefined 回到根，否则退回对应上级 */
-  const handleCrumb = (prefix: string | undefined) => { storageObjectStore.setPrefix(prefix); setSelectedRowKeys([]); };
+  const handleCrumb = (prefix: string | undefined) => { storageExplorerStore.setPrefix(prefix); setSelectedRowKeys([]); };
 
-  // 外部（BucketListPage 行点击）改了 defaultStorageCode → store 还没跟上，同步一次
+  // 外部（存储管理页行点击）改了 defaultStorageCode → store 还没跟上，同步一次
   useEffect(() => {
-    if (defaultStorageCode && query.storageCode !== defaultStorageCode) {
-      storageObjectStore.selectStorage(defaultStorageCode);
+    if (defaultStorageCode && explorer.storageCode !== defaultStorageCode) {
+      storageExplorerStore.selectStorage(defaultStorageCode);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [defaultStorageCode]);
@@ -572,21 +567,21 @@ export const StorageObjectPane = ({ defaultStorageCode }: { defaultStorageCode?:
     }
   };
 
-  const handleEdit = async (row: StorageObject) => {
-    setBusyKey(rowKeyOf(row));
-    try {
-      const storage = row.storageCode ?? storageCode;
-      const bucket = bucketOf(row);
-      const initial = await readObjectText(storage, bucket, row.objectName);
-      setEditor({
-        open: true, storageCode: storage, bucketName: bucket,
-        objectName: row.objectName, kind: editorKindOf(row.objectName), initial,
-      });
-    } catch (e) {
-      toast.error((e as Error)?.message || '读取文本失败');
-    } finally {
-      setBusyKey(null);
-    }
+  /**
+   * 打开在线编辑：**跳整页路由**（不是弹窗）。
+   * 参数走 query：objectName 可能带 '/' 前缀目录，塞进路径段会把层级撑破；
+   * prefix 一起带上，编辑器返回时据此把浏览位置还原到所在目录。
+   */
+  const openEditor = (row: StorageObject) => {
+    const bucket = bucketOf(row);
+    if (!bucket) { toast.warning('请先选择桶'); return; }
+    const qs = new URLSearchParams({
+      storageCode: row.storageCode ?? storageCode ?? '',
+      bucketName: bucket,
+      objectName: row.objectName,
+    });
+    if (currentPrefix) qs.set('prefix', currentPrefix);
+    navigate(`${STORAGE011_ROUTES.fileEdit}?${qs.toString()}`);
   };
 
   const handleRemove = async (row: StorageObject) => {
@@ -632,26 +627,24 @@ export const StorageObjectPane = ({ defaultStorageCode }: { defaultStorageCode?:
           );
         }
         const obj = r.obj;
+        const shortName = currentPrefix && obj.objectName.startsWith(currentPrefix)
+          ? obj.objectName.slice(currentPrefix.length) : obj.objectName;
         if (isTextObject(obj.objectName)) {
           const kind = editorKindOf(obj.objectName);
-          const shortName = currentPrefix && obj.objectName.startsWith(currentPrefix)
-            ? obj.objectName.slice(currentPrefix.length) : obj.objectName;
           const hint = kind === 'sql' ? 'SQL 编辑器' : (kind === 'markdown' ? 'Markdown 编辑器' : '文本编辑器');
           return (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               <FileTextOutlined style={{ color: '#8c8c8c' }} />
               <a
-                onClick={(e) => { e.preventDefault(); void handleEdit(obj); }}
+                onClick={(e) => { e.preventDefault(); openEditor(obj); }}
                 style={{ cursor: 'pointer', color: '#1677ff' }}
-                title={`点击用 ${hint} 打开`}
+                title={`点击跳转到 ${hint}`}
               >
                 <code>{shortName}</code>
               </a>
             </span>
           );
         }
-        const shortName = currentPrefix && obj.objectName.startsWith(currentPrefix)
-          ? obj.objectName.slice(currentPrefix.length) : obj.objectName;
         return (
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <FileOutlined style={{ color: '#8c8c8c' }} />
@@ -687,7 +680,7 @@ export const StorageObjectPane = ({ defaultStorageCode }: { defaultStorageCode?:
           <Space size="small">
             <Button type="link" size="small" loading={busyKey === rowKeyOf(obj)} onClick={() => handleDownload(obj)}>下载</Button>
             {isTextObject(obj.objectName) && (
-              <Button type="link" size="small" loading={busyKey === rowKeyOf(obj)} onClick={() => handleEdit(obj)}>编辑</Button>
+              <Button type="link" size="small" onClick={() => openEditor(obj)}>编辑</Button>
             )}
             <Button type="link" size="small" loading={busyKey === rowKeyOf(obj)} onClick={() => handleCopyUrl(obj)}>链接</Button>
             <Popconfirm
@@ -710,7 +703,7 @@ export const StorageObjectPane = ({ defaultStorageCode }: { defaultStorageCode?:
             allowClear placeholder="存储实例" style={{ width: 240 }}
             value={storageCode}
             onChange={(v) => {
-              storageObjectStore.selectStorage(v);
+              storageExplorerStore.selectStorage(v);
               setSelectedRowKeys([]);
             }}
             options={storages.map((s) => ({ value: s.storageCode, label: `${s.storageName} (${s.storageCode})` }))}
@@ -719,7 +712,7 @@ export const StorageObjectPane = ({ defaultStorageCode }: { defaultStorageCode?:
             allowClear placeholder={storageCode ? '选择桶' : '请先选存储实例'} style={{ width: 220 }}
             disabled={!storageCode} value={effectiveBucket}
             onChange={(v) => {
-              storageObjectStore.selectBucket(v);
+              storageExplorerStore.selectBucket(v);
               setSelectedRowKeys([]);
             }}
             options={buckets.map((b) => ({ value: b.bucketName, label: b.bucketName }))}
@@ -795,18 +788,6 @@ export const StorageObjectPane = ({ defaultStorageCode }: { defaultStorageCode?:
           }}
         />
       </Card>
-
-      <TextEditorModal
-        open={editor.open}
-        storageCode={editor.storageCode}
-        bucketName={editor.bucketName}
-        objectName={editor.objectName}
-        editorKind={editor.kind}
-        initial={editor.initial}
-        onClose={() => setEditor((prev) => ({ ...prev, open: false }))}
-        onSaved={() => reload()}
-      />
     </>
   );
 };
-

@@ -22,6 +22,10 @@
 /* 字典下方明细区（Tabs：明细项）——卡片 body 是 padding:0，
    表格要通版贴边，但页签条与表格下方的行编辑操作条需要各自补内边距 */
 .detail-tabs .ant-tabs-nav { padding-inline: 16px; margin-bottom: 0; }
+/* nav 的 margin-bottom 被清零后，页签下边框会直接贴住内容（实测 0px）。
+   子表首个元素若是页面工具条（如存储桶的「新建桶 / 刷新」），需自己补回上间距；
+   .detail-actions 那种自带 padding 的操作条不在此列，避免重复留白。 */
+.detail-tabs .page-toolbar { padding-top: 16px; }
 .detail-pane { padding: 16px; }
 .detail-empty { padding: 32px 0; text-align: center; color: var(--text-muted); }
 

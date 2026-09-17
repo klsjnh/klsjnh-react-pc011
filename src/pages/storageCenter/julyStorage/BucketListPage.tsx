@@ -16,6 +16,7 @@ import {
 import { fetchBucketPage } from '@/services/storage011/storageBucketService';
 import { useStorageState } from '@/stores/storage011/julyStorageStore';
 import { useStorageBucketState } from '@/stores/storage011/storageBucketStore';
+import { storageExplorerStore, useStorageExplorer } from '@/stores/storage011/storageExplorerStore';
 import { PAGE_SIZE_OPTIONS } from '@/utils/pageSizePref';
 import { TestFeedbackAlert, type TestFeedback, type TestFeedbackDetail } from '@/components/system011/TestFeedbackAlert';
 import { StorageFormModal } from '@/pages/storageCenter/julyStorage/StorageFormModal';
@@ -63,7 +64,9 @@ export const BucketListPage = () => {
   const [testingId, setTestingId] = useState<string | null>(null);
   const [pageTest, setPageTest] = useState<TestFeedback | null>(null);
   const [keyword, setKeyword] = useState('');
-  const [selectedCode, setSelectedCode] = useState<string | undefined>();
+  // 选中的存储实例放持久化 store：拉到文件列表页 / 刷新后回来，仍停在上次选中的实例
+  const explorer = useStorageExplorer();
+  const selectedCode = explorer.storageCode;
   const cardRef = useRef<HTMLDivElement>(null);
   const tableBodyHeight = useTableFillHeight(cardRef, `${total}-${loading}`);
 
@@ -98,9 +101,10 @@ export const BucketListPage = () => {
     }
   };
 
-  /** 点击行切右侧桶子表 */
+  /** 点击行切右侧桶子表（写持久化 store，切页/刷新后仍记得） */
   const handleRowClick = (row: JulyStorage) => {
-    setSelectedCode(row.storageCode);
+    if (row.storageCode === selectedCode) return;
+    storageExplorerStore.selectStorage(row.storageCode);
   };
 
   const columns: ColumnsType<JulyStorage> = [
@@ -167,6 +171,7 @@ export const BucketListPage = () => {
           rowKey="id"
           columns={columns}
           onRow={(r) => ({ onClick: () => handleRowClick(r), style: { cursor: 'pointer' } })}
+          rowClassName={(r) => (r.storageCode && r.storageCode === selectedCode ? 'master-row-selected' : '')}
           dataSource={list}
           loading={loading}
           scroll={{ x: 1160, y: tableBodyHeight }}
@@ -207,7 +212,7 @@ export const BucketListPage = () => {
         open={modal.open}
         node={modal.node}
         onClose={() => setModal({ open: false, node: null })}
-        onSaved={() => setSelectedCode(undefined)}
+        onSaved={() => storageExplorerStore.selectStorage(undefined)}
       />
     </div>
   );
