@@ -10,5 +10,9 @@ export interface MockEnvelope<T> {
   data: T;
 }
 
-/** Mock handler 函数签名 */
-export type MockHandler = (body: any) => Promise<MockEnvelope<any>>;
+/**
+ * Mock handler 函数签名。
+ * `body` 保留 `any`：handler 按 action 字符串分发，请求体结构随接口异构，
+ * 边界处不做强类型约束，由各 handler 内部自行收窄；真契约以运行时 OpenAPI 为准（见 013.api-contract）。
+ */
+export type MockHandler = (body: any) => Promise<MockEnvelope<unknown>>;

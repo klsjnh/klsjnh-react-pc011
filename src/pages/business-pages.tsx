@@ -193,7 +193,7 @@ export const DictPage = () => {
 
       {/* 字典类型编辑弹窗 */}
       <Modal title={typeModal.node ? '编辑字典类型' : '新建字典类型'} open={typeModal.open} onCancel={() => setTypeModal({ open: false, node: null })}
-        onOk={handleSaveType} okText="保存" cancelText="取消" destroyOnClose>
+        onOk={handleSaveType} okText="保存" cancelText="取消" destroyOnHidden>
         <Form form={typeForm} layout="vertical" preserve={false}>
           <Form.Item name="typeCode" label="字典编码" rules={[{ required: true, message: '请输入字典编码' }]}>
             <Input placeholder="如 menu_type" disabled={!!typeModal.node} />
@@ -212,7 +212,7 @@ export const DictPage = () => {
 
       {/* 字典项编辑弹窗 */}
       <Modal title={itemModal.node ? '编辑字典项' : '新建字典项'} open={itemModal.open} onCancel={() => setItemModal({ open: false, node: null })}
-        onOk={handleSaveItem} okText="保存" cancelText="取消" destroyOnClose>
+        onOk={handleSaveItem} okText="保存" cancelText="取消" destroyOnHidden>
         <Form form={itemForm} layout="vertical" preserve={false}>
           <Form.Item name="itemValue" label="字典项值" rules={[{ required: true, message: '请输入字典项值' }]}>
             <Input placeholder="如 1" />
@@ -517,7 +517,7 @@ export const TrendPage = () => {
           { label: '最低月', value: '38', sub: '7月', color: '#f5222d' },
           { label: '平均值', value: '70', sub: '月均', color: '#1890ff' },
         ].map((s) => (
-          <Col span={8} key={s.label}><Card><Statistic title={s.label} value={s.value} suffix={s.sub} valueStyle={{ color: s.color }} /></Card></Col>
+          <Col span={8} key={s.label}><Card><Statistic title={s.label} value={s.value} suffix={s.sub} styles={{ content: { color: s.color } }} /></Card></Col>
         ))}
       </Row>
     </div>
@@ -632,7 +632,7 @@ export const DashboardScreenPage = () => {
       <div className="page-header"><h2>数据大屏</h2><p>{time.toLocaleTimeString('zh-CN')}</p></div>
       <Row gutter={16} style={{ marginBottom: 16 }}>
         {widgets.map((w) => (
-          <Col span={6} key={w.label}><Card><Statistic title={w.label} value={w.value} valueStyle={{ color: w.color }} /></Card></Col>
+          <Col span={6} key={w.label}><Card><Statistic title={w.label} value={w.value} styles={{ content: { color: w.color } }} /></Card></Col>
         ))}
       </Row>
       <Card title="实时数据流" className="table-wrapper">
@@ -707,7 +707,7 @@ export const MarkdownEditorPage = () => {
 ## 代码示例
 \`\`\`javascript
 const greeting = 'Hello, World!';
-console.log(greeting);
+console.info(greeting);
 \`\`\`
 `);
 

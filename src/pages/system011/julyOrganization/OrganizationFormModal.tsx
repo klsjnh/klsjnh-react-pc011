@@ -61,7 +61,7 @@ export const OrganizationFormModal = ({
       okText="保存"
       cancelText="取消"
       width={480}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form
         key={`${mode}-${node?.id || 'new'}-${initialParentId}`}

@@ -6,6 +6,7 @@
  *   - secure 是 boolean（不是 '0'/'1'）
  *   - secretKey 出参不回显：编辑态留空 = 保持原值
  *   - 编辑态必须回带 storageCode（它有 @NotBlank 校验，且业务上不可变）
+ * 「测试连接」结果用 TestFeedbackAlert 展示在表单顶部（与数据源页一致），不再用 toast。
  */
 import { useEffect, useState } from 'react';
 import { Button, Form, Input, InputNumber, Modal, Row, Col, Select, Switch } from 'antd';
@@ -13,6 +14,7 @@ import { ApiOutlined } from '@ant-design/icons';
 import type { JulyStorage, JulyStorageConnect, StorageTestResult } from '@/types/storage011';
 import { saveStorage, testStorageConnection } from '@/services/storage011/julyStorageService';
 import { toast } from '@/utils/toast';
+import { TestFeedbackAlert, type TestFeedback, type TestFeedbackDetail } from '@/components/system011/TestFeedbackAlert';
 
 interface Props {
   open: boolean;
@@ -31,9 +33,44 @@ const PROVIDER_OPTIONS = [
   { value: 's3011', label: '通用 S3 s3011' },
 ];
 
+/** provider 中文名（测试反馈详情行展示用） */
+const PROVIDER_LABELS: Record<string, string> = {
+  local011: '本地磁盘',
+  minio011: 'MinIO',
+  cos011: '腾讯云 COS',
+  tos011: '火山引擎 TOS',
+  oss011: '阿里云 OSS',
+  s3011: '通用 S3',
+};
+
+/** 组装存储测试反馈（供 TestFeedbackAlert 消费）：存储没有「数据库产品/版本」，改用 details 详情行 */
+function buildStorageFeedback(res: StorageTestResult, startedAt: number, providerLabel?: string): TestFeedback {
+  const details: TestFeedbackDetail[] = [];
+  if (providerLabel) details.push({ label: '类型', value: providerLabel });
+  if (res.endpoint) details.push({ label: '接入点', value: res.endpoint });
+  if (res.basePath) details.push({ label: '根路径', value: res.basePath });
+  if (res.bucketCount != null) details.push({ label: '桶数量', value: String(res.bucketCount) });
+  return {
+    ok: !!res.success,
+    message: res.message || (res.success ? '连接成功' : '连接失败'),
+    elapsedMs: Date.now() - startedAt,
+    details,
+  };
+}
+
+/** 请求异常（如 HTTP 500）时的失败反馈 -> 用 Alert 展示，而非 toast */
+function failureFeedback(e: unknown, startedAt: number): TestFeedback {
+  return {
+    ok: false,
+    message: (e as Error)?.message || '连接测试请求失败',
+    elapsedMs: Date.now() - startedAt,
+  };
+}
+
 export const StorageFormModal = ({ open, node, onClose, onSaved }: Props) => {
   const [form] = Form.useForm();
   const [testing, setTesting] = useState(false);
+  const [modalTest, setModalTest] = useState<TestFeedback | null>(null);
   const provider = Form.useWatch('provider', form);
 
   useEffect(() => {
@@ -64,8 +101,11 @@ export const StorageFormModal = ({ open, node, onClose, onSaved }: Props) => {
     }
   };
 
+  /** 弹窗内测试连接（新建草稿态 / 编辑重测），结果展示在弹窗内 Alert */
   const handleTest = async () => {
     setTesting(true);
+    setModalTest(null);
+    const startedAt = Date.now();
     try {
       const values = form.getFieldsValue() as Partial<JulyStorage>;
       // 对齐当前表单数据测试：编辑态带 id 同时传当前字段值（secretKey 留空=保持原值）
@@ -81,10 +121,9 @@ export const StorageFormModal = ({ open, node, onClose, onSaved }: Props) => {
       };
       if (values.secretKey) payload.secretKey = values.secretKey;
       const res: StorageTestResult = await testStorageConnection(payload);
-      if (res?.success) toast.success(`连接成功${res.message ? '：' + res.message : ''}`);
-      else toast.error(`连接失败：${res?.message || '未知原因'}`);
+      setModalTest(buildStorageFeedback(res || { success: false }, startedAt, PROVIDER_LABELS[values.provider || '']));
     } catch (e) {
-      toast.error((e as Error)?.message || '测试失败');
+      setModalTest(failureFeedback(e, startedAt));
     } finally {
       setTesting(false);
     }
@@ -105,6 +144,7 @@ export const StorageFormModal = ({ open, node, onClose, onSaved }: Props) => {
       ]}
     >
       <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
+        {modalTest && <TestFeedbackAlert data={modalTest} />}
         <Row gutter={16}>
           <Col span={8}>
             <Form.Item name="storageCode" label="编码" rules={[{ required: true, message: '请输入唯一编码' }]}>

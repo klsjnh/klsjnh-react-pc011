@@ -3,8 +3,8 @@
  * 路由：/storageCenter/bucketList
  */
 import React, { useState } from 'react';
-import { StorageInstancePane } from './index';
-import { StorageBucketPane } from './index';
+import { StorageInstancePane } from '@/pages/storageCenter/julyStorage';
+import { StorageBucketPane } from '@/pages/storageCenter/julyStorage';
 
 export const StorageInstancePage = () => {
   const [selectedCode, setSelectedCode] = useState<string | undefined>();

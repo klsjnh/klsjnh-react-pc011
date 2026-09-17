@@ -24,21 +24,21 @@ import type { ColumnsType } from 'antd/es/table';
 import { PAGE_SIZE_OPTIONS } from '@/utils/pageSizePref';
 import { useTableFillHeight } from '@/hooks/useTableFillHeight';
 import { toast } from '@/utils/toast';
-import type { JulyStorage, ObjectStat, StorageBucket, StorageObject } from '@/types/storage011';
+import type { JulyStorage, StorageBucket, StorageObject } from '@/types/storage011';
 import {
   fetchStoragePage, listStorages, removeStorage, removeStorages, testStorageConnection,
 } from '@/services/storage011/julyStorageService';
 import { fetchBucketPage, listBuckets, removeBucket } from '@/services/storage011/storageBucketService';
 import {
-  batchRemoveObjects, downloadObject, fetchObjectPage, presignedUrl, readObjectText, removeObject, statObject, uploadObject,
+  batchRemoveObjects, downloadObject, fetchObjectPage, presignedUrl, readObjectText, removeObject, uploadObject,
   type ObjectEditorKind, type ReadTextResult,
 } from '@/services/storage011/storageObjectService';
 import { useStorageState } from '@/stores/storage011/julyStorageStore';
 import { useStorageBucketState } from '@/stores/storage011/storageBucketStore';
 import { useStorageObjectState, storageObjectStore } from '@/stores/storage011/storageObjectStore';
-import { StorageFormModal } from './StorageFormModal';
-import { BucketFormModal } from './BucketFormModal';
-import { TextEditorModal } from '../julyFileList/TextEditorModal';
+import { StorageFormModal } from '@/pages/storageCenter/julyStorage/StorageFormModal';
+import { BucketFormModal } from '@/pages/storageCenter/julyStorage/BucketFormModal';
+import { TextEditorModal } from '@/pages/storageCenter/julyFileList/TextEditorModal';
 
 /** 表头单元格水平居中 */
 const hdrCenter = (): React.HTMLAttributes<HTMLElement> => ({ style: { textAlign: 'center' } });
@@ -332,15 +332,18 @@ export const StorageBucketPane = ({ defaultStorageCode }: { defaultStorageCode?:
   };
 
   /**
-   * 列只保留后端真能给的东西：
-   * bucket/selectList|selectListByPage 返回的是 `List<String>`（桶名），
-   * 区域 / 创建时间 / 存在状态后端都不返回，列出这两列只会永远空白（曾按对象字段渲染过，属接口不对）。
+   * 列以后端真实出参为准：bucket/selectBucketList|selectBucketListByPage 回
+   * `BucketInfo{bucketName, creationDate}` —— 创建时间**已随列表返回**，可直接展示。
+   * 区域（region）只在新建入参里，出参不回，故不列。
+   * ⚠️ 桶名来自对象的 `bucketName` 字段；曾按「桶名字符串数组」解析，导致整行 bucketName 变成对象、
+   *    React 渲染 `<code>{object}</code>` 直接抛错，同时 rowKey 退化成 `xx|[object Object]`。
    */
   const columns: ColumnsType<StorageBucket> = [
-    { ...leftCell, title: '桶名', dataIndex: 'bucketName', width: 320, render: (v) => <code>{v}</code> },
-    { ...leftCell, title: '归属实例', key: 'storageCode', width: 240, render: (_, r) => storageNameOf(r.storageCode) },
+    { ...leftCell, title: '桶名', dataIndex: 'bucketName', width: 300, render: (v) => <code>{v}</code> },
+    { ...leftCell, title: '创建时间', dataIndex: 'creationDate', width: 180, render: (v) => formatDateTime(v) },
+    { ...leftCell, title: '归属实例', key: 'storageCode', width: 220, render: (_, r) => storageNameOf(r.storageCode) },
     { title: '实例类型', key: 'provider', width: 120, align: 'center', onHeaderCell: hdrCenter, render: (_, r) => providerOf(r.storageCode) },
-    { ...leftCell, title: '接入点', key: 'endpoint', width: 260, render: (_, r) => endpointOf(r.storageCode) },
+    { ...leftCell, title: '接入点', key: 'endpoint', width: 240, render: (_, r) => endpointOf(r.storageCode) },
     { title: '状态', key: 'status', width: 100, align: 'center', onHeaderCell: hdrCenter, render: (_, r) => statusOf(r.storageCode) },
     {
       title: '操作', key: 'action', width: 110, fixed: 'right', align: 'center', onHeaderCell: hdrCenter,
@@ -372,7 +375,7 @@ export const StorageBucketPane = ({ defaultStorageCode }: { defaultStorageCode?:
           columns={columns}
           dataSource={list}
           loading={loading}
-          scroll={{ x: 1200, y: tableBodyHeight }}
+          scroll={{ x: 1320, y: tableBodyHeight }}
           pagination={false}
         />
       </Card>
@@ -510,39 +513,20 @@ export const StorageObjectPane = ({ defaultStorageCode }: { defaultStorageCode?:
   }, [bucketsReady, storageCode, effectiveBucket, currentPrefix]);
 
   /**
-   * 对象元数据补齐。
-   * 后端 object/selectObjectList|selectObjectListByPage 都只回 List<String>（对象键），
-   * size / contentType / lastModified 必须另调 `object/stat`（GET + query）拿。
-   * 这里只补当前页，限量并发；单条 404（对象刚被删）只让该行降级成 '-'，不影响整页。
+   * 对象元数据（size / contentType / lastModified）**不再单独拉**：
+   * 后端 selectObjectListByPage 回 `PageResult011<ObjectStat>`，元数据随列表一起返回，
+   * 行上直接可用（见 storageObjectService.toObjectRows）。
+   * 旧实现对本页每个键并发 6 个 object/stat 请求（每页 N 次往返），列表页白白放大 N 倍流量，已移除；
+   * statObject 仍保留给「不分页的 selectObjectList（只回键字符串）」的场景按需补齐。
    */
-  const [statMap, setStatMap] = useState<Record<string, ObjectStat>>({});
-  useEffect(() => {
-    const keys = list.map((r) => r.objectName).filter(Boolean);
-    if (!keys.length || !storageCode || !effectiveBucket) { setStatMap({}); return; }
-    let alive = true;
-    void (async () => {
-      const next: Record<string, ObjectStat> = {};
-      const CONCURRENCY = 6;
-      for (let i = 0; i < keys.length; i += CONCURRENCY) {
-        const settled = await Promise.all(keys.slice(i, i + CONCURRENCY).map(async (key) => {
-          try { return [key, await statObject(storageCode, effectiveBucket, key)] as const; }
-          catch { return [key, null] as const; }
-        }));
-        for (const [key, stat] of settled) if (stat) next[key] = stat;
-      }
-      if (alive) setStatMap(next);
-    })();
-    return () => { alive = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [list, storageCode, effectiveBucket]);
 
   const reload = useCallback((patch: { pageIndex?: number; pageSize?: number } = {}) => {
     void fetchObjectPage({ pageIndex: patch.pageIndex ?? 1, pageSize: patch.pageSize, storageCode, bucketName: effectiveBucket, prefix: currentPrefix || undefined });
   }, [storageCode, effectiveBucket, currentPrefix]);
 
-  /** 行键：桶 + 对象键即唯一（列表接口只回键，桶来自当前筛选条件） */
+  /** 行键：桶 + 对象键即唯一（bucketName 现由后端 ObjectStat.bucket 带回，缺省回退当前筛选桶） */
   const rowKeyOf = (r: StorageObject) => `${r.bucketName || effectiveBucket || ''}|${r.objectName}`;
-  /** 行上的桶：后端列表不回带桶名，缺省回退到当前筛选的桶 */
+  /** 行上的桶：优先用后端回带的 bucket，缺失时回退到当前筛选的桶 */
   const bucketOf = (r: StorageObject) => r.bucketName || effectiveBucket || '';
 
   const handleUpload = async (file: File) => {
@@ -678,15 +662,15 @@ export const StorageObjectPane = ({ defaultStorageCode }: { defaultStorageCode?:
     },
     {
       title: '大小', key: 'size', width: 110, align: 'center', onHeaderCell: hdrCenter,
-      render: (_, r) => (r._isDir ? '—' : formatBytes(statMap[r.obj.objectName]?.size)),
+      render: (_, r) => (r._isDir ? '—' : formatBytes(r.obj.size)),
     },
     {
       ...leftCell, title: '内容类型', key: 'contentType', width: 200,
-      render: (_, r) => (r._isDir ? '文件夹' : (statMap[r.obj.objectName]?.contentType || '-')),
+      render: (_, r) => (r._isDir ? '文件夹' : (r.obj.contentType || '-')),
     },
     {
       ...leftCell, title: '最后修改', key: 'lastModified', width: 190,
-      render: (_, r) => (r._isDir ? '—' : formatDateTime(statMap[r.obj.objectName]?.lastModified)),
+      render: (_, r) => (r._isDir ? '—' : formatDateTime(r.obj.lastModified)),
     },
     {
       title: '操作', key: 'action', width: 250, fixed: 'right', align: 'center', onHeaderCell: hdrCenter,

@@ -132,7 +132,7 @@ export const JulyScheduler = () => {
       </Card>
 
       <Modal title={modal.node ? '编辑任务' : '新建任务'} key={modal.node?.id ?? 'new'} open={modal.open} onCancel={() => setModal({ open: false, node: null })}
-        onOk={handleSave} okText="保存" cancelText="取消" confirmLoading={saving} destroyOnClose>
+        onOk={handleSave} okText="保存" cancelText="取消" confirmLoading={saving} destroyOnHidden>
         <Form form={form} layout="vertical" preserve={false} initialValues={formInitialValues}>
           <Row gutter={16}>
             <Col span={12}>

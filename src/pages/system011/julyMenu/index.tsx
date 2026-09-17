@@ -397,7 +397,7 @@ export const JulyMenu = () => {
         onOk={handleCreate}
         okText="保存"
         cancelText="取消"
-        destroyOnClose
+        destroyOnHidden
       >
         <Form form={createForm} layout="vertical" preserve={false}>
           <Row gutter={12}>

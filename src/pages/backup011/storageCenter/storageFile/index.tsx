@@ -29,7 +29,7 @@ import { useStorageObjectState } from '@/stores/storage011/storageObjectStore';
 import { storageExplorerStore, useStorageExplorer } from '@/stores/storage011/storageExplorerStore';
 import { useStorageOptions } from '@/pages/storageCenter/useStorageOptions';
 import { StorageInstancesModal } from '@/pages/storageCenter/StorageInstancesModal';
-import { TextEditorModal } from './TextEditorModal';
+import { TextEditorModal } from '@/pages/backup011/storageCenter/storageFile/TextEditorModal';
 
 /** 表头单元格水平居中 */
 const hdrCenter = (): React.HTMLAttributes<HTMLElement> => ({ style: { textAlign: 'center' } });

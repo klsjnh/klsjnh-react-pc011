@@ -69,7 +69,7 @@ export const JulyConfig = () => {
     onClick: ({ key }) => handleExport(key as 'json' | 'csv'),
   };
 
-  // 表单初始值逻辑已收敛到 ConfigFormModal（destroyOnClose + initialValues）
+  // 表单初始值逻辑已收敛到 ConfigFormModal（destroyOnHidden + initialValues）
 
   const handleRemove = async (id: string) => {
     try {

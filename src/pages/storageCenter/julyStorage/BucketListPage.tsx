@@ -1,6 +1,7 @@
 /**
  * 存储管理（主子表：存储实例 → 存储桶）
  * 路由：/storageCenter/bucketList
+ * 行内「测试连接」结果用 TestFeedbackAlert 展示（与数据源页一致），不再用 toast。
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Card, Input, Popconfirm, Space, Table, Tag, Tabs } from 'antd';
@@ -8,7 +9,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { PlusOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTableFillHeight } from '@/hooks/useTableFillHeight';
 import { toast } from '@/utils/toast';
-import type { JulyStorage, JulyStorageConnect } from '@/types/storage011';
+import type { JulyStorage, JulyStorageConnect, StorageTestResult } from '@/types/storage011';
 import {
   fetchStoragePage, listStorages, removeStorage, removeStorages, testStorageConnection,
 } from '@/services/storage011/julyStorageService';
@@ -16,8 +17,9 @@ import { fetchBucketPage } from '@/services/storage011/storageBucketService';
 import { useStorageState } from '@/stores/storage011/julyStorageStore';
 import { useStorageBucketState } from '@/stores/storage011/storageBucketStore';
 import { PAGE_SIZE_OPTIONS } from '@/utils/pageSizePref';
-import { StorageFormModal } from './StorageFormModal';
-import { StorageBucketPane } from './index';
+import { TestFeedbackAlert, type TestFeedback, type TestFeedbackDetail } from '@/components/system011/TestFeedbackAlert';
+import { StorageFormModal } from '@/pages/storageCenter/julyStorage/StorageFormModal';
+import { StorageBucketPane } from '@/pages/storageCenter/julyStorage';
 
 const hdrCenter = (): React.HTMLAttributes<HTMLElement> => ({ style: { textAlign: 'center' } });
 const leftCell = { align: 'left' as const, onHeaderCell: hdrCenter };
@@ -31,10 +33,35 @@ const PROVIDER_META: Record<string, { label: string; color: string }> = {
   s3011: { label: '通用 S3', color: 'geekblue' },
 };
 
+/** 组装存储测试反馈（供 TestFeedbackAlert 消费）：存储没有「数据库产品/版本」，改用 details 详情行 */
+function buildStorageFeedback(res: StorageTestResult, startedAt: number, providerLabel?: string): TestFeedback {
+  const details: TestFeedbackDetail[] = [];
+  if (providerLabel) details.push({ label: '类型', value: providerLabel });
+  if (res.endpoint) details.push({ label: '接入点', value: res.endpoint });
+  if (res.basePath) details.push({ label: '根路径', value: res.basePath });
+  if (res.bucketCount != null) details.push({ label: '桶数量', value: String(res.bucketCount) });
+  return {
+    ok: !!res.success,
+    message: res.message || (res.success ? '连接成功' : '连接失败'),
+    elapsedMs: Date.now() - startedAt,
+    details,
+  };
+}
+
+/** 请求异常（如 HTTP 500）时的失败反馈 -> 用 Alert 展示，而非 toast */
+function failureFeedback(e: unknown, startedAt: number): TestFeedback {
+  return {
+    ok: false,
+    message: (e as Error)?.message || '连接测试请求失败',
+    elapsedMs: Date.now() - startedAt,
+  };
+}
+
 export const BucketListPage = () => {
   const { list, total, loading, query } = useStorageState();
   const [modal, setModal] = useState<{ open: boolean; node: JulyStorage | null }>({ open: false, node: null });
   const [testingId, setTestingId] = useState<string | null>(null);
+  const [pageTest, setPageTest] = useState<TestFeedback | null>(null);
   const [keyword, setKeyword] = useState('');
   const [selectedCode, setSelectedCode] = useState<string | undefined>();
   const cardRef = useRef<HTMLDivElement>(null);
@@ -44,17 +71,19 @@ export const BucketListPage = () => {
 
   const search = (v: string) => { setKeyword(v); void fetchStoragePage({ pageIndex: 1, keyword: v || undefined }); };
 
+  /** 表行内测试（对已保存实例重测），结果展示在页面顶部 Alert */
   const handleTest = async (row: JulyStorage) => {
     setTestingId(row.id);
+    setPageTest(null);
+    const startedAt = Date.now();
     try {
       // 后端 testConnection 入参是 JulyStorageConnectVo011（只接受 id 或连接字段）
       // 已保存实例只传 id —— 让后端按库里的连接配置测；secretKey 列表页默认不回显，拼草稿字段也不可信
       const payload: JulyStorageConnect = { id: row.id };
       const res = await testStorageConnection(payload);
-      if (res?.success) toast.success(`连接成功${res.message ? '：' + res.message : ''}`);
-      else toast.error(`连接失败：${res?.message || '未知原因'}`);
+      setPageTest(buildStorageFeedback(res || { success: false }, startedAt, PROVIDER_META[row.provider]?.label));
     } catch (e) {
-      toast.error((e as Error)?.message || '测试失败');
+      setPageTest(failureFeedback(e, startedAt));
     } finally {
       setTestingId(null);
     }
@@ -130,6 +159,8 @@ export const BucketListPage = () => {
           >刷新</Button>
         </div>
       </div>
+
+      {pageTest && <TestFeedbackAlert data={pageTest} />}
 
       <Card className="table-wrapper" styles={{ body: { padding: 0 } }} title="存储实例">
         <Table<JulyStorage>

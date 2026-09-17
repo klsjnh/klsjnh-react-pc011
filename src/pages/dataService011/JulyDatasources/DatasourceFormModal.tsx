@@ -121,7 +121,7 @@ export const DatasourceFormModal = ({ open, node, onClose, onSaved }: Datasource
         <Button key="ok" type="primary" loading={saving} onClick={handleSave}>保存</Button>,
       ]}
       width={720}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form form={form} layout="vertical" preserve={false} initialValues={formInitialValues}>
         {modalTest && <TestFeedbackAlert data={modalTest} />}

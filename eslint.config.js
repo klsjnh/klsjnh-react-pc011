@@ -1,7 +1,7 @@
 /**
  * ESLint 扁平配置（eslint v9+）
  * 配套 docs/011.agreements 与 015/016.coding-standards：no-any / no-non-null-assertion / 禁用 React.FC 等。
- * 安装：pnpm add -D eslint typescript-eslint eslint-plugin-react-hooks eslint-plugin-react-refresh
+ * 安装：npm install -D eslint typescript-eslint eslint-plugin-react-hooks eslint-plugin-react-refresh
  */
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';

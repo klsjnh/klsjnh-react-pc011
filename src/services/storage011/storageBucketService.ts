@@ -1,18 +1,21 @@
 /**
  * 存储桶服务（storagecenter · julyStorage/v1/*）
  * 桶名即主键，无 id；所有动作带 storageCode 归属某个存储实例。
- * 后端契约（核对 Java 源码 + 实时 OpenAPI 2026-09-17）：
- *   GET  /julyStorage/v1/getBucket?storageCode=&bucketName=   → Boolean
- *   POST /julyStorage/v1/selectBucketList|selectBucketListByPage  → List<String> / PageResult011<String>（**只有桶名**）
+ * 后端契约（核对实时 OpenAPI 2026-09-17）：
+ *   GET  /julyStorage/v1/getBucket?storageCode=&bucketName=  → {bucketName, exists}（**不存在时 404**）
+ *   POST /julyStorage/v1/selectBucketList|selectBucketListByPage  → BucketInfo[] / PageResult011<BucketInfo>
+ *        （BucketInfo = {bucketName, creationDate} —— 是对象数组，不再是桶名字符串数组）
  *   POST /julyStorage/v1/insertBucket|removeBucket|testBucketConnection
  *   POST /julyStorage/v1/selectListByPage                     → 存储实例分页（非桶）
- * ⚠️ 桶的区域/创建时间后端不返回，列表页不得展示这两列（否则永远空）。
+ * 区域（region）只在新建入参里，出参不回；创建时间已随 BucketInfo 返回。
  */
 import { api } from '@/api/request';
-import { STORAGECENTER_BASE } from './base';
+import { STORAGECENTER_BASE } from '@/services/storage011/base';
 import { storageBucketStore } from '@/stores/storage011/storageBucketStore';
 import type { PageResult011 } from '@/types/common';
-import type { StorageBucket, StorageBucketQuery, StorageTestResult } from '@/types/storage011';
+import type {
+  BucketInfo, StorageBucket, StorageBucketExists, StorageBucketQuery, StorageTestResult,
+} from '@/types/storage011';
 
 /** 存储桶动作路径（相对 STORAGECENTER_BASE） */
 const BUCKET_ACTIONS = {
@@ -24,14 +27,22 @@ const BUCKET_ACTIONS = {
   testConnection: '/julyStorage/v1/testBucketConnection',
 } as const;
 
-/** 桶名字符串 → 行（挂上归属实例，桶级接口只认 storageCode 入参，不回带） */
-function toBucketRows(names: string[] | null | undefined, storageCode?: string): StorageBucket[] {
-  return (names || []).map((name) => ({ bucketName: name, storageCode }));
+/**
+ * 后端桶行 → 前端统一行。
+ * 后端回 BucketInfo{bucketName, creationDate}；这里补上**入参**决定的归属实例
+ * （桶级接口只认 storageCode 入参，不回带 storageCode）。
+ * 兼容纯字符串形态（老契约 / 非分页接口若回 List<String>），避免形状变动再次打崩渲染。
+ */
+function toBucketRows(rows: (BucketInfo | string)[] | null | undefined, storageCode?: string): StorageBucket[] {
+  return (rows || []).map((row) => {
+    if (typeof row === 'string') return { bucketName: row, storageCode };
+    return { bucketName: String(row?.bucketName ?? ''), creationDate: row?.creationDate, storageCode };
+  });
 }
 
-/** 分页查询（后端返回桶名数组，这里补齐 storageCode 供表格展示「归属实例」） */
+/** 分页查询（后端回 PageResult011<BucketInfo>，这里补 storageCode 供「归属实例」列展示） */
 export async function selectBucketListByPage(query: StorageBucketQuery = {}): Promise<PageResult011<StorageBucket>> {
-  const res = await api.post<PageResult011<string>>(BUCKET_ACTIONS.selectListByPage, query, STORAGECENTER_BASE);
+  const res = await api.post<PageResult011<BucketInfo>>(BUCKET_ACTIONS.selectListByPage, query, STORAGECENTER_BASE);
   return { ...res, rows: toBucketRows(res.rows, query.storageCode) };
 }
 
@@ -59,18 +70,21 @@ export async function removeBucket(storageCode: string | undefined, bucketName: 
   await fetchBucketPage(storageBucketStore.getSnapshot().query);
 }
 
-/** 某实例下的桶列表（对象选择器用）：后端返回桶名数组 */
+/** 某实例下的桶列表（对象选择器用）：后端回 BucketInfo[] */
 export async function listBuckets(storageCode?: string): Promise<StorageBucket[]> {
-  const names = await api.post<string[]>(BUCKET_ACTIONS.selectList, { storageCode }, STORAGECENTER_BASE);
-  return toBucketRows(names, storageCode);
+  const rows = await api.post<BucketInfo[]>(BUCKET_ACTIONS.selectList, { storageCode }, STORAGECENTER_BASE);
+  return toBucketRows(rows, storageCode);
 }
 
-/** 桶是否存在（GET + query） */
-export function getBucketByName(storageCode: string | undefined, bucketName: string): Promise<boolean> {
-  return api.get<boolean>(BUCKET_ACTIONS.getByName, { storageCode, bucketName }, STORAGECENTER_BASE);
+/**
+ * 桶是否存在（GET + query）：后端回 {bucketName, exists}，**桶不存在时直接 404**。
+ * 调用方需自行 catch 404（404 语义即「不存在」）。
+ */
+export function getBucketByName(storageCode: string | undefined, bucketName: string): Promise<StorageBucketExists> {
+  return api.get<StorageBucketExists>(BUCKET_ACTIONS.getByName, { storageCode, bucketName }, STORAGECENTER_BASE);
 }
 
-/** 桶连接测试（恒 200，看 data.success） */
+/** 桶连接测试（恒 200，看 data.success / data.bucketCount） */
 export function testBucketConnection(storageCode?: string): Promise<StorageTestResult> {
   return api.post<StorageTestResult>(BUCKET_ACTIONS.testConnection, { storageCode }, STORAGECENTER_BASE);
 }

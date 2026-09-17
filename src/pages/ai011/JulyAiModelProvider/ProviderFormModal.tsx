@@ -5,7 +5,7 @@
  * 子表：API 密钥管理（selectApiListByProvider 拉取，新增/编辑/删除/测试连接）
  * 提交 / 测试逻辑收敛在组件内，页面只用控制 open / node 与刷新。
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ApiOutlined, KeyOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button, Col, Form, Input, Modal, Row, Select, Space, Table, Tag, Popconfirm } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -43,13 +43,15 @@ export interface ProviderFormModalProps {
 }
 
 /** API 子表 新增 / 编辑 弹窗 */
-const ApiFormModal: React.FC<{
+interface ApiFormModalProps {
   open: boolean;
   provider: AiModelProviderItem | null;
   node: AiModelProviderApiItem | null;
   onClose: () => void;
   onSaved: () => void;
-}> = ({ open, provider, node, onClose, onSaved }) => {
+}
+
+const ApiFormModal = ({ open, provider, node, onClose, onSaved }: ApiFormModalProps) => {
   const [form] = Form.useForm();
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -91,7 +93,7 @@ const ApiFormModal: React.FC<{
       onSaved();
       onClose();
     } catch (e) {
-      if ((e as any)?.errorFields) return;
+      if (e && typeof e === 'object' && 'errorFields' in e) return;
       toast.error((e as Error)?.message || '保存失败');
     } finally { setSaving(false); }
   };
@@ -108,7 +110,7 @@ const ApiFormModal: React.FC<{
         <Button key="ok" type="primary" loading={saving} onClick={handleSave}>保存</Button>,
       ]}
       width={600}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form form={form} layout="vertical" preserve={false}>
         {test && <TestFeedbackAlert data={test} />}
@@ -206,7 +208,7 @@ export const ProviderFormModal = ({ open, node, onClose, onSaved }: ProviderForm
       onSaved();
       onClose();
     } catch (e) {
-      if ((e as any)?.errorFields) return;
+      if (e && typeof e === 'object' && 'errorFields' in e) return;
       toast.error((e as Error)?.message || '保存失败，请检查输入');
     } finally { setSaving(false); }
   };
@@ -256,7 +258,7 @@ export const ProviderFormModal = ({ open, node, onClose, onSaved }: ProviderForm
         <Button key="ok" type="primary" loading={saving} onClick={handleSave}>保存</Button>,
       ]}
       width={760}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form form={form} layout="vertical" preserve={false} initialValues={{ status: '1', sortOrder: 1 }}>
         {modalTest && <TestFeedbackAlert data={modalTest} />}

@@ -3,7 +3,7 @@
  * 字段对齐后端：userAccount / userName / email / mobile / pkOrg / status；角色用 roleIds。
  * 提交走 julyUserService.saveUser。
  *
- * 注：依赖 destroyOnClose + initialValues 在每次打开时重新挂载 Form，
+ * 注：依赖 destroyOnHidden + initialValues 在每次打开时重新挂载 Form，
  * 因此用 initialValues 填充初始值（而非 useEffect + initialized 守卫，后者易漏填/重复填）。
  * 角色数据可能在弹窗打开后才加载完，用额外 effect 在不覆盖用户手改的前提下补填 roleIds。
  */
@@ -39,7 +39,7 @@ export const JulyUserFormModal = ({
   const [form] = Form.useForm();
   const isEdit = !!user;
 
-  // 打开时根据当前 user 计算初始值；destroyOnClose 每次打开重新挂载 Form，initialValues 重新生效
+  // 打开时根据当前 user 计算初始值；destroyOnHidden 每次打开重新挂载 Form，initialValues 重新生效
   const initialValues = useMemo(() => {
     if (!user) return { status: '1' };
     return {
@@ -77,7 +77,7 @@ export const JulyUserFormModal = ({
       okText="保存"
       cancelText="取消"
       width={640}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form form={form} layout="vertical" preserve={false} initialValues={initialValues}>
 

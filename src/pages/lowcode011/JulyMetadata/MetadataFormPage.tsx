@@ -8,9 +8,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button, Card, Form, Input, InputNumber, Select, Space, Tabs } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
-import { FieldTable, type SubTableHandle } from './FieldTable';
-import { DisplayTable } from './DisplayTable';
-import { ServiceTable } from './ServiceTable';
+import { FieldTable, type SubTableHandle } from '@/pages/lowcode011/JulyMetadata/FieldTable';
+import { DisplayTable } from '@/pages/lowcode011/JulyMetadata/DisplayTable';
+import { ServiceTable } from '@/pages/lowcode011/JulyMetadata/ServiceTable';
 import { saveMetadata, getMetadataById } from '@/services/lowcode011';
 import { toast } from '@/utils/toast';
 import { LOWCODE011_ROUTES } from '@/config/routes';
@@ -76,8 +76,8 @@ export const MetadataFormPage = ({ id, onNavigate }: Props) => {
     let v: Record<string, any>;
     try {
       v = await form.validateFields();
-    } catch (e: any) {
-      if (e && e.errorFields) return;
+    } catch (e) {
+      if (e && typeof e === 'object' && 'errorFields' in e) return;
       return;
     }
     const fields = fieldRef.current?.getSaveData() || [];

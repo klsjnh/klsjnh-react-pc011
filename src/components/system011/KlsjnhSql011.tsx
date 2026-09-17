@@ -55,7 +55,7 @@ function getNativeTextarea(ref: AntTextAreaRef | null): HTMLTextAreaElement | nu
   return ref?.resizableTextArea?.textArea ?? null;
 }
 
-export const KlsjnhSql011: React.FC<KlsjnhSql011Props> = ({
+export const KlsjnhSql011 = ({
   value = '',
   onChange,
   onExecute,
@@ -68,7 +68,7 @@ export const KlsjnhSql011: React.FC<KlsjnhSql011Props> = ({
   prefix,
   suffix,
   defaultDialect = 'oracle',
-}) => {
+}: KlsjnhSql011Props) => {
   const { message } = App.useApp();
   const [executing, setExecuting] = useState(false);
   const [dialect, setDialect] = useState<SqlFormatLanguage>(defaultDialect);

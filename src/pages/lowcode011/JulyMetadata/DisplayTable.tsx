@@ -6,8 +6,8 @@ import React, { forwardRef, useImperativeHandle } from 'react';
 import { Button, Input, InputNumber, Select, Table } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import { useDraftRows } from './useDraftRows';
-import type { SubTableHandle } from './FieldTable';
+import { useDraftRows } from '@/pages/lowcode011/JulyMetadata/useDraftRows';
+import type { SubTableHandle } from '@/pages/lowcode011/JulyMetadata/FieldTable';
 import type { JulyMetadataDisplayVo011, DraftRow } from '@/types/lowcode011';
 
 const ALIGN_OPTIONS = [

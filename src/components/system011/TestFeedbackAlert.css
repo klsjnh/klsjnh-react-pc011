@@ -18,3 +18,13 @@
 .test-feedback-lines .tf-db-line {
   line-height: 1.6;
 }
+/* 非数据库模块的附加详情行（如存储的「接入点 / 根路径 / 桶数量」） */
+.test-feedback-lines .tf-details {
+  margin-top: 2px;
+  color: rgba(0, 0, 0, 0.65);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.test-feedback-lines .tf-detail-line {
+  line-height: 1.6;
+}

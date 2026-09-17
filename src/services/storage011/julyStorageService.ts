@@ -5,10 +5,11 @@
  *   GET  /julyStorage/v1/getById?id=          GET /julyStorage/v1/getByCode?code=
  *   POST /julyStorage/v1/selectListByPage     POST /julyStorage/v1/insert|update|logicDelete|logicDeleteBatch|testConnection
  *   POST /julyStorage/v1/insertBucket|removeBucket|selectBucketList|selectBucketListByPage|testBucketConnection
- *   GET  /julyStorage/v1/getBucket?storageCode=&bucketName=  → Boolean
+ *   GET  /julyStorage/v1/getBucket?storageCode=&bucketName=  → {bucketName, exists}（不存在 404）
+ *   POST /julyStorage/v1/testConnection → StorageProbeVo011{success, bucketCount, basePath, endpoint, message}
  */
 import { api } from '@/api/request';
-import { STORAGECENTER_BASE } from './base';
+import { STORAGECENTER_BASE } from '@/services/storage011/base';
 import { julyStorageStore } from '@/stores/storage011/julyStorageStore';
 import type { PageResult011, IdVo011, BatchDeleteResultVo011 } from '@/types/common';
 import type { JulyStorage, JulyStorageConnect, JulyStorageQuery, StorageTestResult } from '@/types/storage011';
