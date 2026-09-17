@@ -1,6 +1,11 @@
 /**
  * 元数据服务（lowcode011 / julyMetadata/v1/*）—— 一主三子整体管理。
  * 分层：page → service → store；service 编排业务并写 store，不直接被 store 调用。
+ *
+ * 本文件覆盖后端 039 已上线的**两期**（2026-09-17）：
+ *  - 一期（设计闭环，零改库）：`listMetadataModels` / `loadMetadataDto` / `saveMetadataDto` / `previewMetadataDdl`
+ *  - 二期（发布闭环）：`publishMetadata` / `getMetadataImportStatus` / `importMetadataDataFromSql`
+ * 三期（运行时 CRUD / 菜单 / 开放 API）后端未实装，前端占位见 `services/lowcode011/metadataDesignerService.ts`。
  */
 import { api } from '@/api/request';
 import { LOWCODE011_ACTIONS } from '@/services/lowcode011/actions';
@@ -8,6 +13,7 @@ import { julyMetadataStore } from '@/stores/lowcode011/julyMetadataStore';
 import type {
   JulyMetadataVo011, JulyMetadataQueryVo011, JulyMetadataSaveVo011,
   JulyMetadataMetaDto011, JulyMetadataModelRow011,
+  PublishPayload, PublishResult, ImportDataPayload, ImportDataResult, ImportStatusResult,
 } from '@/types/lowcode011';
 import type { PageResult011, IdVo011 } from '@/types/common';
 
@@ -111,4 +117,40 @@ export async function saveMetadataDto(body: JulyMetadataMetaDto011): Promise<str
 export async function previewMetadataDdl(objectName: string): Promise<string> {
   const res = await api.get<{ ddl?: string }>(LOWCODE011_ACTIONS.metadata.previewDdl, { objectName }, BASE);
   return res?.ddl || '';
+}
+
+/* ==================== 设计器：发布 / 数据同步（039 二期，2026-09-17 后端上线） ==================== */
+
+/**
+ * 发布建表（POST /publish）—— **真正执行 DDL**。
+ * 行为：首次 `CREATE TABLE IF NOT EXISTS`；表已存在时**只** `ALTER ... ADD COLUMN` 补齐缺失列，
+ * 永不 DROP / MODIFY / RENAME；无事可做时 `ddl` 为 null。
+ * 受配置开关 `krt.lowcode.ddl-execute.enabled` 控制（关闭时 → 400 `ddl execute disabled ...`）。
+ * 副作用：写入快照表 `july_metadata_version` 并推进主表 `publish_status` / `version` / `physical_table`。
+ * ⚠️ `migrateData` / `includeDeleted` 后端当前是**预留参数**（收了不用），返回的 `backupTable` 恒 null。
+ * @returns 含 version（`0.0.1` 递增串）、physicalTable、ddl 的结果
+ */
+export function publishMetadata(body: PublishPayload): Promise<PublishResult> {
+  return api.post<PublishResult>(LOWCODE011_ACTIONS.metadata.publish, body, BASE);
+}
+
+/**
+ * 读取数据同步状态（GET /importStatus?objectName=）。
+ * 对象不存在时后端仍回 200（`dataInitialized=false` / `physicalTable=null` / `publishStatus=draft`），
+ * 故可用它判「是否已发布 + 是否已初始化」——这也是**唯一**拿到真实发布态的接口
+ * （`listModels` / `load` 里的 publishStatus 是硬编码 `draft`）。
+ */
+export function getMetadataImportStatus(objectName: string): Promise<ImportStatusResult> {
+  return api.get<ImportStatusResult>(LOWCODE011_ACTIONS.metadata.importStatus, { objectName }, BASE);
+}
+
+/**
+ * 分页导入数据（POST /importDataFromSql）—— 源 SQL 分页读 → 目标物理表 upsert。
+ * 源 SQL 走业务建模的分页执行器（方言分页），目标表取自最新发布快照。
+ * ⚠️ 前置条件：对象**必须先发布**（未发布 → 400 `object not published: xxx`）；
+ * 对象不存在 → 404 `record not found`；缺 dataSourceCode / sqlCode → 400。
+ * `updated` / `unchanged` / `skipped` 后端恒为 0，只有 `inserted`（= 本页处理行数）可信。
+ */
+export function importMetadataDataFromSql(body: ImportDataPayload): Promise<ImportDataResult> {
+  return api.post<ImportDataResult>(LOWCODE011_ACTIONS.metadata.importDataFromSql, body, BASE);
 }

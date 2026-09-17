@@ -5,8 +5,9 @@
  * 因此此处 action 只写相对路径（与 mock 分发 key 完全一致）。
  *
  * ⚠️ 方法错配本项目一律报 **500**（不是 405），改前先确认 GET/POST：
- *  - GET（query 传参）：getById / getByObjectName / listModels / load / previewDdl
+ *  - GET（query 传参）：getById / getByObjectName / listModels / load / previewDdl / importStatus
  *  - POST（body）：selectListByPage / insert / update / designerSave / logicDelete / logicDeleteBatch
+ *    / publish / importDataFromSql
  *
  * 【两组口径并存，勿混】
  *  - CRUD 组（038）：insert / update，子表键名 fieldCode / fieldName / fieldLength / requiredField
@@ -30,5 +31,12 @@ export const LOWCODE011_ACTIONS = {
     designerSave: '/julyMetadata/v1/save',
     /** 与 publish 共用同一 DDL 生成器；返回 { ddl } */
     previewDdl: '/julyMetadata/v1/previewDdl',
+    /* ---- 039 二期 发布 / 数据同步（2026-09-17 后端上线） ---- */
+    /** body { objectName, migrateData, includeDeleted }；返回 { version, publishStatus, physicalTable, ddl } */
+    publish: '/julyMetadata/v1/publish',
+    /** body { objectName, dataSourceCode, sqlCode, pageNum, pageSize, forceInit }（前三个必填） */
+    importDataFromSql: '/julyMetadata/v1/importDataFromSql',
+    /** GET；query { objectName }；返回 { dataInitialized, physicalTable, publishStatus } */
+    importStatus: '/julyMetadata/v1/importStatus',
   },
 } as const;

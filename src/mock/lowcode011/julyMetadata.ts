@@ -2,15 +2,19 @@
  * Mock：元数据（lowcode011 / julyMetadata）—— 一主三子。
  * 内存态存主表 + fields + displays + services；insert/update 整体替换三子。
  *
- * ★ 覆盖**两组口径**（真实后端 2026-09-17 起同时提供）：
+ * ★ 覆盖**三组口径**（真实后端 2026-09-17 起同时提供）：
  *  - 038 CRUD：`selectListByPage` / `getById` / `getByObjectName` / `insert` / `update` /
  *    `logicDelete` / `logicDeleteBatch` —— 子表键名 `fieldCode` / `fieldName` / `requiredField`
  *  - 039 一期设计器：`listModels` / `load` / `save` / `previewDdl` —— MetaDTO，
  *    三子在**顶层**、键名短名 `code` / `name` / `notNull`
+ *  - 039 二期发布：`publish` / `importDataFromSql` / `importStatus` —— 发布态为 mock 内存态
  *
- * ⚠️ mock 的 `previewDdl` **逐字照抄**后端 `MySqlMetadataDdlGenerator`（含 `lc_` 前缀、
- * `IF NOT EXISTS`、无 id 时自动补主键、类型映射与 identifier 白名单），
- * 改这里必须同步改后端，否则 mock/真实两态下预览的 DDL 会漂移。
+ * ⚠️ mock 的 DDL 生成（`generateDdl` / `generateAddColumns`）**逐字照抄**后端
+ * `MySqlMetadataDdlGenerator`（含 `lc_` 前缀、`IF NOT EXISTS`、无 id 时自动补主键、
+ * 类型映射与 identifier 白名单），改这里必须同步改后端，否则 mock/真实两态下 DDL 会漂移。
+ *
+ * ⚠️ mock 的 `publish` **不建真表**（无物理库），只维护内存发布态（版本 / 物理表名 / 初始化标记）；
+ * 且按 action 派发**不区分 HTTP 方法** —— 方法错配（GET 写成 POST）在 mock 下永远发现不了。
  */
 import { ok, fail, delay, pageResult, type Handler } from '@/mock/system011/common';
 import type {
@@ -240,6 +244,105 @@ export const handlers: Record<string, Handler> = {
       return fail((e as Error).message, 400);
     }
   },
+
+  /* ---- 039 二期 发布 / 数据同步（2026-09-17 后端上线） ---- */
+
+  /** POST /publish —— 发布态存内存；DDL 与 previewDdl 同源（表已存在且无新列时 ddl=null） */
+  '/julyMetadata/v1/publish': async (body) => {
+    await delay(500);
+    const name = String(body?.objectName ?? '').trim();
+    if (!name) return fail('objectName required', 400);
+    const item = mockMetadatas.find((m) => m.objectName === name);
+    if (!item) return fail(`record not found, id=${name}`, 404);
+
+    const prev = publishStates.get(name);
+    const table = DDL_TABLE_PREFIX + name;
+    const version = nextVersion(prev?.version || '');
+    let ddl: string | null;
+
+    try {
+      if (!prev) {
+        // 表不存在 → CREATE（与 previewDdl 逐字一致）
+        ddl = generateDdl(item);
+      } else {
+        // 表已存在 → 只补缺失列；无缺失 → null（无事可做）
+        const existing = new Set(prev.columns);
+        const missing = (item.fields || []).filter((f) => !existing.has((f.fieldCode || '').toLowerCase()));
+        ddl = missing.length ? generateAddColumns(table, item.fields || [], missing) : null;
+      }
+    } catch (e) {
+      return fail((e as Error).message, 400);
+    }
+
+    publishStates.set(name, {
+      publishStatus: 'published',
+      version,
+      physicalTable: table,
+      dataInitialized: prev?.dataInitialized ?? false,
+      columns: (item.fields || []).map((f) => (f.fieldCode || '').toLowerCase()),
+    });
+
+    return ok({
+      objectName: name,
+      version,
+      publishStatus: 'published',
+      physicalTable: table,
+      backupTable: null,
+      ddl,
+    });
+  },
+
+  /** GET /importStatus?objectName= —— 对象不存在时后端仍回 200（全 false/null/draft） */
+  '/julyMetadata/v1/importStatus': async (body) => {
+    await delay(200);
+    const name = String(body?.objectName ?? '').trim();
+    const st = publishStates.get(name);
+    return ok({
+      objectName: name,
+      dataInitialized: st?.dataInitialized ?? false,
+      physicalTable: st?.physicalTable ?? null,
+      publishStatus: st ? 'published' : 'draft',
+    });
+  },
+
+  /**
+   * POST /importDataFromSql —— 前置：对象存在（否则 404）+ 已发布（否则 400）。
+   * 模拟源 SQL 每页 100 条、共 3 页；与后端一致地 updated/unchanged/skipped 恒 0。
+   */
+  '/julyMetadata/v1/importDataFromSql': async (body) => {
+    await delay(450);
+    const name = String(body?.objectName ?? '').trim();
+    const item = mockMetadatas.find((m) => m.objectName === name);
+    if (!item) return fail(`record not found, id=${name}`, 404);
+    const st = publishStates.get(name);
+    if (!st) return fail(`object not published: ${name}`, 400);
+    if (!String(body?.dataSourceCode ?? '').trim()) return fail('dataSourceCode required', 400);
+    if (!String(body?.sqlCode ?? '').trim()) return fail('sqlCode required', 400);
+
+    const pageNum = Number(body?.pageNum) > 0 ? Number(body?.pageNum) : 1;
+    const rawSize = Number(body?.pageSize) > 0 ? Number(body?.pageSize) : 100;
+    const pageSize = Math.min(rawSize, 500);
+    const totalPages = 3;
+    const hasMore = pageNum < totalPages;
+    const mode: 'init' | 'sync' = body?.forceInit === true || !st.dataInitialized ? 'init' : 'sync';
+
+    st.dataInitialized = true;
+
+    return ok({
+      objectName: name,
+      mode,
+      pageNum,
+      pageSize,
+      hasMore,
+      nextPageNum: hasMore ? pageNum + 1 : null,
+      inserted: pageSize,
+      updated: 0,
+      unchanged: 0,
+      skipped: 0,
+      processed: pageSize,
+      dataInitialized: true,
+    });
+  },
 };
 
 /** 清理前端草稿标记（_key/_isNew/_editing/_dirty/_deleted），新行剔除 id */
@@ -433,4 +536,50 @@ function generateDdl(m: JulyMetadataVo011): string {
   const tableComment = escapeLiteral(m.description || table);
   return `CREATE TABLE IF NOT EXISTS \`${table}\` (\n${lines.join(',\n')}\n)`
     + ` ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='${tableComment}'`;
+}
+
+/* ==================== 039 二期：发布态 + 补列 DDL ==================== */
+
+/** 发布态（mock 内存；key = objectName）—— publish 写，importStatus / importDataFromSql 读 */
+interface PublishState {
+  publishStatus: 'draft' | 'published';
+  version: string;
+  physicalTable: string;
+  dataInitialized: boolean;
+  /** 已建列快照（字段编码小写）—— 用于判「无新增列 → ddl = null」 */
+  columns: string[];
+}
+
+const publishStates = new Map<string, PublishState>();
+
+/**
+ * 版本号递增（**照抄后端 `JulyMetadataPublishUseCase#nextVersion`**）：
+ * 首次 `0.0.1`，其后 patch 位 +1；最后一段非数字时退化为追加 `.1`。
+ */
+function nextVersion(latest: string): string {
+  if (!latest) return '0.0.1';
+  const parts = latest.split('.');
+  const patch = Number(parts[parts.length - 1]);
+  if (!Number.isFinite(patch)) return `${latest}.1`;
+  parts[parts.length - 1] = String(patch + 1);
+  return parts.join('.');
+}
+
+/**
+ * 生成补列 DDL（**照抄后端 `MySqlMetadataDdlGenerator#generateAddColumns`**）。
+ * 只产出 `ADD COLUMN`，永不 DROP / MODIFY / RENAME —— 与「发布幂等、绝不删列」的约定一致。
+ */
+function generateAddColumns(table: string, missing: JulyMetadataFieldVo011[]): string {
+  if (!missing.length) throw new Error('no fields to add');
+  const t = requireIdentifier(table);
+  const clauses = missing.map((f) => {
+    const column = requireIdentifier(f.fieldCode);
+    const type = (f.fieldType || '').toLowerCase();
+    if (!DDL_TYPES.includes(type)) throw new Error(`unknown field type: ${f.fieldType}`);
+    const nullable = f.requiredField ? ' NOT NULL' : '';
+    const comment = f.fieldName || f.fieldCode;
+    return `ADD COLUMN \`${column}\` ${ddlColumnType(type, Number(f.fieldLength) || 0)}${nullable}`
+      + ` COMMENT '${escapeLiteral(comment)}'`;
+  });
+  return `ALTER TABLE \`${t}\`\n  ${clauses.join(',\n  ')}`;
 }
