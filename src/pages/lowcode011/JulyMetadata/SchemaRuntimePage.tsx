@@ -12,6 +12,7 @@
  * ★ 分流口径（接口有的对上，没有的说明是 mock）：
  *   - 元数据（列 / 表单 / 查询区 / 服务开关）→ **真实接口** getByObjectName
  *   - 缺 objectName 时的可选对象列表 → **真实接口** listModels（039 一期，2026-09-17 上线）
+ *   - 对象发布 / 初始化状态 → **真实接口** importStatus（039 二期，2026-09-17 上线）
  *   - 数据 CRUD（分页 / 新增 / 修改 / 删除）→ **PENDING-BACKEND** 占位
  *     （后端 039 三期规划为 /runtime/<objectName>，未实装）
  *     页面上以橙色 Alert 明示，占位实现见 src/mock/lowcode011/pendingRuntime.ts。
@@ -33,11 +34,12 @@ import { LOWCODE011_ROUTES } from '@/config/routes';
 import { useTableFillHeight } from '@/hooks/useTableFillHeight';
 import { loadPageSize, PAGE_SIZE_OPTIONS } from '@/utils/pageSizePref';
 import {
-  deleteRuntime, getRuntimeMeta, insertRuntime, listMetadataModels, pageRuntime, updateRuntime,
-  type RuntimeRow,
+  deleteRuntime, getRuntimeMeta, getRuntimePublishStatus, insertRuntime, listMetadataModels,
+  pageRuntime, updateRuntime, type RuntimeRow,
 } from '@/services/lowcode011';
 import { toast } from '@/utils/toast';
 import type { JulyMetadataModelRow011, JulyMetadataVo011 } from '@/types/lowcode011';
+import type { ImportStatusResult } from '@/types/lowcode011/metadataDesigner';
 
 const { Text } = Typography;
 
@@ -178,7 +180,8 @@ function renderFormControl(fieldType: string): React.ReactNode {
 const PAGE_SIZE_SCOPE = 'schemaRuntime';
 
 const PENDING_TEXT = '运行时动态 CRUD 属后端 039 三期（未实装，后端规划为 /runtime/<objectName>）；'
-  + '下方列表数据为内存占位、刷新即重置。对象元数据与模型列表走真实接口（getByObjectName / listModels）。';
+  + '下方列表数据为内存占位、刷新即重置。'
+  + '对象元数据 / 模型列表 / 发布态走真实接口（getByObjectName / listModels / importStatus）。';
 
 export const SchemaRuntimePage = () => {
   const location = useLocation();
@@ -190,6 +193,9 @@ export const SchemaRuntimePage = () => {
 
   const [meta, setMeta] = useState<JulyMetadataVo011 | null>(null);
   const [metaLoading, setMetaLoading] = useState(!!objectName);
+
+  // 发布 / 初始化状态（真实接口 importStatus）
+  const [publishState, setPublishState] = useState<ImportStatusResult | null>(null);
 
   // 缺 objectName 时用它列出可选模型（真实接口 listModels）
   const [models, setModels] = useState<JulyMetadataModelRow011[]>([]);
@@ -218,6 +224,15 @@ export const SchemaRuntimePage = () => {
       .then(setMeta)
       .catch((e) => toast.error((e as Error)?.message || '加载对象元数据失败'))
       .finally(() => setMetaLoading(false));
+  }, [objectName]);
+
+  /* ---------------- 发布 / 初始化状态（真实接口 importStatus，039 二期） ---------------- */
+  useEffect(() => {
+    if (!objectName) { setPublishState(null); return; }
+    getRuntimePublishStatus(objectName)
+      .then(setPublishState)
+      // 状态探测失败不阻断页面（数据仍走占位）
+      .catch(() => setPublishState(null));
   }, [objectName]);
 
   /* ---------------- 模型列表（真实接口 listModels；仅缺 objectName 时取） ---------------- */
@@ -452,8 +467,15 @@ export const SchemaRuntimePage = () => {
           <h2 style={{ margin: 0 }}>{meta?.description || objectName}</h2>
           <Tag color="blue">{objectName}</Tag>
           {meta?.objectType ? <Tag color="geekblue">{meta.objectType}</Tag> : null}
+          {publishState?.publishStatus === 'published'
+            ? <Tag color="green">已发布{publishState.physicalTable ? `：${publishState.physicalTable}` : ''}</Tag>
+            : <Tag color="orange">待发布</Tag>}
+          {publishState?.dataInitialized ? <Tag color="cyan">数据已初始化</Tag> : null}
         </Space>
-        <p>按元数据动态渲染：列 / 表单 / 查询区 / 服务开关均来自 /julyMetadata/v1/getByObjectName</p>
+        <p>
+          按元数据动态渲染：列 / 表单 / 查询区 / 服务开关来自 /julyMetadata/v1/getByObjectName；
+          发布态来自 /julyMetadata/v1/importStatus（均为真实接口）
+        </p>
       </div>
 
       {/* 工具栏：卡片之外、右对齐一行按钮 */}
@@ -475,6 +497,15 @@ export const SchemaRuntimePage = () => {
         message="数据 CRUD 为前端占位实现（PENDING-BACKEND）"
         description={PENDING_TEXT}
       />
+
+      {publishState && publishState.publishStatus !== 'published' && (
+        <Alert
+          type="info" showIcon style={{ marginBottom: 16, flex: '0 0 auto' }}
+          message={`对象 ${objectName} 尚未发布建表`}
+          description="后端三期实装运行时 CRUD 后，数据读写需要物理表存在 —— 请先在设计器执行「发布建表」。当前数据行为占位实现，不受此限制。"
+          action={<Button size="small" onClick={() => navigate(backPath)}>去设计器</Button>}
+        />
+      )}
 
       {canQuery && queryDefs.length > 0 && (
         <Card size="small" style={{ marginBottom: 16, flex: '0 0 auto' }}>
