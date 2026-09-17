@@ -2,7 +2,7 @@
  * 图标选择器（QQ 表情面板风格）
  * 点击图标即可选中，用于菜单图标配置。
  */
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Popover, Input } from 'antd';
 import type { NavIcon } from '@/types/view/layout';
 import { resolveMenuIcon } from '@/components/layout/MenuIcons';
@@ -24,7 +24,7 @@ interface IconPickerProps {
   onChange?: (value: string) => void;
 }
 
-export const IconPicker: React.FC<IconPickerProps> = ({ value, onChange }) => {
+export const IconPicker = ({ value, onChange }: IconPickerProps) => {
   const [open, setOpen] = useState(false);
   const Icon = value ? resolveMenuIcon(value) : null;
 

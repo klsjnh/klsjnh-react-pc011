@@ -55,7 +55,7 @@ export const ConfigFormModal = ({ open, node, onClose, onSaved }: ConfigFormModa
       okText="保存"
       cancelText="取消"
       confirmLoading={saving}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form form={form} layout="vertical" preserve={false} initialValues={formInitialValues}>
         <Form.Item name="code" label="配置键" rules={[{ required: true, message: '请输入配置键' }]}>

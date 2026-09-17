@@ -24,7 +24,7 @@ import { useStorageBucketState } from '@/stores/storage011/storageBucketStore';
 import { storageExplorerStore, useStorageExplorer } from '@/stores/storage011/storageExplorerStore';
 import { useStorageOptions } from '@/pages/storageCenter/useStorageOptions';
 import { StorageInstancesModal } from '@/pages/storageCenter/StorageInstancesModal';
-import { BucketFormModal } from './BucketFormModal';
+import { BucketFormModal } from '@/pages/backup011/storageCenter/storageBucket/BucketFormModal';
 
 /** 文件列表页路由（与 config/routes 的存储中心子路由保持一致） */
 const STORAGE_FILE_ROUTE = '/business/storage/file';

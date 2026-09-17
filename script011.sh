@@ -24,7 +24,7 @@ if [ "$1" = "gate" ]; then
     echo "==> [2/3] eslint"
     "$NODE" node_modules/eslint/bin/eslint.js .
   else
-    echo "==> [2/3] eslint 未安装，跳过（pnpm add -D eslint typescript-eslint eslint-plugin-react-hooks eslint-plugin-react-refresh）"
+    echo "==> [2/3] eslint 未安装，跳过（npm install -D eslint typescript-eslint eslint-plugin-react-hooks eslint-plugin-react-refresh）"
   fi
   echo "==> [3/3] 规范自检（Agent.md / 011 / 015 / 016 / 017）"
   "$NODE" tools/check-klsjnh-react-standards.mjs

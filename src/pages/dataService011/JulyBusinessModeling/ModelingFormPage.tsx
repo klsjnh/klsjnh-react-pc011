@@ -55,6 +55,8 @@ interface SqlOutcome {
     pageIndex?: number;
     pageSize?: number;
     totalPages?: number;
+    /** 后端返回结构未建模：此签名用于容纳原样透传的其余字段，展示层只读上面已知字段 */
+    [key: string]: unknown;
   };
   error?: string;
 }
@@ -134,7 +136,7 @@ export const ModelingFormPage = ({ id, onNavigate }: Props) => {
       toast.success(`${id ? 'update' : 'insert'} ${savedId} success ...`);
       onNavigate?.(DATASERVICE011_ROUTES.julyBusinessModeling);
     } catch (e) {
-      if ((e as any)?.errorFields) return;
+      if (e && typeof e === 'object' && 'errorFields' in e) return;
       toast.error((e as Error)?.message || '保存失败，请检查输入');
     } finally { setSaving(false); }
   };
@@ -148,7 +150,7 @@ export const ModelingFormPage = ({ id, onNavigate }: Props) => {
     try {
       if (kind === 'probe') {
         const res = await probeSql({ dataSourceCode: sqlDs, sqlContent: sqlText });
-        setSqlOutcome({ kind, data: { ...res, columns: res.columns } as any });
+        setSqlOutcome({ kind, data: { ...res, columns: res.columns } });
       } else if (kind === 'execute') {
         const res = await executeSqlByPage({ dataSourceCode: sqlDs, sqlContent: sqlText, pageIndex: 1, pageSize: 10 });
         setSqlTotal(res.total || (res.rows?.length ?? 0));
@@ -257,16 +259,16 @@ export const ModelingFormPage = ({ id, onNavigate }: Props) => {
 
                   <Form.List name="fieldData">
                     {(fields, { remove }) => {
-                      const columns: ColumnsType<any> = [
-                        { title: '字段编码', width: 150, render: (_: any, __: any, idx: number) => <Form.Item name={[idx, 'fieldCode']} rules={[{ required: true, message: '必填' }]} style={{ margin: 0 }}><Input placeholder="fieldCode" /></Form.Item> },
-                        { title: '字段名称', width: 130, render: (_: any, __: any, idx: number) => <Form.Item name={[idx, 'fieldName']} rules={[{ required: true, message: '必填' }]} style={{ margin: 0 }}><Input placeholder="名称" /></Form.Item> },
-                        { title: '列名', width: 130, render: (_: any, __: any, idx: number) => <Form.Item name={[idx, 'columnName']} rules={[{ required: true, message: '必填' }]} style={{ margin: 0 }}><Input placeholder="col_name" /></Form.Item> },
-                        { title: '类型', width: 120, render: (_: any, __: any, idx: number) => <Form.Item name={[idx, 'dataType']} style={{ margin: 0 }}><Select options={DATA_TYPE_OPTIONS} /></Form.Item> },
-                        { title: '长度', width: 90, render: (_: any, __: any, idx: number) => <Form.Item name={[idx, 'length']} style={{ margin: 0 }}><Input placeholder="如 64" /></Form.Item> },
-                        { title: '主键', width: 80, render: (_: any, __: any, idx: number) => <Form.Item name={[idx, 'isPrimaryKey']} style={{ margin: 0 }}><Select options={YESNO_OPTIONS} /></Form.Item> },
-                        { title: '可空', width: 80, render: (_: any, __: any, idx: number) => <Form.Item name={[idx, 'isNullable']} style={{ margin: 0 }}><Select options={YESNO_OPTIONS} /></Form.Item> },
-                        { title: '必填', width: 80, render: (_: any, __: any, idx: number) => <Form.Item name={[idx, 'isRequired']} style={{ margin: 0 }}><Select options={YESNO_OPTIONS} /></Form.Item> },
-                        { title: '操作', key: 'op', width: 60, render: (_: any, __: any, idx: number) => <Button type="link" size="small" danger icon={<DeleteOutlined />} onClick={() => remove(idx)} /> },
+                      const columns: ColumnsType<{ key: number; name: number }> = [
+                        { title: '字段编码', width: 150, render: (_: unknown, __: unknown, idx: number) => <Form.Item name={[idx, 'fieldCode']} rules={[{ required: true, message: '必填' }]} style={{ margin: 0 }}><Input placeholder="fieldCode" /></Form.Item> },
+                        { title: '字段名称', width: 130, render: (_: unknown, __: unknown, idx: number) => <Form.Item name={[idx, 'fieldName']} rules={[{ required: true, message: '必填' }]} style={{ margin: 0 }}><Input placeholder="名称" /></Form.Item> },
+                        { title: '列名', width: 130, render: (_: unknown, __: unknown, idx: number) => <Form.Item name={[idx, 'columnName']} rules={[{ required: true, message: '必填' }]} style={{ margin: 0 }}><Input placeholder="col_name" /></Form.Item> },
+                        { title: '类型', width: 120, render: (_: unknown, __: unknown, idx: number) => <Form.Item name={[idx, 'dataType']} style={{ margin: 0 }}><Select options={DATA_TYPE_OPTIONS} /></Form.Item> },
+                        { title: '长度', width: 90, render: (_: unknown, __: unknown, idx: number) => <Form.Item name={[idx, 'length']} style={{ margin: 0 }}><Input placeholder="如 64" /></Form.Item> },
+                        { title: '主键', width: 80, render: (_: unknown, __: unknown, idx: number) => <Form.Item name={[idx, 'isPrimaryKey']} style={{ margin: 0 }}><Select options={YESNO_OPTIONS} /></Form.Item> },
+                        { title: '可空', width: 80, render: (_: unknown, __: unknown, idx: number) => <Form.Item name={[idx, 'isNullable']} style={{ margin: 0 }}><Select options={YESNO_OPTIONS} /></Form.Item> },
+                        { title: '必填', width: 80, render: (_: unknown, __: unknown, idx: number) => <Form.Item name={[idx, 'isRequired']} style={{ margin: 0 }}><Select options={YESNO_OPTIONS} /></Form.Item> },
+                        { title: '操作', key: 'op', width: 60, render: (_: unknown, __: unknown, idx: number) => <Button type="link" size="small" danger icon={<DeleteOutlined />} onClick={() => remove(idx)} /> },
                       ];
                       return (
                         <Table

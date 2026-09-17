@@ -7,9 +7,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button, Drawer, Form, Input, InputNumber, Select, Space, Tabs } from 'antd';
 import { SaveOutlined } from '@ant-design/icons';
-import { FieldTable, type SubTableHandle } from './FieldTable';
-import { DisplayTable } from './DisplayTable';
-import { ServiceTable } from './ServiceTable';
+import { FieldTable, type SubTableHandle } from '@/pages/lowcode011/JulyMetadata/FieldTable';
+import { DisplayTable } from '@/pages/lowcode011/JulyMetadata/DisplayTable';
+import { ServiceTable } from '@/pages/lowcode011/JulyMetadata/ServiceTable';
 import { saveMetadata } from '@/services/lowcode011';
 import { toast } from '@/utils/toast';
 import type { JulyMetadataVo011, JulyMetadataSaveVo011 } from '@/types/lowcode011';
@@ -59,8 +59,8 @@ const EditorBody = ({ node, onClose }: { node: JulyMetadataVo011 | null; onClose
     let v: Record<string, any>;
     try {
       v = await form.validateFields();
-    } catch (e: any) {
-      if (e && e.errorFields) return; // 表单校验未过，antd 已高亮，不打 toast
+    } catch (e) {
+      if (e && typeof e === 'object' && 'errorFields' in e) return; // 表单校验未过，antd 已高亮，不打 toast
       return;
     }
     const fields = fieldRef.current?.getSaveData() || [];

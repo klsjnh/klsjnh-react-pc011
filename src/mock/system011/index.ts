@@ -41,7 +41,7 @@ const handlers: Record<string, Handler> = {
   ...storage011Handlers,
 };
 
-export function getMockResponse(action: string, body?: any): Promise<MockEnvelope<any>> | null {
+export function getMockResponse(action: string, body?: object): Promise<MockEnvelope<unknown>> | null {
   const handler = handlers[action];
   if (!handler) return null;
   return handler(body);

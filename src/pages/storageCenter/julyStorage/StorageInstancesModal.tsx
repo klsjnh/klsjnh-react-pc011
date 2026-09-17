@@ -14,7 +14,7 @@ import {
   fetchStoragePage, removeStorage, removeStorages, testStorageConnection,
 } from '@/services/storage011/julyStorageService';
 import { useStorageState } from '@/stores/storage011/julyStorageStore';
-import { StorageFormModal } from './StorageFormModal';
+import { StorageFormModal } from '@/pages/storageCenter/julyStorage/StorageFormModal';
 
 /** 表头单元格水平居中 */
 const hdrCenter = (): React.HTMLAttributes<HTMLElement> => ({ style: { textAlign: 'center' } });

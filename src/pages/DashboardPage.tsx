@@ -35,7 +35,7 @@ export const DashboardPage = () => {
         {stats.map((s) => (
           <Col span={6} key={s.label}>
             <Card>
-              <Statistic title={s.label} value={s.value} valueStyle={{ color: s.color }} />
+              <Statistic title={s.label} value={s.value} styles={{ content: { color: s.color } }} />
               {s.change && (
                 <div className="text-xs mt-2" style={{ color: s.up ? '#52c41a' : '#f5222d' }}>
                   {s.up ? '↑' : '↓'} {s.change} 较昨日

@@ -1,18 +1,19 @@
 /**
  * 对象（文件）服务（storagecenter · julyObject/v1/*）
  * 后端契约（核对 Java 源码 + 实时 OpenAPI 2026-09-17）：
- *   POST /julyObject/v1/selectObjectList           → List<String>
- *   POST /julyObject/v1/selectObjectListByPage     → PageResult011<String>（与 selectList 同形，仅多了分页）
+ *   POST /julyObject/v1/selectObjectList           → List<String>（**只有键**）
+ *   POST /julyObject/v1/selectObjectListByPage     → PageResult011<ObjectStat>（**带 size/lastModified/contentType**）
  *   GET  /julyObject/v1/statObject|readObjectText|presignObjectUrl|downloadObject （query 传参）
  *   POST /julyObject/v1/uploadObject（multipart：query 带 storageCode/bucketName/objectName，part 名 file）
  *   POST /julyObject/v1/saveObjectText|removeObject|batchRemoveObject（JSON body）
- * ⚠️ 列表与分页接口都只回对象键字符串数组；size/lastModified/contentType 必须靠 statObject 补齐。
+ * ⚠️ 形状不一致：**分页**回 ObjectStat 对象（bucket/key/size/lastModified/contentType），
+ *    **不分页的 selectObjectList 仍只回键字符串**（需要元数据时再走 statObject 逐个补）。
  * 上传/下载绕过 api.post 信封（multipart / blob），需拼完整基址 + 手动带鉴权头。
  */
 import { api, ApiError } from '@/api/request';
 import { isMockMode } from '@/config/appConfig';
 import { authStore } from '@/stores/authStore';
-import { STORAGECENTER_BASE, resolveStorageBase } from './base';
+import { STORAGECENTER_BASE, resolveStorageBase } from '@/services/storage011/base';
 import { storageObjectStore } from '@/stores/storage011/storageObjectStore';
 import type { PageResult011 } from '@/types/common';
 import type { ObjectStat, StorageObject, StorageObjectQuery, StorageTextContent } from '@/types/storage011';
@@ -45,16 +46,29 @@ function resolveEditorKind(objectName: string): ObjectEditorKind {
 }
 
 /**
- * 对象键字符串 → 统一行。
- * 后端 selectList / selectListByPage 都只回 List<String>；storageCode / bucketName 由入参回填，
- * size/lastModified/contentType 由调用方按需靠 statObject 补齐（详见 StorageObjectPane statMap）。
+ * 后端对象行 → 前端统一行。
+ * - 分页接口回 ObjectStat{bucket, key, size, lastModified, contentType}：直接落成行，**无需再 stat 补齐**；
+ * - 不分页的 selectObjectList 回字符串键：只映射键，元数据留空由调用方按需 statObject。
+ * storageCode 由入参回填（后端对象接口不回带）。
  */
-function toObjectRows(keys: string[] | null | undefined, storageCode?: string, bucketName?: string): StorageObject[] {
-  return (keys || []).map((key) => ({
-    objectName: String(key),
-    bucketName: bucketName || '',
-    storageCode: storageCode || '',
-  }));
+function toObjectRows(
+  rows: (ObjectStat | string)[] | null | undefined,
+  storageCode?: string,
+  bucketName?: string,
+): StorageObject[] {
+  return (rows || []).map((row) => {
+    if (typeof row === 'string') {
+      return { objectName: row, bucketName: bucketName || '', storageCode: storageCode || '' };
+    }
+    return {
+      objectName: String(row?.key ?? ''),
+      bucketName: row?.bucket || bucketName || '',
+      storageCode: storageCode || '',
+      size: row?.size,
+      lastModified: row?.lastModified,
+      contentType: row?.contentType,
+    };
+  });
 }
 
 /** 触发浏览器下载（blob → a[download]） */
@@ -67,9 +81,9 @@ function triggerDownload(blob: Blob, fileName: string): void {
   URL.revokeObjectURL(url);
 }
 
-/** 分页查询：后端回 PageResult011<String>，抽成统一行 */
+/** 分页查询：后端回 PageResult011<ObjectStat>（已带元数据），抽成统一行 */
 export async function selectObjectListByPage(query: StorageObjectQuery = {}): Promise<PageResult011<StorageObject>> {
-  const res = await api.post<PageResult011<string[]>>(OBJECT_ACTIONS.selectListByPage, query, STORAGECENTER_BASE);
+  const res = await api.post<PageResult011<ObjectStat>>(OBJECT_ACTIONS.selectListByPage, query, STORAGECENTER_BASE);
   return { ...res, rows: toObjectRows(res.rows, query.storageCode, query.bucketName) };
 }
 

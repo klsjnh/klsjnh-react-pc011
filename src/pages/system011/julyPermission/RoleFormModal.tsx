@@ -50,7 +50,7 @@ export const RoleFormModal = ({ open, role, onClose }: RoleFormModalProps) => {
       cancelText="取消"
       confirmLoading={submitting}
       width={560}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form
         key={role?.id ?? 'new'}

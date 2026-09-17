@@ -36,9 +36,9 @@ import {
 import { useStorageState } from '@/stores/storage011/julyStorageStore';
 import { useStorageBucketState } from '@/stores/storage011/storageBucketStore';
 import { useStorageObjectState } from '@/stores/storage011/storageObjectStore';
-import { StorageFormModal } from './StorageFormModal';
-import { BucketFormModal } from './BucketFormModal';
-import { TextEditorModal } from './TextEditorModal';
+import { StorageFormModal } from '@/pages/backup011/storageCenter/StorageCenter/StorageFormModal';
+import { BucketFormModal } from '@/pages/backup011/storageCenter/StorageCenter/BucketFormModal';
+import { TextEditorModal } from '@/pages/backup011/storageCenter/StorageCenter/TextEditorModal';
 
 /** 表头单元格水平居中 */
 const hdrCenter = (): React.HTMLAttributes<HTMLElement> => ({ style: { textAlign: 'center' } });

@@ -1,7 +1,7 @@
 /**
- * 存储桶新建弹窗（对接 storage011/bucket/insert）
- * 桶名即主键，故只支持新增（不支持改名）；storageCode 决定桶归属哪个存储实例。
- * 提交成功后 service 已刷新桶分页，父页无需额外回调。
+ * 存储桶新建弹窗（对接 /klsjnh/storagecenter/julyStorage/v1/insertBucket）
+ * 入参只有 storageCode / bucketName / region（StorageBucketInsertVo011）；桶名即主键，故只支持新增。
+ * storageCode 由主表选中行锁定（disabled），提交成功后 service 已刷新桶分页，父页无需额外回调。
  */
 import { useEffect, useMemo } from 'react';
 import { Form, Input, Modal, Select, Tag, Space } from 'antd';

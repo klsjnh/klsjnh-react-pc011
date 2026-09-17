@@ -3,7 +3,7 @@
  * Migrated from klsjnh-react-dev011_20260909_011.
  * Features: edit/preview modes, toolbar formatting, Word HTML conversion.
  */
-import React, { useCallback, useRef, useState, type ClipboardEvent } from 'react';
+import { useCallback, useRef, useState, type ClipboardEvent } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { App, Button, Input, Space, Tooltip } from 'antd';
@@ -44,14 +44,14 @@ export interface KlsjnhMarkdown011Props {
   className?: string;
 }
 
-export const KlsjnhMarkdown011: React.FC<KlsjnhMarkdown011Props> = ({
+export const KlsjnhMarkdown011 = ({
   value = '',
   onChange,
   placeholder = 'Enter Markdown content...',
   height = 400,
   readOnly = false,
   className = '',
-}) => {
+}: KlsjnhMarkdown011Props) => {
   const { message } = App.useApp();
   const [mode, setMode] = useState<'edit' | 'preview'>('edit');
   const textareaRef = useRef<TextAreaRef>(null);

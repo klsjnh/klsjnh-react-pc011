@@ -65,7 +65,7 @@ export const UserTransferModal = ({
       cancelText="取消"
       okButtonProps={{ disabled: selectedUserIds.size === 0 }}
       width={780}
-      destroyOnClose
+      destroyOnHidden
     >
       <Row gutter={10} style={{ minHeight: 360 }}>
         <Col span={6}>
