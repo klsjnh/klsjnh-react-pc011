@@ -56,6 +56,16 @@ function formatBytes(size?: number): string {
 }
 
 /**
+ * 后端 lastModified 是 LocalDateTime 序列化结果（如 2026-09-15T20:48:36.1933758）。
+ * 归一化成 `YYYY-MM-DD HH:mm:ss`，避免 7 位小数撑破列宽。
+ */
+function formatDateTime(v?: string): string {
+  if (!v) return '-';
+  const t = v.replace('T', ' ');
+  return t.length > 19 ? t.slice(0, 19) : t;
+}
+
+/**
  * 适配器类型 → 展示名 / 颜色。
  * 取值来自后端 JulyStorageSaveVo011.provider 注释：local011 / minio011 / cos011 / tos011 / oss011 / s3011
  * （旧实现按 'S3' / 'LOCAL' 判断，与真实枚举对不上，Tag 恒为默认色、也误导用户）。
@@ -542,14 +552,30 @@ export const StorageObjectPane = () => {
   };
 
   const columns: ColumnsType<StorageObject> = [
-    { ...leftCell, title: '对象键', dataIndex: 'objectName', width: 300, ellipsis: true, render: (v) => <code>{v}</code> },
+    {
+      ...leftCell, title: '对象键', dataIndex: 'objectName', width: 300, ellipsis: true,
+      render: (v, r) => {
+        if (isTextObject(v)) {
+          return (
+            <a
+              onClick={(e) => { e.preventDefault(); void handleEdit(r); }}
+              style={{ cursor: 'pointer' }}
+              title="点击编辑"
+            >
+              <code>{v}</code>
+            </a>
+          );
+        }
+        return <code>{v}</code>;
+      },
+    },
     { ...leftCell, title: '归属桶', key: 'bucketName', width: 150, render: (_, r) => bucketOf(r) || '-' },
     {
       title: '大小', key: 'size', width: 120, align: 'center', onHeaderCell: hdrCenter,
       render: (_, r) => formatBytes(statMap[r.objectName]?.size),
     },
     { ...leftCell, title: '内容类型', key: 'contentType', width: 190, render: (_, r) => statMap[r.objectName]?.contentType || '-' },
-    { ...leftCell, title: '最后修改', key: 'lastModified', width: 190, render: (_, r) => statMap[r.objectName]?.lastModified || '-' },
+    { ...leftCell, title: '最后修改', key: 'lastModified', width: 190, render: (_, r) => formatDateTime(statMap[r.objectName]?.lastModified) },
     {
       title: '操作', key: 'action', width: 250, fixed: 'right', align: 'center', onHeaderCell: hdrCenter,
       render: (_, r) => (

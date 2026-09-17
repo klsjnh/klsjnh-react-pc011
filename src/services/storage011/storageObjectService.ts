@@ -1,33 +1,34 @@
 /**
- * 对象（文件）服务（storage011 · object/*）
- * 后端契约（核对 Java 源码 StorageObjectController / StorageObjectUseCase）：
- *   POST /object/selectList|selectListByPage  → List<String> / PageResult011<String>（**只有对象键**）
- *   GET  /object/stat|readText|presignedUrl|download （全部走 query，objectName 必填）
- *   POST /object/upload（multipart：query 带 storageCode/bucketName/objectName，part 名 file）
- *   POST /object/saveText|remove|batchRemove（JSON body）
- * ⚠️ 列表只有键，size/lastModified/contentType 必须另调 stat；列表接口没有元数据字段。
+ * 对象（文件）服务（storagecenter · julyObject/v1/*）
+ * 后端契约（核对 Java 源码 + 实时 OpenAPI 2026-09-17）：
+ *   POST /julyObject/v1/selectObjectList|selectObjectListByPage  → List<String> / PageResult011MapStringObject
+ *   GET  /julyObject/v1/statObject|readObjectText|presignObjectUrl|downloadObject （query 传参）
+ *   POST /julyObject/v1/uploadObject（multipart：query 带 storageCode/bucketName/objectName，part 名 file）
+ *   POST /julyObject/v1/saveObjectText|removeObject|batchRemoveObject（JSON body）
+ * ⚠️ 分页接口 selectObjectListByPage 返回的是 MapStringObject 数组（带对象键/元数据），不是纯字符串；
+ *      selectObjectList 仍返回 List<String>。
  * 上传/下载绕过 api.post 信封（multipart / blob），需拼完整基址 + 手动带鉴权头。
  */
 import { api, ApiError } from '@/api/request';
 import { isMockMode } from '@/config/appConfig';
 import { authStore } from '@/stores/authStore';
-import { STORAGE011_BASE, resolveStorageBase } from './base';
+import { STORAGECENTER_BASE, resolveStorageBase } from './base';
 import { storageObjectStore } from '@/stores/storage011/storageObjectStore';
 import type { PageResult011 } from '@/types/common';
 import type { ObjectStat, StorageObject, StorageObjectQuery, StorageTextContent } from '@/types/storage011';
 
-/** 对象动作路径（相对 STORAGE011_BASE） */
+/** 对象动作路径（相对 STORAGECENTER_BASE） */
 const OBJECT_ACTIONS = {
-  selectListByPage: '/object/selectListByPage',
-  selectList: '/object/selectList',
-  upload: '/object/upload',
-  download: '/object/download',
-  readText: '/object/readText',
-  saveText: '/object/saveText',
-  stat: '/object/stat',
-  remove: '/object/remove',
-  batchRemove: '/object/batchRemove',
-  presignedUrl: '/object/presignedUrl',
+  selectListByPage: '/julyObject/v1/selectObjectListByPage',
+  selectList: '/julyObject/v1/selectObjectList',
+  upload: '/julyObject/v1/uploadObject',
+  download: '/julyObject/v1/downloadObject',
+  readText: '/julyObject/v1/readObjectText',
+  saveText: '/julyObject/v1/saveObjectText',
+  stat: '/julyObject/v1/statObject',
+  remove: '/julyObject/v1/removeObject',
+  batchRemove: '/julyObject/v1/batchRemoveObject',
+  presignedUrl: '/julyObject/v1/presignObjectUrl',
 } as const;
 
 /** 在线文本读写的编辑器类型推断 */
@@ -43,9 +44,19 @@ function resolveEditorKind(objectName: string): ObjectEditorKind {
   return 'text';
 }
 
-/** 对象键字符串 → 行（补上归属实例 / 桶，后端列表不回带） */
-function toObjectRows(keys: string[] | null | undefined, storageCode?: string, bucketName?: string): StorageObject[] {
-  return (keys || []).map((key) => ({ objectName: key, storageCode, bucketName }));
+/** 对象条目 → 行（分页接口返回 MapStringObject，这里抽成统一行） */
+function toObjectRows(items: Array<Record<string, unknown>> | null | undefined, storageCode?: string, bucketName?: string): StorageObject[] {
+  return (items || []).map((it) => {
+    const key = String(it.key ?? it.objectName ?? '');
+    return {
+      objectName: key,
+      bucketName: bucketName || String(it.bucketName ?? ''),
+      storageCode: storageCode || String(it.storageCode ?? ''),
+      size: typeof it.size === 'number' ? it.size : undefined,
+      lastModified: typeof it.lastModified === 'string' ? it.lastModified : undefined,
+      contentType: typeof it.contentType === 'string' ? it.contentType : undefined,
+    };
+  });
 }
 
 /** 触发浏览器下载（blob → a[download]） */
@@ -58,9 +69,9 @@ function triggerDownload(blob: Blob, fileName: string): void {
   URL.revokeObjectURL(url);
 }
 
-/** 分页查询：后端只回对象键，这里补成行 */
+/** 分页查询：后端回 MapStringObject 数组，这里映射为行 */
 export async function selectObjectListByPage(query: StorageObjectQuery = {}): Promise<PageResult011<StorageObject>> {
-  const res = await api.post<PageResult011<string>>(OBJECT_ACTIONS.selectListByPage, query, STORAGE011_BASE);
+  const res = await api.post<PageResult011<Array<Record<string, unknown>>>>(OBJECT_ACTIONS.selectListByPage, query, STORAGECENTER_BASE);
   return { ...res, rows: toObjectRows(res.rows, query.storageCode, query.bucketName) };
 }
 
@@ -76,10 +87,10 @@ export async function fetchObjectPage(patch: Partial<StorageObjectQuery> = {}): 
   }
 }
 
-/** 某桶下的对象键列表（树/前缀浏览用） */
+/** 某桶下的对象键列表（树/前缀浏览用）：后端返回 List<String> */
 export async function listObjects(query: StorageObjectQuery): Promise<StorageObject[]> {
-  const keys = await api.post<string[]>(OBJECT_ACTIONS.selectList, query, STORAGE011_BASE);
-  return toObjectRows(keys, query.storageCode, query.bucketName);
+  const keys = await api.post<string[]>(OBJECT_ACTIONS.selectList, query, STORAGECENTER_BASE);
+  return toObjectRows(keys.map((k) => ({ key: k })), query.storageCode, query.bucketName);
 }
 
 /**
@@ -87,12 +98,12 @@ export async function listObjects(query: StorageObjectQuery): Promise<StorageObj
  * 对象不存在时后端 404，调用方按需降级为 '-'。
  */
 export function statObject(storageCode: string | undefined, bucketName: string | undefined, objectName: string): Promise<ObjectStat> {
-  return api.get<ObjectStat>(OBJECT_ACTIONS.stat, { storageCode, bucketName, objectName }, STORAGE011_BASE);
+  return api.get<ObjectStat>(OBJECT_ACTIONS.stat, { storageCode, bucketName, objectName }, STORAGECENTER_BASE);
 }
 
 /** 删除对象 */
 export async function removeObject(storageCode: string | undefined, bucketName: string, objectName: string): Promise<void> {
-  await api.post(OBJECT_ACTIONS.remove, { storageCode, bucketName, objectName }, STORAGE011_BASE);
+  await api.post(OBJECT_ACTIONS.remove, { storageCode, bucketName, objectName }, STORAGECENTER_BASE);
   await fetchObjectPage(storageObjectStore.getSnapshot().query);
 }
 
@@ -102,13 +113,13 @@ export async function batchRemoveObjects(
   bucketName: string,
   objectNames: string[],
 ): Promise<void> {
-  await api.post(OBJECT_ACTIONS.batchRemove, { storageCode, bucketName, objectNames }, STORAGE011_BASE);
+  await api.post(OBJECT_ACTIONS.batchRemove, { storageCode, bucketName, objectNames }, STORAGECENTER_BASE);
   await fetchObjectPage(storageObjectStore.getSnapshot().query);
 }
 
 /** 预签名 URL（GET + query，返回的是 URL 字符串本身） */
 export function presignedUrl(storageCode: string | undefined, bucketName: string, objectName: string): Promise<string> {
-  return api.get<string>(OBJECT_ACTIONS.presignedUrl, { storageCode, bucketName, objectName }, STORAGE011_BASE);
+  return api.get<string>(OBJECT_ACTIONS.presignedUrl, { storageCode, bucketName, objectName }, STORAGECENTER_BASE);
 }
 
 /**
@@ -126,7 +137,7 @@ export async function uploadObject(
     return api.post<string>(
       OBJECT_ACTIONS.upload,
       { storageCode, bucketName, objectName: objectName || file.name, size: file.size, contentType: file.type },
-      STORAGE011_BASE,
+      STORAGECENTER_BASE,
     );
   }
   const form = new FormData();
@@ -188,7 +199,7 @@ export async function readObjectText(
   const row = await api.get<StorageTextContent>(
     OBJECT_ACTIONS.readText,
     { storageCode, bucketName, objectName },
-    STORAGE011_BASE,
+    STORAGECENTER_BASE,
   );
   const content = row?.content ?? '';
   return { ...row, objectName: row?.objectName || objectName, content, editorKind: resolveEditorKind(objectName) };
@@ -204,6 +215,6 @@ export function saveObjectText(
   return api.post<string>(
     OBJECT_ACTIONS.saveText,
     { storageCode, bucketName, objectName, content },
-    STORAGE011_BASE,
+    STORAGECENTER_BASE,
   );
 }
