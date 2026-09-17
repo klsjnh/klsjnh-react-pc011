@@ -61,8 +61,8 @@ const AboutPage = lazy(() => import('@/pages/home/about').then(m => ({ default: 
 const ProfilePage = lazy(() => import('@/pages/ProfilePage').then(m => ({ default: m.ProfilePage })));
 const SettingsPage = lazy(() => import('@/pages/demo16/demo011').then(m => ({ default: m.Demo011 })));
 // 存储中心独立路由
-const BucketListPage = lazy(() => import('@/pages/storageCenter/BucketListPage').then(m => ({ default: m.BucketListPage })));
-const FileListPage = lazy(() => import('@/pages/storageCenter/FileListPage').then(m => ({ default: m.FileListPage })));
+const BucketListPage = lazy(() => import('@/pages/storageCenter/julyStorage/BucketListPage').then(m => ({ default: m.BucketListPage })));
+const FileListPage = lazy(() => import('@/pages/storageCenter/julyFileList/FileListPage').then(m => ({ default: m.FileListPage })));
 
 // 数据宝宝（暂用 BusinessPage 占位）
 const DataOverviewPage = lazy(() => import('@/pages/BusinessPage').then(m => ({ default: m.BusinessPage })));
