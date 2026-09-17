@@ -45,6 +45,8 @@ export const LOWCODE011_ROUTES = {
   julyMetadata: '/lowcode011/JulyMetadata',
   julyMetadataNew: '/lowcode011/JulyMetadata/new',
   julyMetadataEdit: '/lowcode011/JulyMetadata/:id',
+  /** 元数据对象的运行时数据页：参数走 query（?objectName=xxx），objectName 用户自定义故不入路径段 */
+  schemaRuntime: '/lowcode011/schemaRuntime',
 } as const;
 
 /* ---------------- storageCenter ---------------- */
@@ -146,6 +148,7 @@ const JulyDatasourcePage = lazy(() => import('@/pages/dataService011/JulyDatasou
 const JulyBusinessModelingPage = lazy(() => import('@/pages/dataService011/JulyBusinessModeling').then((m) => ({ default: m.JulyBusinessModeling })));
 const JulyAiModelProviderPage = lazy(() => import('@/pages/ai011/JulyAiModelProvider').then((m) => ({ default: m.JulyAiModelProvider })));
 const JulyMetadataPage = lazy(() => import('@/pages/lowcode011/JulyMetadata').then((m) => ({ default: m.JulyMetadata })));
+const SchemaRuntimePage = lazy(() => import('@/pages/lowcode011/JulyMetadata/SchemaRuntimePage').then((m) => ({ default: m.SchemaRuntimePage })));
 const ParamsPage = lazy(() => import('@/pages/demo16/demo011').then((m) => ({ default: m.Demo011 })));
 const TemplatePage = lazy(() => import('@/pages/business-pages').then((m) => ({ default: m.TemplatePage })));
 const PushPage = lazy(() => import('@/pages/business-pages').then((m) => ({ default: m.PushPage })));
@@ -245,6 +248,7 @@ export const PAGE_MAP: Record<string, PageComponent> = {
 
   [LOWCODE011_ROUTES.julyMetadata]: JulyMetadataPage,
   [LOWCODE011_ROUTES.julyMetadataNew]: JulyMetadataFormPage,
+  [LOWCODE011_ROUTES.schemaRuntime]: SchemaRuntimePage,
 
   [STORAGE011_ROUTES.bucketList]: BucketListPage,
   [STORAGE011_ROUTES.fileList]: FileListPage,
