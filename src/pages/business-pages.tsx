@@ -4,7 +4,7 @@
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Button, Card, Col, Empty, Form, Input, Modal, Popconfirm, Progress, Row, Select, Space, Statistic, Switch, Table, Tag,
+  Button, Card, Col, Empty, Form, Input, Modal, Popconfirm, Progress, Row, Select, Space, Statistic, Table, Tag,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
@@ -63,7 +63,7 @@ export const DictPage = () => {
   const handleSaveType = async () => {
     const v = await typeForm.validateFields();
     if (typeModal.node) {
-      setDictTypes((prev) => prev.map((t) => t.id === typeModal.node!.id ? { ...t, ...v, updatedAt: new Date().toLocaleString('zh-CN') } : t));
+      setDictTypes((prev) => prev.map((t) => t.id === (typeModal.node?.id ?? '') ? { ...t, ...v, updatedAt: new Date().toLocaleString('zh-CN') } : t));
       toast.success('字典类型已更新');
     } else {
       const newType: DictType = { id: genId(), ...v, createdAt: new Date().toLocaleString('zh-CN'), updatedAt: new Date().toLocaleString('zh-CN') };
@@ -95,7 +95,7 @@ export const DictPage = () => {
   const handleSaveItem = async () => {
     const v = await itemForm.validateFields();
     if (itemModal.node) {
-      setDictItems((prev) => prev.map((i) => i.id === itemModal.node!.id ? { ...i, ...v, updatedAt: new Date().toLocaleString('zh-CN') } : i));
+      setDictItems((prev) => prev.map((i) => i.id === (itemModal.node?.id ?? '') ? { ...i, ...v, updatedAt: new Date().toLocaleString('zh-CN') } : i));
       toast.success('字典项已更新');
     } else {
       const newItem: DictItem = { id: genId(), dictTypeId: selectedTypeId, ...v, createdAt: new Date().toLocaleString('zh-CN'), updatedAt: new Date().toLocaleString('zh-CN') };

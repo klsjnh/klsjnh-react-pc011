@@ -75,6 +75,7 @@ export const KlsjnhSql011 = ({
   const [formatMode, setFormatMode] = useState<SqlFormatMode>('standard');
   const textareaRef = useRef<AntTextAreaRef>(null);
 
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     if (cacheKey && !value) {
       const cached = localStorage.getItem(cacheKey);
@@ -83,6 +84,7 @@ export const KlsjnhSql011 = ({
       }
     }
   }, []);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   useEffect(() => {
     if (cacheKey && value) {

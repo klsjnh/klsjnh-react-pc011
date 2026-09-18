@@ -218,7 +218,11 @@ export const SchemaRuntimePage = () => {
 
   /* ---------------- 元数据（真实接口） ---------------- */
   useEffect(() => {
-    if (!objectName) { setMetaLoading(false); return; }
+    if (!objectName) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setMetaLoading(false);
+      return;
+    }
     setMetaLoading(true);
     getRuntimeMeta(objectName)
       .then(setMeta)
@@ -228,7 +232,11 @@ export const SchemaRuntimePage = () => {
 
   /* ---------------- 发布 / 初始化状态（真实接口 importStatus，039 二期） ---------------- */
   useEffect(() => {
-    if (!objectName) { setPublishState(null); return; }
+    if (!objectName) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPublishState(null);
+      return;
+    }
     getRuntimePublishStatus(objectName)
       .then(setPublishState)
       // 状态探测失败不阻断页面（数据仍走占位）
@@ -238,6 +246,7 @@ export const SchemaRuntimePage = () => {
   /* ---------------- 模型列表（真实接口 listModels；仅缺 objectName 时取） ---------------- */
   useEffect(() => {
     if (objectName) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setModelsLoading(true);
     listMetadataModels()
       .then(setModels)
@@ -279,6 +288,7 @@ export const SchemaRuntimePage = () => {
   useEffect(() => {
     if (!objectName) return;
     queryForm.resetFields();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchPage(1, loadPageSize(PAGE_SIZE_SCOPE));
   }, [objectName]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -561,7 +571,7 @@ export const SchemaRuntimePage = () => {
         destroyOnHidden
         width={560}
       >
-        <Form form={form} key={editing?.id ?? 'new'} layout="vertical" initialValues={editing ?? {}}>
+        <Form form={form} key={editing ? (editing as { id?: string | number }).id ?? 'new' : 'new'} layout="vertical" initialValues={editing ?? {}}>
           {formDefs.length === 0 ? (
             <Alert type="info" showIcon message="该对象未配置字段定义，无法录入数据（请先在设计器里维护「字段定义」）" />
           ) : formDefs.map((def) => (

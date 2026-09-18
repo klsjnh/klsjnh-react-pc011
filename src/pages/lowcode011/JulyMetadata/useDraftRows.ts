@@ -33,10 +33,18 @@ export function useDraftRows<T extends object>(initial: T[], opts: {
   const { getId, newRow } = opts;
 
   // 挂载时快照（用于老行「取消」还原服务端原值）
-  const originRef = useRef<DraftRow<T>[]>(
-    initial.map((r, i) => ({ ...r, _key: getId(r) || `row-${i}-${Math.random().toString(36).slice(2, 6)}`, _editing: false, _dirty: false } as DraftRow<T>)),
+  // 用 useMemo 避免在 render 阶段访问 ref / 调用 Math.random
+  const originRows = useMemo<DraftRow<T>[]>(
+    () =>
+      initial.map((r, i) => ({
+        ...r,
+        _key: getId(r) || `row-${i}`,
+        _editing: false,
+        _dirty: false,
+      } as DraftRow<T>)),
+    [initial, getId],
   );
-  const [rows, setRows] = useState<DraftRow<T>[]>(() => originRef.current.map((r) => ({ ...r })));
+  const [rows, setRows] = useState<DraftRow<T>[]>(() => originRows.map((r) => ({ ...r })));
   const newSeq = useRef(0);
 
   const patch = (key: string, p: Partial<T>) =>
@@ -56,14 +64,14 @@ export function useDraftRows<T extends object>(initial: T[], opts: {
       const row = prev.find((r) => r._key === key);
       if (!row) return prev;
       if (row._isNew) return prev.filter((r) => r._key !== key);
-      const origin = originRef.current.find((o) => o._key === key);
+      const origin = originRows.find((o) => o._key === key);
       return prev.map((r) => (r._key === key ? { ...(origin ? origin : r), _editing: false, _dirty: false } : r));
     });
 
   /** 表格末尾追加空行并进编辑态（其余行退出编辑态），sortOrder = 现有最大 +1 */
   const add = () => {
     newSeq.current += 1;
-    const maxSort = rows.reduce((m, r) => Math.max(m, (r.sortOrder as number) ?? 0), 0);
+    const maxSort = rows.reduce((m, r) => Math.max(m, ((r as { sortOrder?: number }).sortOrder as number) ?? 0), 0);
     const row = { ...newRow(), sortOrder: maxSort + 1 } as T;
     const draft = { ...row, _key: `new-${Date.now()}-${newSeq.current}`, _isNew: true, _editing: true, _dirty: true } as DraftRow<T>;
     setRows((prev) => [...prev.map((r) => ({ ...r, _editing: false })), draft]);

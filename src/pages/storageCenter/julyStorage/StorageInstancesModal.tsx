@@ -40,18 +40,19 @@ export const StorageInstancesModal = ({ open, onClose, onChanged }: Props) => {
   // 每次打开都回到第 1 页重拉：弹窗里的数据应当是"当前后端最新"，不复用上次残留的分页位置
   useEffect(() => {
     if (!open) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedRowKeys([]);
-    void fetchStoragePage({ pageIndex: 1, storageName: keyword || undefined });
+    void fetchStoragePage({ pageIndex: 1, keyword: keyword || undefined });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const reload = useCallback((patch: { pageIndex?: number; pageSize?: number } = {}) => {
-    void fetchStoragePage({ pageIndex: patch.pageIndex ?? 1, pageSize: patch.pageSize, storageName: keyword || undefined });
+    void fetchStoragePage({ pageIndex: patch.pageIndex ?? 1, pageSize: patch.pageSize, keyword: keyword || undefined });
   }, [keyword]);
 
   const search = (v: string) => {
     setKeyword(v);
-    void fetchStoragePage({ pageIndex: 1, storageName: v || undefined });
+    void fetchStoragePage({ pageIndex: 1, keyword: v || undefined });
   };
 
   const handleTest = async (row: JulyStorage) => {

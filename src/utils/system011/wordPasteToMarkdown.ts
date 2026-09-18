@@ -23,7 +23,7 @@ function getTurndownService(): TurndownService {
   return turndownService;
 }
 
-const BULLET_PREFIX = /^[-\u00B7\u25CF\u25CB\u25A0\u2219\u25CF\u25CB\u2219\s]+/;
+const __BULLET_PREFIX = /^[-\u00B7\u25CF\u25CB\u25A0\u2219\u25CF\u25CB\u2219\s]+/;
 const DOC_META_LABELS = [
   'File No.', 'Distribution', 'Version', 'Pages', 'Effective', 'Approval', 'Confidential',
   'File Name', 'No.', 'Draft', 'Review', 'Approve', 'Prepare',
@@ -210,7 +210,7 @@ function normalizeImages(doc: Document): void {
   });
 }
 
-function promoteHeading(node: Element, level: number): void {
+function _promoteHeading_UNUSED(node: Element, level: number): void {
   const headingLevel = Math.min(6, Math.max(1, level));
   const heading = node.ownerDocument.createElement(`h${headingLevel}`);
   heading.innerHTML = node.innerHTML;
@@ -333,7 +333,7 @@ export function looksLikeWordHtml(text: string): boolean {
 }
 
 function cleanupPlainSegment(segment: string): string {
-  let text = segment.trim();
+  const text = segment.trim();
   if (!text) return '';
   if (!/<[^>]+>/.test(text)) return text;
   if (looksLikeWordHtml(text)) {

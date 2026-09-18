@@ -222,25 +222,12 @@ export async function assignPermissions(roleId: string, menuIds: string[]): Prom
  * 本函数应改为先查真实角色集合再合并下发。
  */
 export async function assignUsersToRole(roleId: string, userIds: string[]): Promise<void> {
-  const s = roleStore.getSnapshot();
-  const role = s.roles.find((r) => r.id === roleId);
-  const current = role?.userIds ?? [];
-  const added = userIds.filter((id) => !current.includes(id));
-  const removed = current.filter((id) => !userIds.includes(id));
-  roleStore.setState({ roles: s.roles.map((r) => (r.id === roleId ? { ...r, userIds } : r)) });
-  if (isMockMode()) return;
-  // 本地 users[].roles 存的是 roleCode，后端要角色 id，需先翻译
-  const roleIdByCode = new Map(s.roles.map((r) => [r.roleCode, r.id] as [string, string]));
-  const roleIdsOf = (userId: string) =>
-    (s.users.find((u) => u.id === userId)?.roles ?? [])
-      .map((code) => roleIdByCode.get(code))
-      .filter((x): x is string => x != null);
-  for (const userId of added) {
-    const next = Array.from(new Set([...roleIdsOf(userId), roleId]));
-    await api.post(SYSTEM011_ACTIONS.user.assignRoles, { id: userId, pkRoles: next });
+  if (isMockMode()) {
+    const s = roleStore.getSnapshot();
+    roleStore.setState({ roles: s.roles.map((r) => (r.id === roleId ? { ...r, userIds } : r)) });
+    return;
   }
-  for (const userId of removed) {
-    const next = roleIdsOf(userId).filter((rid) => rid !== roleId);
-    await api.post(SYSTEM011_ACTIONS.user.assignRoles, { id: userId, pkRoles: next });
-  }
+  // API 模式下，用户当前角色集合来自前端 mock 投影，无法安全 diff。
+  // 后端补出 selectRolesByUser / JulyUserVo011.pkRoles 前，禁用该功能避免覆盖真实角色。
+  throw new Error('API 模式暂不支持分配用户到角色（后端缺少查询用户角色端点）');
 }

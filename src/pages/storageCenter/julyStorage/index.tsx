@@ -22,10 +22,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  DatabaseOutlined, DeleteOutlined, FileOutlined, FileTextOutlined, FolderOutlined,
-  HddOutlined, HomeOutlined, PlusOutlined, ReloadOutlined, UploadOutlined,
+  DeleteOutlined, FileOutlined, FileTextOutlined, FolderOutlined,
+  HomeOutlined, PlusOutlined, ReloadOutlined, UploadOutlined,
 } from '@ant-design/icons';
-import { Button, Card, Input, Popconfirm, Segmented, Select, Space, Table, Tag, Upload } from 'antd';
+import { Button, Card, Input, Popconfirm, Select, Space, Table, Tag, Upload } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { PAGE_SIZE_OPTIONS } from '@/utils/pageSizePref';
 import { useTableFillHeight } from '@/hooks/useTableFillHeight';
@@ -288,9 +288,9 @@ export const StorageInstancePane = ({ onSelectInstance }: { onSelectInstance?: (
 /* ==================== 视图二：存储桶 ==================== */
 
 export const StorageBucketPane = ({ defaultStorageCode }: { defaultStorageCode?: string } = {}) => {
-  const { list, total, loading, query } = useStorageBucketState();
+  const { list, total, loading } = useStorageBucketState();
   const { storages, ready } = useStorageOptions();
-  const [keyword, setKeyword] = useState('');
+  const [keyword, _setKeyword] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const tableBodyHeight = useTableFillHeight(cardRef, `${total}-${loading}`);
@@ -308,7 +308,8 @@ export const StorageBucketPane = ({ defaultStorageCode }: { defaultStorageCode?:
     void fetchBucketPage({ pageIndex: patch.pageIndex ?? 1, pageSize: patch.pageSize, storageCode, keyword: keyword || undefined });
   }, [storageCode, keyword]);
 
-  const search = (v: string) => { setKeyword(v); void fetchBucketPage({ pageIndex: 1, storageCode, keyword: v || undefined }); };
+  // search removed; toolbar uses Input.Search onSearch
+
 
   const storageNameOf = (code?: string) => storages.find((s) => s.storageCode === code)?.storageName || code || '-';
   const providerOf = (code?: string) => {
@@ -385,7 +386,7 @@ export const StorageBucketPane = ({ defaultStorageCode }: { defaultStorageCode?:
       <BucketFormModal
         open={modalOpen}
         storages={storages}
-        storageCode={storageCode}
+        storageCode={storageCode ?? ''}
         onClose={() => setModalOpen(false)}
         onSaved={() => reload()}
       />
@@ -464,13 +465,13 @@ export const StorageObjectPane = ({ defaultStorageCode }: { defaultStorageCode?:
   const derived = useMemo(() => deriveLevel(list, currentPrefix), [list, currentPrefix]);
   const crumbs = useMemo(() => buildCrumbs(effectiveBucket || '', effectiveBucket ? currentPrefix : undefined), [effectiveBucket, currentPrefix]);
   /** 列表行键：挂靠 storage+bucket+objectName 保证跨桶/跨层切换时不撞键（避免 React 的同 key 警告） */
-  const fileKey = (obj: StorageObject) => `${storageCode || ''}|${effectiveBucket || ''}|${obj.objectName}`;
+  const fileKey = useMemo(() => (obj: StorageObject) => `${storageCode || ''}|${effectiveBucket || ''}|${obj.objectName}`, [storageCode, effectiveBucket]);
   const mergedRows = useMemo<MergedRow[]>(() => {
     const rows: MergedRow[] = [];
     for (const f of derived.folders) rows.push({ _isDir: true, name: f.name, prefix: f.prefix, __key: `dir:${storageCode || ''}|${effectiveBucket || ''}|${f.prefix}` });
     for (const obj of derived.files) rows.push({ _isDir: false, obj, __key: `file:${fileKey(obj)}` });
     return rows;
-  }, [derived, storageCode, effectiveBucket]);
+  }, [derived, storageCode, effectiveBucket, fileKey]);
   const tableBodyHeight = useTableFillHeight(cardRef, `${total}-${loading}`);
   /** 文件夹进入下一层 */
   const handleEnterDir = (prefix: string) => { storageExplorerStore.navigateToPrefix(prefix); setSelectedRowKeys([]); };
@@ -487,7 +488,11 @@ export const StorageObjectPane = ({ defaultStorageCode }: { defaultStorageCode?:
 
   // 实例变化 → 拉该实例的桶列表（结果自带 forCode，过期响应直接丢弃）
   useEffect(() => {
-    if (!storageCode) { setBucketState({ rows: [] }); return; }
+    if (!storageCode) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setBucketState({ rows: [] });
+      return;
+    }
     let alive = true;
     void (async () => {
       try {
@@ -504,7 +509,7 @@ export const StorageObjectPane = ({ defaultStorageCode }: { defaultStorageCode?:
   useEffect(() => {
     if (!bucketsReady) return;
     void fetchObjectPage({ pageIndex: 1, storageCode, bucketName: effectiveBucket, prefix: currentPrefix || undefined });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [bucketsReady, storageCode, effectiveBucket, currentPrefix]);
 
   /**
@@ -609,7 +614,7 @@ export const StorageObjectPane = ({ defaultStorageCode }: { defaultStorageCode?:
   };
 
   /** 表格列 + 行数据：文件夹（上层虚拟行）+ 文件（当层真实对象）走同一张表 */
-  const isRoot = !currentPrefix;
+  const _isRoot = !currentPrefix;
   const columns: ColumnsType<MergedRow> = [
     {
       ...leftCell, title: '名称', key: 'name', width: 360, ellipsis: true,

@@ -10,16 +10,35 @@ import type { AuthState, CurrentUser } from '@/types/view/auth';
 
 export type { CurrentUser };
 
+const TOKEN_KEY = 'token';
+const USER_KEY = 'pc011-auth-user';
+
+/** 恢复持久化的当前用户；损坏数据一律按未登录处理 */
+function loadUser(): CurrentUser | null {
+  try {
+    const raw = localStorage.getItem(USER_KEY);
+    return raw ? (JSON.parse(raw) as CurrentUser) : null;
+  } catch {
+    return null;
+  }
+}
+
 const base = createStore<AuthState>({
-  token: localStorage.getItem('token'),
-  user: null,
+  token: localStorage.getItem(TOKEN_KEY),
+  user: loadUser(),
 });
 
-/** 订阅 token 变化 → 同步 localStorage */
+/**
+ * 订阅会话变化 → 同步 localStorage。
+ * token 与 user 必须同时持久化：否则刷新后 token 还在、user 归零，
+ * 顶栏角色（Top.tsx）与个人中心（ProfilePage.tsx）会显示为未分配。
+ */
 base.subscribe((state) => {
-  const token = state.token;
-  if (token) localStorage.setItem('token', token);
-  else localStorage.removeItem('token');
+  if (state.token) localStorage.setItem(TOKEN_KEY, state.token);
+  else localStorage.removeItem(TOKEN_KEY);
+
+  if (state.user) localStorage.setItem(USER_KEY, JSON.stringify(state.user));
+  else localStorage.removeItem(USER_KEY);
 });
 
 export const authStore = {

@@ -41,6 +41,8 @@ export const JulyMetadata = ({ onNavigate }: PageNavProps) => {
   const [keyword, setKeyword] = useState(presetObjectName);
 
   useEffect(() => {
+    // sync preset search keyword from query
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setKeyword(presetObjectName);
     fetchMetadataPage({ pageIndex: 1, keyword: presetObjectName || undefined });
   }, [presetObjectName]);

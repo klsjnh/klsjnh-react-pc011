@@ -25,7 +25,6 @@ import {
   NotificationOutlined,
   PieChartOutlined,
   QuestionCircleOutlined,
-  SearchOutlined,
   SettingOutlined,
   SyncOutlined,
   ToolOutlined,

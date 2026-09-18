@@ -57,13 +57,13 @@ export async function fetchMetadataPage(patch: Partial<JulyMetadataQueryVo011> =
  * @param params 含 id = 修改；无 id = 新增
  */
 export async function saveMetadata(params: JulyMetadataSaveVo011): Promise<string> {
-  const { id } = params.id
+  const saved = params.id
     ? await api.post<IdVo011>(LOWCODE011_ACTIONS.metadata.update, params, BASE)
     : await api.post<IdVo011>(LOWCODE011_ACTIONS.metadata.insert, params, BASE);
   const q = julyMetadataStore.getSnapshot().query;
   // 新增后回第一页；修改留在当前页
   await fetchMetadataPage({ ...q, pageIndex: params.id ? q.pageIndex : 1 });
-  return params.id || (id && id.id) || 'new';
+  return params.id || (saved?.id) || 'new';
 }
 
 /** 逻辑删除单个（级联删三子） */

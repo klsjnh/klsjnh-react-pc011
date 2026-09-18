@@ -3,19 +3,15 @@
  * 路由：/storageCenter/bucketList
  * 行内「测试连接」结果用 TestFeedbackAlert 展示（与数据源页一致），不再用 toast。
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button, Card, Input, Popconfirm, Space, Table, Tag, Tabs } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { PlusOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
+import { PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTableFillHeight } from '@/hooks/useTableFillHeight';
 import { toast } from '@/utils/toast';
 import type { JulyStorage, JulyStorageConnect, StorageTestResult } from '@/types/storage011';
-import {
-  fetchStoragePage, listStorages, removeStorage, removeStorages, testStorageConnection,
-} from '@/services/storage011/julyStorageService';
-import { fetchBucketPage } from '@/services/storage011/storageBucketService';
+import { fetchStoragePage, removeStorage, testStorageConnection } from '@/services/storage011/julyStorageService';
 import { useStorageState } from '@/stores/storage011/julyStorageStore';
-import { useStorageBucketState } from '@/stores/storage011/storageBucketStore';
 import { storageExplorerStore, useStorageExplorer } from '@/stores/storage011/storageExplorerStore';
 import { PAGE_SIZE_OPTIONS } from '@/utils/pageSizePref';
 import { TestFeedbackAlert, type TestFeedback, type TestFeedbackDetail } from '@/components/system011/TestFeedbackAlert';
@@ -84,7 +80,7 @@ export const BucketListPage = () => {
       // 已保存实例只传 id —— 让后端按库里的连接配置测；secretKey 列表页默认不回显，拼草稿字段也不可信
       const payload: JulyStorageConnect = { id: row.id };
       const res = await testStorageConnection(payload);
-      setPageTest(buildStorageFeedback(res || { success: false }, startedAt, PROVIDER_META[row.provider]?.label));
+      setPageTest(buildStorageFeedback(res || { success: false }, startedAt, PROVIDER_META[row.provider ?? '']?.label));
     } catch (e) {
       setPageTest(failureFeedback(e, startedAt));
     } finally {

@@ -105,6 +105,8 @@ export const FileEditorPage = () => {
     }
   }, [storageCode, bucketName, objectName]);
 
+  //  intentional data-loading effect
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { void load(); }, [load]);
 
   /** 返回列表：先把浏览位置写回 explorer（刷新后仍停在同一实例 + 桶 + 目录） */

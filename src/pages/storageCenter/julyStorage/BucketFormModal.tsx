@@ -16,6 +16,8 @@ interface Props {
   /** 当前选中的存储实例编码（来自主表选中行，不可更改） */
   storageCode: string;
   onClose: () => void;
+  /** 新建成功后回调（父页可据此刷新） */
+  onSaved?: () => void;
 }
 
 const PROVIDER_META: Record<string, { label: string; color: string }> = {

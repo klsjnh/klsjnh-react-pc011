@@ -23,7 +23,7 @@ const leftCell = { align: 'left' as const, onHeaderCell: hdrCenter };
 
 function buildFeedback(res: AiModelProviderTestResultVo011, startedAt?: number): TestFeedback {
   const elapsedMs = startedAt != null ? Date.now() - startedAt : undefined;
-  return { ok: res.success, message: res.message || (res.success ? '连接成功' : '连接失败'), elapsedMs };
+  return { ok: !!res.success, message: res.message || (res.success ? '连接成功' : '连接失败'), elapsedMs };
 }
 function failureFeedback(e: unknown, startedAt?: number): TestFeedback {
   const elapsedMs = startedAt != null ? Date.now() - startedAt : undefined;

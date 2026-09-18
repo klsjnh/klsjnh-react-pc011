@@ -91,7 +91,7 @@ export const JulyMenu = () => {
     const topLevelOpened = allKeys.filter(k => getNodeDepth(menus, k, 0) === 0);
 
     if (topLevelOpened.length > 2) {
-      const [first, ...rest] = topLevelOpened;
+      const [first, ..._rest] = topLevelOpened;
       const filtered = allKeys.filter(k => {
         if (k === first) return false;
         const parent = findParentId(menus, k);

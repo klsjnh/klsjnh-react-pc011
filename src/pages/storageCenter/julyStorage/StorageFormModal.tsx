@@ -9,7 +9,7 @@
  * 「测试连接」结果用 TestFeedbackAlert 展示在表单顶部（与数据源页一致），不再用 toast。
  */
 import { useEffect, useState } from 'react';
-import { Button, Form, Input, InputNumber, Modal, Row, Col, Select, Switch } from 'antd';
+import { Button, Form, Input, InputNumber, Modal, Row, Col, Select } from 'antd';
 import { ApiOutlined } from '@ant-design/icons';
 import type { JulyStorage, JulyStorageConnect, StorageTestResult } from '@/types/storage011';
 import { saveStorage, testStorageConnection } from '@/services/storage011/julyStorageService';

@@ -8,6 +8,8 @@ import type { MessageInstance } from 'antd/es/message/interface';
 
 let messageApi: MessageInstance | null = null;
 
+// keep ref-backed message bridge stable for HMR/dev; fast-refresh warning is acceptable here
+// eslint-disable-next-line react-refresh/only-export-components
 export const getMessageApi = (): MessageInstance | null => messageApi;
 
 export const MessageBridge = () => {

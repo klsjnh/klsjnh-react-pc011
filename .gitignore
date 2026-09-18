@@ -1,8 +1,8 @@
 # Dependencies
 node_modules/
+# 包管理器统一为 pnpm：pnpm-lock.yaml 必须入库（构建可复现）
 package-lock.json
 yarn.lock
-pnpm-lock.yaml
 
 # Build output
 dist/
@@ -38,7 +38,10 @@ npm-debug.log*
 # OS
 Thumbs.db
 
-# Temporary
+# Temporary（一次性脚本/合并残留，禁止入库）
 *.tmp
 *.swp
 *~
+*.orig
+tmp_*
+temp-*

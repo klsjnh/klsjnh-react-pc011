@@ -4,7 +4,6 @@
  */
 import { useState } from 'react';
 import { Popover, Input } from 'antd';
-import type { NavIcon } from '@/types/view/layout';
 import { resolveMenuIcon } from '@/components/layout/MenuIcons';
 
 const ALL_ICONS = [
@@ -26,7 +25,6 @@ interface IconPickerProps {
 
 export const IconPicker = ({ value, onChange }: IconPickerProps) => {
   const [open, setOpen] = useState(false);
-  const Icon = value ? resolveMenuIcon(value) : null;
 
   return (
     <Popover

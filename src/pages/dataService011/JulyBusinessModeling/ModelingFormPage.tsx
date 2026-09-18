@@ -73,6 +73,8 @@ export const ModelingFormPage = ({ id, onNavigate }: Props) => {
   const [outcome, setOutcome] = useState<SqlOutcome | null>(null);
   const [sqlPage, setSqlPage] = useState({ pageIndex: 1, pageSize: 10 });
 
+  // data-loading effect: load depends on id/form/datasourceList
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (id) {
       setLoading(true);
@@ -108,6 +110,8 @@ export const ModelingFormPage = ({ id, onNavigate }: Props) => {
   }, [id, form, datasourceList.length]);
 
   // 数据源加载后自动选中第一条（仅新增且未选时）
+  // default datasource selection when creating new modeling
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!sqlDs && datasourceList.length > 0 && !id) {
       setSqlDs(datasourceList[0].dsCode);
