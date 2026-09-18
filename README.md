@@ -1,6 +1,8 @@
 # pc-admin · 企业管理系统 PC 端
 
-基于 **React 19 + TypeScript + Vite + Ant Design 6** 实现的 PC 端管理后台。当前为**前端完整功能 + Mock 数据**阶段，已内置 **Mock / API 双数据模式**，可随时切换对接真实后端（协作规范见 [Agent.md](Agent.md)，接口契约见 `docs/` 下的 api-contract 文档）。
+基于 **React 19 + TypeScript + Vite + Ant Design 6** 实现的 PC 端管理后台。已内置 **Mock / API 双数据模式**，可随时切换对接真实后端（协作规范见 [Agent.md](Agent.md)，项目事实见 [docs/015.project-info.md](docs/015.project-info.md)，接口契约见 `docs/013.api-contract.md`）。
+
+> 当前状态：框架与系统管理、低代码、数据服务、存储中心等模块已可用；部分路由仍为占位页（见文末「已知遗留事项」）。
 
 > 本项目属于「PC 前端 + Java 后端」体系：前端 React 19 + TS + Vite + antd 6，后端 Java + Spring Boot + MyBatis-Plus，通讯机制为统一响应信封 + POST + JSON body + camelCase。
 
@@ -9,21 +11,32 @@
 | 项 | 选型 |
 |---|---|
 | 框架 | React 19（函数组件 + Hooks） |
-| 语言 | TypeScript 5.6 |
+| 语言 | TypeScript 5.6（`strict`） |
 | 构建 | Vite 6 |
 | UI | Ant Design 6 + @ant-design/icons 6 |
+| 样式 | Sass（`src/styles/**/*.scss`）—— **未使用 Tailwind CSS** |
 | 路由 | react-router-dom 7（`HashRouter`，`#/xxx`） |
 | 状态管理 | zustand 5（封装为 `src/stores/createStore.ts` 工厂，对外暴露 `useStoreState` / `useStore`） |
-| 其他 | mermaid / react-markdown / remark-gfm / sql-formatter |
+| 请求 | 原生 `fetch`（**非 Axios**），收口于 `src/api/request.ts` |
+| 内容渲染 | react-markdown / remark-gfm / turndown / sql-formatter |
+| 包管理器 | pnpm 10（锁文件 `pnpm-lock.yaml` 入库） |
 
 ## 快速开始
 
 ```bash
-# Node 18+（推荐 pnpm，仓库带 pnpm-lock.yaml）
-npm install        # 或 pnpm install
-npm run dev        # 默认端口 11181，可加 -- --port 18765 覆盖
-npm run build      # 产物在 dist/
-npm run preview    # 预览构建产物
+# Node 18+（本机 v22）· pnpm 10（首次可用 corepack enable pnpm）
+pnpm install       # 依赖安装（以 pnpm-lock.yaml 为准）
+pnpm dev           # 开发服务器，端口 11181，可加 -- --port 18765 覆盖
+pnpm build         # 产物在 dist/
+pnpm preview       # 预览构建产物
+pnpm typecheck     # tsc --noEmit
+pnpm lint          # ESLint
+pnpm standards     # 规范自检
+
+./script011.sh gate        # 门禁：tsc → eslint → 规范自检
+./script011.sh build011    # 门禁 + 生产构建
+./script011.sh start011    # 启动开发服务器
+./script011.sh             # 门禁 → 版本自增 → 提交白名单路径 → push
 ```
 
 登录账号（Mock 模式）：**klsjnh / zhangsan / lisi**，密码与用户名相同（如 `klsjnh` / `klsjnh`）。开发态还支持免密登录（仅填用户名）。
@@ -48,37 +61,38 @@ npm run preview    # 预览构建产物
 ```
 ├── Agent.md                     # 协作铁律 / 工作流（必读）
 ├── docs/                        # 文档库（项目信息 / 编码标准 / 接口契约 / 工作日志）
-├── mock-server.mjs              # ⚠️ 历史遗留的独立测试后端，当前前端未使用（改用内置 mock），建议删除
+│   └── contracts/               # 运行时 OpenAPI 契约快照
+├── tools/                       # check-klsjnh-react-standards.mjs 规范自检
+├── script011.sh                 # 一体化脚本（gate / build011 / start011 / 默认提交）
 ├── vite.config.ts               # Vite 配置（含 /klsjnh 代理、@ 别名）
 └── src/
     ├── main.tsx                 # 入口：StrictMode + HashRouter + antd reset.css
     ├── App.tsx                  # 根组件：ConfigProvider + 登录态分流路由
-    ├── styles/global.css        # 全局样式
+    ├── styles/                  # SCSS 主题与样式（_tokens / _base / components/ / pages/）
     ├── api/
     │   └── request.ts           # 请求封装：mock/API 统一路由 + 统一响应信封解包
     ├── config/
     │   ├── appConfig.ts         # 数据模式 / 运行态 / API 地址（localStorage 持久化）
-    │   ├── routes.ts            # 路由常量
-    │   ├── global.ts            # 应用级静态配置（应用名 / 菜单来源）
-    │   └── theme.ts             # antd 主题
+    │   ├── routes.ts            # 路由常量 + 懒加载页面映射（唯一可信来源）
+    │   ├── constants.ts         # 应用级静态配置
+    │   └── theme.ts             # antd 主题（SEEDS 驱动多套换肤）
     ├── stores/                  # 状态管理（zustand 封装）
     │   ├── createStore.ts       # 通用 store 工厂（useStoreState / useStore）
-    │   ├── authStore.ts         # 登录态 / 当前用户
+    │   ├── authStore.ts         # 登录态 / 当前用户（token 与 user 均持久化）
     │   ├── uiStore.ts           # UI 状态（侧边栏收起等）
-    │   ├── notificationStore.ts  # 通知 + 未读数
+    │   ├── notificationStore.ts # 通知 + 未读数
     │   └── system011/           # 各模块 store（julyUser / julyRole / julyOrganization / julyMenu ...）
     ├── services/                # 业务编排（page → service → store）
-    │   └── system011/           # 各模块 service + actions.ts（action 路径常量）
-    ├── mock/                    # 内置 mock 后端（system011 各模块 handler）
-    │   └── system011/
-    ├── components/layout/       # 布局：top（顶栏）/ left（侧边栏）/ index
+    │   ├── system011/           # 各模块 service + actions.ts（action 路径常量）
+    │   └── lowcode011 / dataservice011 / storage011 / ai011
+    ├── mock/                    # 内置 mock 后端（按真实 action 路径分发）
+    ├── components/layout/       # 布局：Top（顶栏）/ Left（侧边栏）/ index
     ├── pages/
     │   ├── home/                # 仪表盘 + 登录页
-    │   └── system011/           # ★ 系统管理模块（julyXxx 全单词命名）
-    │       ├── julyMenu/        # 菜单管理
-    │       ├── julyUser/        # 用户管理（index.tsx + JulyUserFormModal.tsx）
-    │       ├── julyPermission/  # 权限管理（index.tsx + RoleFormModal.tsx）
-    │       └── julyOrganization/# 组织机构（index.tsx + OrganizationFormModal.tsx）
+    │   ├── system011/           # ★ 系统管理模块（julyXxx 全单词命名）
+    │   ├── lowcode011/          # 低代码设计器 + 运行时
+    │   └── storageCenter/       # 存储中心
+    ├── hooks/                   # useTableFillHeight
     └── types/                   # 类型（前后端契约 DTO/VO + 前端视图类型）
 ```
 
@@ -95,7 +109,8 @@ npm run preview    # 预览构建产物
 | `#/profile` | 个人中心 | ProfilePage |
 | `#/login` | 登录页 | home/login |
 
-> 侧边栏菜单分组（系统管理 / 系统工具等）来自 `config/global.ts` 的 `GLOBAL_MENUS`（开发态默认），非开发态走接口 `julyMenu/v1/selectUserMenuTree`。
+> 路由的**唯一可信来源**是 `src/config/routes.ts`（路径常量 + 懒加载页面映射），上表仅列常用项，未穷举低代码 / 存储中心 / 数据服务等路由。
+> 侧边栏菜单分组（系统管理 / 系统工具等）来自 `config/constants.ts` 的 `GLOBAL_MENUS`（开发态默认），非开发态走接口 `julyMenu/v1/getUserMenuTree`。
 
 ## 架构要点
 
@@ -112,8 +127,8 @@ npm run preview    # 预览构建产物
 
 ### 布局（components/layout）
 
-- **top（顶栏）**：数据模式切换（MOCK/API + API 地址配置 + 最近错误）→ 通知铃铛（红点未读数，点击跳消息通知页）→ 用户下拉（个人信息 / 修改密码 / 退出登录；修改密码为真实接口 `julyUser/v1/changePassword`）。
-- **left（侧边栏）**：分组菜单，依据当前路由自动展开所属分组（同时兼容配置菜单与接口菜单两种 key 形态），可折叠，状态经 `uiStore` 持久化。
+- **Top（顶栏）**：数据模式切换（MOCK/API + API 地址配置 + 最近错误）→ 通知铃铛（红点未读数，点击跳消息通知页）→ 用户下拉（个人信息 / 修改密码 / 退出登录；修改密码为真实接口 `julyUser/v1/changePassword`）。
+- **Left（侧边栏）**：分组菜单，依据当前路由自动展开所属分组（同时兼容配置菜单与接口菜单两种 key 形态），可折叠，状态经 `uiStore` 持久化。
 
 ### 状态管理
 
@@ -121,7 +136,7 @@ npm run preview    # 预览构建产物
 
 | Store | 职责 | 持久化 |
 |---|---|---|
-| authStore | token + 当前用户 | token 存 localStorage |
+| authStore | token + 当前用户 | 两者均存 localStorage（`token` / `pc011-auth-user`） |
 | uiStore | 侧边栏收起等 UI 状态 | localStorage |
 | julyUserStore / julyRoleStore / julyOrganizationStore / julyMenuStore | 各模块列表/树状态 | 内存 |
 | notificationStore | 通知 + 未读数 | 内存 |
@@ -151,17 +166,20 @@ npm run preview    # 预览构建产物
 }
 ```
 
-- 错误码：`200` 成功；`400` 入参失败；`401` 未认证；`403` 无权限；`500` 服务端异常。非 200 时前端抛 `ApiError`，读取类失败自动回退本地数据，写入类失败记录在顶栏模式下拉的「最近错误」里。
+- 错误码：`200` 成功；`400` 入参失败；`401` 未认证；`403` 无权限；`500` 服务端异常。非 200 时前端抛 `ApiError`；401（凭据类接口除外）统一清会话并由守卫跳登录（不做静默刷新）；失败信息记录在顶栏模式下拉的「最近错误」里。
+- 兜底口径：仅 **消息通知列表**（`notificationStore`）在请求失败时保留本地数据不白屏，其余读取失败一律上抛，由页面处理。
 
 ## 前端开发约定（速览，完整版见 Agent.md）
 
 - **提交时机**：仅在用户明确发出「提交 / push」指令时提交，禁止主动提交。
-- **提交前置**：`npm run build` 无报错 + 功能自测通过。
-- **HTTP 规范**：业务接口统一 POST + JSON body；GET 仅用于无参/少参纯查询（如树查询），`api.get` 已支持把 body 序列化为 query string。
+- **提交前置**：`./script011.sh gate` 全绿（tsc → eslint → 规范自检），且功能自测通过。
+- **HTTP 规范**：业务接口统一 POST + JSON body；GET 仅用于无参/少参纯查询（如树查询），`api.get` 会把 body 序列化为 query string。
 - **红线**：堆栈/SQL 不出站、凭证一律走环境变量、对外契约禁止破坏性变更。
 
 ## 已知遗留事项
 
-- `mock-server.mjs` 为早期独立测试后端，当前前端已改用内置 `src/mock/system011`，该文件未被引用，建议清理。
-- `julyConfig` / `julyScheduler` 在 `actions.ts` 与 mock 中已定义 action，但暂无对应页面（菜单也未挂接）。
-- `docs/` 存在少量编号重复（如 `013` / `015` / `016` 各有两份主题文档），后续需按编号约定归并。
+- **路由形态待裁决**：现为 `App.tsx` `path="/*"` + `PAGE_MAP` 分发，与 `017.tech-debt-redlines` §A2「禁通配分发」冲突（见 `docs/2026-09-17.md` §三）。
+- **未落地的规划能力**：`useCrudTable` / `createCrudStore` / `usePermission`；测试与 CI、`ErrorBoundary`、404/403 页面均未实现。
+- **路由占位**：`online`、数据宝宝 `overview` / `query`、`settings` 等路由仍兜底到 `BusinessPage` / `Demo011`。
+- **代理地址硬编码**：`vite.config.ts` 中 `/klsjnh` 指向 `192.168.3.160:11610`，待改为环境变量。
+- `docs/` 规划的 `infrastructure011/`、`requirement011|013|015/`、`archive011/` 目录尚未建立。

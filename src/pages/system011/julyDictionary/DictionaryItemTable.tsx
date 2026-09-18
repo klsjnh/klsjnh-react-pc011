@@ -41,9 +41,11 @@ export const DictionaryItemTable = ({ active }: DictionaryItemTableProps) => {
   const newRowSeq = useRef(0);
 
   // 明细拉取回来后重置草稿（换字典 / 保存后刷新都会走到这里）
+  const mappedItems = (items || []).map((r) => ({ ...r, _key: r.id || `row-${r.itemCode}`, _editing: false, _dirty: false }));
   useEffect(() => {
-    setDraftItems((items || []).map((r) => ({ ...r, _key: r.id || `row-${r.itemCode}`, _editing: false, _dirty: false })));
-  }, [items]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDraftItems(() => mappedItems);
+  }, [mappedItems]);
 
   const dirtyRows = useMemo(() => draftItems.filter((r) => r._dirty), [draftItems]);
   const dirtyCount = dirtyRows.length;

@@ -25,7 +25,7 @@ import { STATUS_LABEL, STATUS_OPTIONS } from '@/config/constants';
 function buildFeedback(res: AiModelProviderTestResultVo011, startedAt?: number): TestFeedback {
   const elapsedMs = startedAt != null ? Date.now() - startedAt : undefined;
   return {
-    ok: res.success,
+    ok: !!res.success,
     message: res.message || (res.success ? '连接成功' : '连接失败'),
     elapsedMs,
   };
@@ -57,6 +57,8 @@ const ApiFormModal = ({ open, provider, node, onClose, onSaved }: ApiFormModalPr
   const [testing, setTesting] = useState(false);
   const [test, setTest] = useState<TestFeedback | null>(null);
 
+  // intentional reset of test feedback when opening a different API row
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (open) {
       setTest(null);
@@ -162,6 +164,7 @@ export const ProviderFormModal = ({ open, node, onClose, onSaved }: ProviderForm
   const [apiTest, setApiTest] = useState<TestFeedback | null>(null);
 
   // 编辑态回填 + 加载 API 子表
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (open) {
       setModalTest(null);

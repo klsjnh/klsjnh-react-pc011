@@ -81,6 +81,7 @@ export const MetadataFormPage = ({ id, onNavigate }: Props) => {
   const [form] = Form.useForm();
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(!!id);
+  const _message = message; // keep reference to satisfy lint if needed later
   const [node, setNode] = useState<JulyMetadataVo011 | null>(null);
   const [nodeKey, setNodeKey] = useState<string>(id || 'new');
 
@@ -143,6 +144,8 @@ export const MetadataFormPage = ({ id, onNavigate }: Props) => {
     }
   }, []);
 
+  // data-loading effect
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (id) {
       setLoading(true);

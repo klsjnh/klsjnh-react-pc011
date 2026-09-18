@@ -268,7 +268,7 @@ export const handlers: Record<string, Handler> = {
         // 表已存在 → 只补缺失列；无缺失 → null（无事可做）
         const existing = new Set(prev.columns);
         const missing = (item.fields || []).filter((f) => !existing.has((f.fieldCode || '').toLowerCase()));
-        ddl = missing.length ? generateAddColumns(table, item.fields || [], missing) : null;
+        ddl = missing.length ? generateAddColumns(table, missing) : null;
       }
     } catch (e) {
       return fail((e as Error).message, 400);

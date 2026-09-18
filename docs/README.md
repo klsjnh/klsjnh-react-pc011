@@ -10,9 +10,10 @@
 | [../Agent.md](../Agent.md) | **协作手册**（先读）：铁律、HTTP 规范、标准流程、红线 |
 | [../README.md](../README.md) | **项目总览**：快速开始、目录结构、路由表、架构要点、双数据模式 |
 | [011.agreements.md](011.agreements.md) | 文档体系与编号约定（本文档体系宪法） |
-| [015.project-info.md](015.project-info.md) | 项目信息：背景、前后端模块对应关系、技术栈 |
-| [016.coding-standards.md](016.coding-standards.md) | 前端编码标准（PC 页面统一写法 / store 模式 / 命名规范） |
+| [015.project-info.md](015.project-info.md) | **项目事实卡**：定位、技术栈、目录、分层、构建运行、当前能力与缺口 |
+| [016.coding-standards.md](016.coding-standards.md) | 前端编码标准（PC 页面统一写法 / store 模式 / 命名规范；未落地项标 `[PLANNED]`） |
 | [013.api-contract.md](013.api-contract.md) | API 契约（信封六键 + 状态码 + 前端请求行为） |
+| [017.tech-debt-redlines.md](017.tech-debt-redlines.md) | 技术债红线（架构 / 类型 / 契约 / 门禁 / 文档） |
 | [019.lowcode011-findings.md](019.lowcode011-findings.md) | **低代码模块现状**：后端 `lowcode011/julyMetadata` 接口清单与一主三子模型、实测踩坑、与 `julyBusinessModeling` 的字段/方法错配清单、待拍板的实现方案 |
 | [020.lowcode011-interface-matrix.md](020.lowcode011-interface-matrix.md) | **低代码接口对照矩阵**：三档分流 —— A 真实接口已对接 / B 契约错配已修正 / C PENDING-BACKEND 前端占位（附实时 OpenAPI 证据与后端补齐后的切换方式） |
 
@@ -20,6 +21,7 @@
 
 | 目录 / 文件 | 内容 |
 |------|------|
-| `2026-09-12.md` | 当日工作日志（每日一份，历史归档至 `archive011/`） |
+| `contracts/` | 运行时 OpenAPI 契约快照（命名与脱敏见 [contracts/README.md](contracts/README.md)） |
+| `2026-09-12.md` · `2026-09-17.md` | 当日工作日志（每日一份，历史归档至 `archive011/`） |
 | requirement011/ requirement013/ | 预留：页面级需求与技术方案（当前与后端仓库 018/019/022 同编号贯穿） |
 | archive011/ | 历史工作日志归档 |

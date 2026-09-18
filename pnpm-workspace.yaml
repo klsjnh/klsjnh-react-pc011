@@ -1,2 +1,4 @@
-allowBuilds:
-  esbuild: set this to true or false
+# pnpm 配置（本仓库为单包工程，无需 packages 声明）
+# pnpm 10 默认阻止依赖的构建脚本，需显式放行有 postinstall 的依赖
+onlyBuiltDependencies:
+  - esbuild

@@ -36,10 +36,10 @@ export const ServiceTable = forwardRef<SubTableHandle<JulyMetadataServiceVo011>,
     getSaveData: () => rows.filter((r) => !r._deleted).map(({ _key, _isNew, _editing, _dirty, _deleted, ...rest }) => {
       const o: Record<string, unknown> = { ...rest };
       if (_isNew) delete o.id;
-      return o as JulyMetadataServiceVo011;
+      return o as unknown as JulyMetadataServiceVo011;
     }),
     isDirty: () => dirtyCount > 0 || deletedCount > 0,
-  }), [rows]);
+  }), [rows, dirtyCount, deletedCount]);
 
   const columns: ColumnsType<DraftRow<JulyMetadataServiceVo011>> = [
     {

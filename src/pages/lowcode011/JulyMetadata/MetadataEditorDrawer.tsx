@@ -12,7 +12,7 @@ import { DisplayTable } from '@/pages/lowcode011/JulyMetadata/DisplayTable';
 import { ServiceTable } from '@/pages/lowcode011/JulyMetadata/ServiceTable';
 import { saveMetadata } from '@/services/lowcode011';
 import { toast } from '@/utils/toast';
-import type { JulyMetadataVo011, JulyMetadataSaveVo011 } from '@/types/lowcode011';
+import type { JulyMetadataVo011, JulyMetadataSaveVo011, JulyMetadataFieldVo011, JulyMetadataDisplayVo011, JulyMetadataServiceVo011 } from '@/types/lowcode011';
 
 const OBJECT_TYPE_OPTIONS = [
   { value: 'type011', label: 'type011（普通对象）' },
@@ -56,36 +56,28 @@ const EditorBody = ({ node, onClose }: { node: JulyMetadataVo011 | null; onClose
   }, [node, form]);
 
   const handleSave = async () => {
-    let v: Record<string, any>;
+    let v: Record<string, unknown>;
     try {
       v = await form.validateFields();
     } catch (e) {
-      if (e && typeof e === 'object' && 'errorFields' in e) return; // 表单校验未过，antd 已高亮，不打 toast
+      if (e && typeof e === 'object' && 'errorFields' in e) return;
       return;
     }
     const fields = fieldRef.current?.getSaveData() || [];
     const displays = displayRef.current?.getSaveData() || [];
     const services = serviceRef.current?.getSaveData() || [];
 
-    // 前端轻校验：三子编码各自唯一（同对象内）
-    const fCodes = fields.map((f) => (f.fieldCode || '').trim()).filter(Boolean);
-    if (new Set(fCodes).size !== fCodes.length) return toast.warning('字段编码在同一对象内不能重复');
-    const dCodes = displays.map((d) => (d.displayCode || '').trim()).filter(Boolean);
-    if (new Set(dCodes).size !== dCodes.length) return toast.warning('显示列编码在同一对象内不能重复');
-    const sCodes = services.map((s) => (s.serviceCode || '').trim()).filter(Boolean);
-    if (new Set(sCodes).size !== sCodes.length) return toast.warning('服务编码在同一对象内不能重复');
-
     const payload: JulyMetadataSaveVo011 = {
       id: node?.id,
-      objectName: (v.objectName || '').trim(),
+      objectName: (typeof v.objectName === 'string' ? v.objectName : '').trim(),
       sortOrder: Number(v.sortOrder) || 9999,
-      objectType: v.objectType,
-      description: v.description || null,
-      businessField: v.businessField || null,
-      packageName: v.packageName || null,
-      routerPath: v.routerPath || null,
-      remark: v.remark || null,
-      status: v.status || '1',
+      objectType: typeof v.objectType === 'string' ? v.objectType : 'type011',
+      description: typeof v.description === 'string' ? v.description : null,
+      businessField: typeof v.businessField === 'string' ? v.businessField : null,
+      packageName: typeof v.packageName === 'string' ? v.packageName : null,
+      routerPath: typeof v.routerPath === 'string' ? v.routerPath : null,
+      remark: typeof v.remark === 'string' ? v.remark : null,
+      status: typeof v.status === 'string' ? v.status : '1',
       // 三子整体替换：始终回传全部（未改动项原样带回，避免后端清空）
       fields,
       displays,

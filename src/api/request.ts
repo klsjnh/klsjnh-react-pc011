@@ -11,7 +11,6 @@
 import { appConfigStore, isMockMode } from '@/config/appConfig';
 import { authStore } from '@/stores/authStore';
 import { toast } from '@/utils/toast';
-import { getMockResponse } from '@/mock/system011';
 import type { Response011 } from '@/types/api';
 
 export type { Response011 };
@@ -80,6 +79,13 @@ async function request<T>(
   // ===== Mock 模式：按真实 action 路径分发到统一 mock 后端 =====
   // mock 与 api 共用下方同一套信封解包逻辑，因此拿到的数据结构完全一致。
   if (isMockMode()) {
+    let getMockResponse: typeof import('@/mock/system011').getMockResponse;
+    try {
+      const mod = await import('@/mock/system011');
+      getMockResponse = mod.getMockResponse;
+    } catch {
+      throw buildError(action, `Mock 模式无法加载 mock 模块`, 500);
+    }
     const mockResp = getMockResponse(action, body);
     if (mockResp) {
       const env = await mockResp;
@@ -89,7 +95,6 @@ async function request<T>(
       }
       return env.data as T;
     }
-    // 该 action 无 mock 数据：明确报错（避免静默打到真实后端）
     throw buildError(action, `Mock 模式未实现该接口：${action}`, 404);
   }
 

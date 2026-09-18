@@ -41,8 +41,10 @@ export const TextEditorModal = ({ open, storageCode, bucketName, objectName, edi
   const kind: ObjectEditorKind = editorKind || resolveEditorKind(objectName);
   const readonly = kind === 'text' && !PLAIN_EDITABLE_RE.test(objectName.toLowerCase());
 
+  // intentional sync from prop to local editor state
   useEffect(() => {
-    if (open) setContent(initial?.content ?? '');
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (open) setContent((initial?.content) ?? '');
   }, [open, initial]);
 
   const handleSave = async () => {

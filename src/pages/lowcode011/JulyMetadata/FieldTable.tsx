@@ -7,7 +7,8 @@ import { Button, Input, InputNumber, Select, Switch, Table, Tag } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useDraftRows } from '@/pages/lowcode011/JulyMetadata/useDraftRows';
-import type { JulyMetadataFieldVo011, DraftRow } from '@/types/lowcode011/julyMetadata/vo';
+import type { JulyMetadataFieldVo011 } from '@/types/lowcode011/julyMetadata/vo';
+import type { DraftRow } from '@/types/lowcode011/julyMetadata/view';
 
 /** 子表对外暴露的保存接口（三个子表共用） */
 export interface SubTableHandle<T> {
@@ -44,10 +45,10 @@ export const FieldTable = forwardRef<SubTableHandle<JulyMetadataFieldVo011>, Fie
     getSaveData: () => rows.filter((r) => !r._deleted).map(({ _key, _isNew, _editing, _dirty, _deleted, ...rest }) => {
       const o: Record<string, unknown> = { ...rest };
       if (_isNew) delete o.id;
-      return o as JulyMetadataFieldVo011;
+      return o as unknown as JulyMetadataFieldVo011;
     }),
     isDirty: () => dirtyCount > 0 || deletedCount > 0,
-  }), [rows]);
+  }), [rows, dirtyCount, deletedCount]);
 
   const columns: ColumnsType<DraftRow<JulyMetadataFieldVo011>> = [
     {

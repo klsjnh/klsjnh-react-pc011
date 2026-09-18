@@ -15,7 +15,7 @@ export default defineConfig({
       output: {
         // 取消 inlineDynamicImports（其会禁用代码分割，抵消 App.tsx 的 lazy 懒加载），改用手动分包
         manualChunks: {
-          react: ['react', 'react-dom', 'react-router-dom'],
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           antd: ['antd', '@ant-design/icons'],
         },
         inlineDynamicImports: false,
