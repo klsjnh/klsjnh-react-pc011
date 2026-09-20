@@ -3,6 +3,13 @@
  * 后端模块前缀为 /klsjnh/dataservice011（复用 DATASERVICE011_BASE）。
  * 分层：page → service → store；store 不调用 service。
  *
+ * ⚠️⚠️ 2026-09-20 迁移警示（勿当现役接口用）⚠️⚠️
+ * 后端换版后 julyBusinessModeling 已随低代码整体迁往新项目，
+ * 本仓库对接的 11160 后端**已无该资源**——非 mock 模式下所有请求必然 404。
+ * 现状态：侧边栏入口已隐藏（见 stores/system011/julyMenuStore 的 HIDDEN_NAV_ROUTES），
+ * 本文件连同页面 / store / mock / types 整体保留，待与新项目的对接方案确定后再处置
+ * （迁移 或 删除）。迁移前请勿在此新增调用点。
+ *
  * 契约以**后端源码**为准（`java17-web011/.../vo/julybusinessmodeling/*.java`，Swagger 未建模出参形状）：
  *   GET   getById(?id) / getByCode(?modelCode) / getModelData(?id)   ← 走 api.get，body 序列化为 query
  *   POST  其余（insert / update / logicDelete / logicDeleteBatch / selectListByPage / probe / executeSql / executeSqlByPage）

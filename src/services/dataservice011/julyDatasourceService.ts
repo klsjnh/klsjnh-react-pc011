@@ -1,6 +1,7 @@
 /**
- * 数据源服务（dataservice011 · julyDatasource/v1/*）
- * 后端模块前缀为 /klsjnh/dataservice011（与 system011 不同，走 baseOverride）。
+ * 数据源服务（datasource · julyDatasource/v1/*）
+ * ⚠️ 2026-09-20 后端换版（192.168.3.160:11160）：dataservice011 模块更名为 datasource，
+ * 后端模块前缀为 /klsjnh/datasource（与 system011 不同，走 baseOverride）。
  * 字段与后端 JulyDatasourceController 严格对齐：dsCode/dsName/dbType/jdbcUrl/...
  * 分层：page → service → store；store 不调用 service。
  */
@@ -13,8 +14,11 @@ import type {
 } from '@/types/dataservice011/datasource';
 import type { PageResult011, IdVo011 } from '@/types/common';
 
-/** 数据源模块 API 根路径（区别于默认 system011，显式指定 dataservice011） */
-export const DATASERVICE011_BASE = '/klsjnh/dataservice011';
+/**
+ * 数据源模块 API 根路径（2026-09-20 后端换版：dataservice011 → datasource）。
+ * 常量名保留 DATASERVICE011_BASE 是为避免连带改名 julyBusinessModelingService 的 8 处引用。
+ */
+export const DATASERVICE011_BASE = '/klsjnh/datasource';
 
 /** 数据源动作路径（相对路径，请求 URL = DATASERVICE011_BASE + action） */
 const DATASOURCE_ACTIONS = {

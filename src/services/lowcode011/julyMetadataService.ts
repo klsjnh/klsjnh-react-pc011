@@ -2,6 +2,12 @@
  * 元数据服务（lowcode011 / julyMetadata/v1/*）—— 一主三子整体管理。
  * 分层：page → service → store；service 编排业务并写 store，不直接被 store 调用。
  *
+ * ⚠️⚠️ 2026-09-20 迁移警示（勿当现役接口用）⚠️⚠️
+ * 低代码模块已整体迁往新项目，本仓库对接的 11160 后端**已无 lowcode011**——
+ * 非 mock 模式下所有请求必然 404。现状态：侧边栏入口已隐藏
+ * （见 stores/system011/julyMenuStore 的 HIDDEN_NAV_ROUTES），
+ * 本目录（services / pages / stores / mock / types）整体保留，处置方案待定。
+ *
  * 本文件覆盖后端 039 已上线的**两期**（2026-09-17）：
  *  - 一期（设计闭环，零改库）：`listMetadataModels` / `loadMetadataDto` / `saveMetadataDto` / `previewMetadataDdl`
  *  - 二期（发布闭环）：`publishMetadata` / `getMetadataImportStatus` / `importMetadataDataFromSql`

@@ -23,14 +23,14 @@ export default defineConfig({
     },
   },
   server: {
-    port: 11181,
+    port: 11161,
     host: true,
     // WSL 挂载的 /mnt/d 上 inotify 不可靠，开启轮询以触发 HMR
     watch: { usePolling: true, interval: 300 },
     // 开发态跨域代理：前端 /klsjnh/* → 后端 java17-framework011（不动后端 CORS）
     proxy: {
       '/klsjnh': {
-        target: 'http://192.168.3.160:11610',
+        target: 'http://192.168.3.160:11160',
         changeOrigin: true,
       },
     },

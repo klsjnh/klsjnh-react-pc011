@@ -9,7 +9,8 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 
 export default tseslint.config(
-  { ignores: ['dist', 'node_modules', 'src/mock', 'tools', '*.mjs'] },
+  // 忽略：构建产物 / 依赖 / mock 与 tools（自有口径，见 016 §14）/ 根目录一次性脚本 / IDE 工具目录
+  { ignores: ['dist', 'node_modules', 'src/mock', 'tools', '*.mjs', '*.cjs', '.workbuddy'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

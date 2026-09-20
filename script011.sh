@@ -19,11 +19,14 @@ TRACKED_PATHS=(
 )
 
 # 解析可用的 node 运行时（PATH 里没有时回退到托管路径）
+# 候选覆盖两种 shell 形态：Git Bash 用 D:/ 前缀，WSL bash 用 /mnt/d/ 前缀
+# （本项目终端可能是 WSL，`command -v node` 与 D:/ 前缀在其下均不可用）
 resolve_node() {
   if command -v node >/dev/null 2>&1; then echo "node"; return; fi
   for c in \
     "$HOME/.workbuddy/binaries/node/versions/22.22.2-3/node.exe" \
-    "D:/Environment/nodejs/node.exe" ; do
+    "D:/Environment/nodejs/node.exe" \
+    "/mnt/d/Environment/nodejs/node.exe" ; do
     if [ -x "$c" ]; then echo "$c"; return; fi
   done
   echo ""

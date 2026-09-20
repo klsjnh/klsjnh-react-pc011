@@ -42,6 +42,8 @@ export const AI011_ROUTES = {
 
 /* ---------------- lowcode011 ---------------- */
 export const LOWCODE011_ROUTES = {
+  /** 低代码中心根路径（侧边栏顶层目录；模块已迁去新项目，当前仅作导航过滤用） */
+  root: '/lowcode011',
   julyMetadata: '/lowcode011/JulyMetadata',
   julyMetadataNew: '/lowcode011/JulyMetadata/new',
   julyMetadataEdit: '/lowcode011/JulyMetadata/:id',

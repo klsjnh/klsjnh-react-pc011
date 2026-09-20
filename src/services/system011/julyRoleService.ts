@@ -2,10 +2,12 @@
  * 角色服务（julyRole/v1/*）
  * 所有业务操作（含 CRUD 编排）在此；可写 store 状态。
  * 分层：page → service → store；store 不调用 service。
+ * ⚠️ 2026-09-20 后端换版（192.168.3.160:11160）：role 全部迁到 iam 模块，
+ * 统一传 baseOverride = IAM_BASE（'/klsjnh/iam'）。
  */
 import { isMockMode } from '@/config/appConfig';
 import { api, fireApi } from '@/api/request';
-import { SYSTEM011_ACTIONS } from '@/services/system011/actions';
+import { IAM_BASE, SYSTEM011_ACTIONS } from '@/services/system011/actions';
 import { roleStore } from '@/stores/system011/julyRoleStore';
 import { julyOrganizationStore } from '@/stores/system011/julyOrganizationStore';
 import { selectUserListByPage } from '@/services/system011/julyUserService';
@@ -20,22 +22,22 @@ import type { PageResult011 } from '@/types/system011';
 
 /** 角色分页查询 */
 export function selectRoleListByPage(body: object = {}): Promise<PageResult011<JulyRoleVo011>> {
-  return api.post<PageResult011<JulyRoleVo011>>(SYSTEM011_ACTIONS.role.selectListByPage, body);
+  return api.post<PageResult011<JulyRoleVo011>>(SYSTEM011_ACTIONS.role.selectListByPage, body, IAM_BASE);
 }
 
 /** 主键查询 */
 export function getRoleById(id: string): Promise<JulyRoleVo011> {
-  return api.get<JulyRoleVo011>(`${SYSTEM011_ACTIONS.role.getById}?id=${encodeURIComponent(id)}`);
+  return api.get<JulyRoleVo011>(`${SYSTEM011_ACTIONS.role.getById}?id=${encodeURIComponent(id)}`, undefined, IAM_BASE);
 }
 
 /** 角色已授权菜单（平铺列表，前端用于校验/回显） */
 export function getMenusByRole(id: string): Promise<JulyMenuVo011[]> {
-  return api.get<JulyMenuVo011[]>(`${SYSTEM011_ACTIONS.role.getMenusByRole}?id=${encodeURIComponent(id)}`);
+  return api.get<JulyMenuVo011[]>(`${SYSTEM011_ACTIONS.role.getMenusByRole}?id=${encodeURIComponent(id)}`, undefined, IAM_BASE);
 }
 
 /** 角色关联用户（全量用户列表，替代 mockRelations.roleUserAccounts） */
 export function getUsersByRole(id: string): Promise<JulyUserVo011[]> {
-  return api.get<JulyUserVo011[]>(`${SYSTEM011_ACTIONS.role.getUsersByRole}?id=${encodeURIComponent(id)}`);
+  return api.get<JulyUserVo011[]>(`${SYSTEM011_ACTIONS.role.getUsersByRole}?id=${encodeURIComponent(id)}`, undefined, IAM_BASE);
 }
 
 // ==================== 投影层 ====================
@@ -172,7 +174,7 @@ export function addRole(data: { roleCode: string; roleName: string; remark?: str
     userIds: [],
   };
   roleStore.setState({ roles: [...s.roles, created] });
-  if (!isMockMode()) fireApi(SYSTEM011_ACTIONS.role.insert, { roleCode: data.roleCode, roleName: data.roleName, remark: data.remark });
+  if (!isMockMode()) fireApi(SYSTEM011_ACTIONS.role.insert, { roleCode: data.roleCode, roleName: data.roleName, remark: data.remark }, IAM_BASE);
 }
 
 /**
@@ -184,14 +186,14 @@ export function addRole(data: { roleCode: string; roleName: string; remark?: str
 export function updateRole(id: string, data: Partial<Pick<RoleDetail, 'roleName' | 'remark' | 'status'>>): void {
   const s = roleStore.getSnapshot();
   roleStore.setState({ roles: s.roles.map((r) => (r.id === id ? { ...r, ...data } : r)) });
-  if (!isMockMode()) fireApi(SYSTEM011_ACTIONS.role.update, { id, ...data });
+  if (!isMockMode()) fireApi(SYSTEM011_ACTIONS.role.update, { id, ...data }, IAM_BASE);
 }
 
 /** 删除角色 */
 export function removeRole(id: string): void {
   const s = roleStore.getSnapshot();
   roleStore.setState({ roles: s.roles.filter((r) => r.id !== id) });
-  if (!isMockMode()) fireApi(SYSTEM011_ACTIONS.role.logicDelete, { id });
+  if (!isMockMode()) fireApi(SYSTEM011_ACTIONS.role.logicDelete, { id }, IAM_BASE);
 }
 
 /**
@@ -203,7 +205,7 @@ export async function assignPermissions(roleId: string, menuIds: string[]): Prom
   const s = roleStore.getSnapshot();
   roleStore.setState({ roles: s.roles.map((r) => (r.id === roleId ? { ...r, permissions: menuIds } : r)) });
   if (isMockMode()) return; // mock 未实现该端点，本地投影即数据源
-  await api.post(SYSTEM011_ACTIONS.role.assignMenus, { id: roleId, pkMenus: menuIds });
+  await api.post(SYSTEM011_ACTIONS.role.assignMenus, { id: roleId, pkMenus: menuIds }, IAM_BASE);
 }
 
 /**

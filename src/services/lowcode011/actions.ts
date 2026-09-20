@@ -4,6 +4,9 @@
  * 调用 api.post/get 时通过 baseOverride 传 '/klsjnh/lowcode011'，
  * 因此此处 action 只写相对路径（与 mock 分发 key 完全一致）。
  *
+ * ⚠️ 2026-09-20：低代码模块已整体迁往新项目，本仓库后端已无 lowcode011，非 mock 模式必 404。
+ * 文件整体保留待处置，勿新增调用点。详见 services/lowcode011/julyMetadataService.ts 头注。
+ *
  * ⚠️ 方法错配本项目一律报 **500**（不是 405），改前先确认 GET/POST：
  *  - GET（query 传参）：getById / getByObjectName / listModels / load / previewDdl / importStatus
  *  - POST（body）：selectListByPage / insert / update / designerSave / logicDelete / logicDeleteBatch

@@ -121,7 +121,7 @@ export const GLOBAL_MENUS: NavItem[] = [
     ],
   },
   {
-    path: '/lowcode011',
+    path: LOWCODE011_ROUTES.root,
     label: '低代码中心',
     icon: AppstoreAddOutlined,
     children: [

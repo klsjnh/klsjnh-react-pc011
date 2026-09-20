@@ -158,7 +158,9 @@ export const api = {
  * API 模式下的静默写请求：本地先行更新（乐观更新），
  * 请求失败仅记录到 appConfigStore.lastApiError，不打断页面交互。
  * 返回 promise 以便调用方按序等待后端落库后再 reload。
+ * baseOverride 用于跨模块前缀（如 2026-09-20 后端换版后 system011 的 user/role
+ * 迁到 iam：动作串不变，前缀改传 '/klsjnh/iam'）。与 api.post 语义一致。
  */
-export function fireApi(action: string, body?: object) {
-  return request(action, body).catch(() => { /* 错误已记录 */ });
+export function fireApi(action: string, body?: object, baseOverride?: string) {
+  return request(action, body, 8000, 'POST', baseOverride).catch(() => { /* 错误已记录 */ });
 }

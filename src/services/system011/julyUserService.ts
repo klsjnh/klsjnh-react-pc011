@@ -4,9 +4,11 @@
  *  - login          账号密码登录，任何环境可用（生产/开发通用）
  *  - loginByUserName 免密登录，仅 debug / development 运行态（生产拒用）
  *  - logout         登出（客户端清除 token）
+ * ⚠️ 2026-09-20 后端换版（192.168.3.160:11160）：user 全部迁到 iam 模块，
+ * 统一传 baseOverride = IAM_BASE（'/klsjnh/iam'）。
  */
 import { api } from '@/api/request';
-import { SYSTEM011_ACTIONS } from '@/services/system011/actions';
+import { IAM_BASE, SYSTEM011_ACTIONS } from '@/services/system011/actions';
 import { julyUserStore } from '@/stores/system011/julyUserStore';
 import { downloadExportResult } from '@/utils/system011/exportFile';
 import type {
@@ -31,17 +33,17 @@ export type { SaveUserParams };
 
 /** 账号密码登录（任何运行态可用） */
 export function login(userAccount: string, password: string): Promise<JulyUserSessionVo011> {
-  return api.post<JulyUserSessionVo011>(SYSTEM011_ACTIONS.user.login, { userAccount, password } as JulyUserLoginVo011);
+  return api.post<JulyUserSessionVo011>(SYSTEM011_ACTIONS.user.login, { userAccount, password } as JulyUserLoginVo011, IAM_BASE);
 }
 
 /** 免密登录（仅 debug / development 运行态；生产后端会拒绝） */
 export function loginByUserName(userAccount: string): Promise<JulyUserSessionVo011> {
-  return api.post<JulyUserSessionVo011>(SYSTEM011_ACTIONS.user.loginByUserName, { userAccount } as JulyUserLoginByNameVo011);
+  return api.post<JulyUserSessionVo011>(SYSTEM011_ACTIONS.user.loginByUserName, { userAccount } as JulyUserLoginByNameVo011, IAM_BASE);
 }
 
 /** 登出 */
 export function logout(): Promise<void> {
-  return api.post<void>(SYSTEM011_ACTIONS.user.logout, {});
+  return api.post<void>(SYSTEM011_ACTIONS.user.logout, {}, IAM_BASE);
 }
 
 /** 本人修改密码（验旧密） */
@@ -50,12 +52,12 @@ export function changePassword(params: {
   oldPassword: string;
   newPassword: string;
 }): Promise<IdVo011> {
-  return api.post<IdVo011>(SYSTEM011_ACTIONS.user.changePassword, params);
+  return api.post<IdVo011>(SYSTEM011_ACTIONS.user.changePassword, params, IAM_BASE);
 }
 
 /** 用户分页查询 */
 export function selectUserListByPage(body: object = {}): Promise<PageResult011<JulyUserVo011>> {
-  return api.post<PageResult011<JulyUserVo011>>(SYSTEM011_ACTIONS.user.selectListByPage, body);
+  return api.post<PageResult011<JulyUserVo011>>(SYSTEM011_ACTIONS.user.selectListByPage, body, IAM_BASE);
 }
 
 // ==================== 业务编排（写 store 状态） ====================
@@ -81,7 +83,7 @@ export async function fetchUserPage(patch: Partial<JulyUserQueryVo011> = {}): Pr
 export async function saveUser(params: SaveUserParams): Promise<string> {
   const { id, userAccount, userName, password, mobile, email, pkOrg, status, roleIds = [] } = params;
   const { id: savedId } = id
-    ? await api.post<IdVo011>(SYSTEM011_ACTIONS.user.update, { id, userName, mobile, email, pkOrg, status } as JulyUserUpdateVo011)
+    ? await api.post<IdVo011>(SYSTEM011_ACTIONS.user.update, { id, userName, mobile, email, pkOrg, status } as JulyUserUpdateVo011, IAM_BASE)
     : await api.post<IdVo011>(SYSTEM011_ACTIONS.user.insert, {
         userAccount,
         userName,
@@ -90,10 +92,10 @@ export async function saveUser(params: SaveUserParams): Promise<string> {
         email,
         pkOrg,
         status,
-      } as JulyUserInsertVo011);
+      } as JulyUserInsertVo011, IAM_BASE);
 
   if (roleIds.length > 0) {
-    await api.post<IdVo011>(SYSTEM011_ACTIONS.user.assignRoles, { id: savedId, pkRoles: roleIds } as JulyUserAssignRolesVo011);
+    await api.post<IdVo011>(SYSTEM011_ACTIONS.user.assignRoles, { id: savedId, pkRoles: roleIds } as JulyUserAssignRolesVo011, IAM_BASE);
   }
   const q = julyUserStore.getSnapshot().query;
   await fetchUserPage({ ...q, pageIndex: id ? q.pageIndex : 1 });
@@ -105,13 +107,13 @@ export async function saveUser(params: SaveUserParams): Promise<string> {
  * 拆包 / 序列化 / 下载细节收敛在 `@/utils/system011/exportFile`，页面只需调用并反馈结果。
  */
 export async function exportUsers(format: 'json' | 'csv' = 'csv'): Promise<{ objectCode: string; rowCount: number }> {
-  const res = await api.post<ExportResult011>(SYSTEM011_ACTIONS.user.export, {});
+  const res = await api.post<ExportResult011>(SYSTEM011_ACTIONS.user.export, {}, IAM_BASE);
   return downloadExportResult(res, format, 'julyUser');
 }
 
 /** 备份全部用户到存储中心（POST /julyUser/v1/backup011，无 body，返回 object key） */
 export function backupUser011(): Promise<BackupResult011> {
-  return api.post<BackupResult011>(SYSTEM011_ACTIONS.user.backup011, {});
+  return api.post<BackupResult011>(SYSTEM011_ACTIONS.user.backup011, {}, IAM_BASE);
 }
 
 /**
@@ -119,7 +121,7 @@ export function backupUser011(): Promise<BackupResult011> {
  * 删除成功后内部刷新当前分页列表（dataSource 从 store 同步），返回删除汇总。
  */
 export async function removeUsers(ids: string[]): Promise<BatchDeleteResultVo011> {
-  const res = await api.post<BatchDeleteResultVo011>(SYSTEM011_ACTIONS.user.logicDeleteBatch, { ids } as IdsVo011);
+  const res = await api.post<BatchDeleteResultVo011>(SYSTEM011_ACTIONS.user.logicDeleteBatch, { ids } as IdsVo011, IAM_BASE);
   await fetchUserPage();
   return res;
 }

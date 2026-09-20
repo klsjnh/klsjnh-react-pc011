@@ -26,7 +26,7 @@
 ```bash
 # Node 18+（本机 v22）· pnpm 10（首次可用 corepack enable pnpm）
 pnpm install       # 依赖安装（以 pnpm-lock.yaml 为准）
-pnpm dev           # 开发服务器，端口 11181，可加 -- --port 18765 覆盖
+pnpm dev           # 开发服务器，端口 11161，可加 -- --port 18765 覆盖
 pnpm build         # 产物在 dist/
 pnpm preview       # 预览构建产物
 pnpm typecheck     # tsc --noEmit
@@ -48,7 +48,7 @@ pnpm standards     # 规范自检
 | 模式 | 行为 |
 |---|---|
 | **Mock**（默认） | 所有请求走内置 mock 后端 `src/mock/system011`，按真实 action 路径（`/julyXxx/v1/{动作}`）分发，离线可用 |
-| **API** | 请求发往 `{apiBaseUrl}/{julyXxx}/v1/{动作}`；默认 `apiBaseUrl` 为 `/klsjnh/system011`（经 vite proxy 转发到后端 `http://192.168.3.160:11610`，免去 CORS） |
+| **API** | 请求发往 `{apiBaseUrl}/{julyXxx}/v1/{动作}`；默认 `apiBaseUrl` 为 `/klsjnh/system011`（经 vite proxy 转发到后端 `http://192.168.3.160:11160`，免去 CORS） |
 
 - **API 地址**：模式下拉里可直接修改，默认 `/klsjnh/system011`，持久化在 localStorage（`pc011-api-base-url`）。
 - **环境变量**（可建 `.env.local`）：
@@ -84,13 +84,13 @@ pnpm standards     # 规范自检
     │   └── system011/           # 各模块 store（julyUser / julyRole / julyOrganization / julyMenu ...）
     ├── services/                # 业务编排（page → service → store）
     │   ├── system011/           # 各模块 service + actions.ts（action 路径常量）
-    │   └── lowcode011 / dataservice011 / storage011 / ai011
+    │   └── dataservice011(=datasource) / storage011 / ai011(=aicenter) / lowcode011(已停用)
     ├── mock/                    # 内置 mock 后端（按真实 action 路径分发）
     ├── components/layout/       # 布局：Top（顶栏）/ Left（侧边栏）/ index
     ├── pages/
     │   ├── home/                # 仪表盘 + 登录页
     │   ├── system011/           # ★ 系统管理模块（julyXxx 全单词命名）
-    │   ├── lowcode011/          # 低代码设计器 + 运行时
+    │   ├── lowcode011/          # 低代码设计器 + 运行时（后端已迁往新项目，侧边栏入口隐藏，代码保留待处置）
     │   └── storageCenter/       # 存储中心
     ├── hooks/                   # useTableFillHeight
     └── types/                   # 类型（前后端契约 DTO/VO + 前端视图类型）
@@ -110,7 +110,7 @@ pnpm standards     # 规范自检
 | `#/login` | 登录页 | home/login |
 
 > 路由的**唯一可信来源**是 `src/config/routes.ts`（路径常量 + 懒加载页面映射），上表仅列常用项，未穷举低代码 / 存储中心 / 数据服务等路由。
-> 侧边栏菜单分组（系统管理 / 系统工具等）来自 `config/constants.ts` 的 `GLOBAL_MENUS`（开发态默认），非开发态走接口 `julyMenu/v1/getUserMenuTree`。
+> 侧边栏菜单分组（系统管理 / 系统工具等）来自 `config/constants.ts` 的 `GLOBAL_MENUS`（开发态默认），非开发态走接口 `julyMenu/v1/getUserMenuTree`（低代码 / 业务建模入口已按 2026-09-20 后端换版隐藏，见 `stores/system011/julyMenuStore.ts` 的 `HIDDEN_NAV_ROUTES`）。
 
 ## 架构要点
 
@@ -181,5 +181,5 @@ pnpm standards     # 规范自检
 - **路由形态待裁决**：现为 `App.tsx` `path="/*"` + `PAGE_MAP` 分发，与 `017.tech-debt-redlines` §A2「禁通配分发」冲突（见 `docs/2026-09-17.md` §三）。
 - **未落地的规划能力**：`useCrudTable` / `createCrudStore` / `usePermission`；测试与 CI、`ErrorBoundary`、404/403 页面均未实现。
 - **路由占位**：`online`、数据宝宝 `overview` / `query`、`settings` 等路由仍兜底到 `BusinessPage` / `Demo011`。
-- **代理地址硬编码**：`vite.config.ts` 中 `/klsjnh` 指向 `192.168.3.160:11610`，待改为环境变量。
+- **代理地址硬编码**：`vite.config.ts` 中 `/klsjnh` 指向 `192.168.3.160:11160`，待改为环境变量。
 - `docs/` 规划的 `infrastructure011/`、`requirement011|013|015/`、`archive011/` 目录尚未建立。

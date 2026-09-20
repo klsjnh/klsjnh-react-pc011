@@ -1,6 +1,6 @@
 /**
- * AI 模型供应商服务（ai011 · julyAiModelProvider/v1/*）
- * 后端模块前缀为 /klsjnh/ai011（baseOverride 显式指定）。
+ * AI 模型供应商服务（aicenter · julyAiModelProvider/v1/*）
+ * ⚠️ 2026-09-20 后端换版：ai011 改名 aicenter，前端 baseOverride 传 AI011_BASE（=/klsjnh/aicenter）。
  * 字段严格对齐后端 AiModelProviderController：主表 provider + 子表 api。
  * 分层：page → service → store；store 不调用 service。
  */
@@ -22,8 +22,8 @@ import type {
 } from '@/types/ai011/aiModelProvider/vo';
 import type { PageResult011, IdVo011 } from '@/types/common';
 
-/** AI 数据源模块 API 根路径（区别于默认 system011 / dataservice011） */
-export const AI011_BASE = '/klsjnh/ai011';
+/** AI 模型供应商模块 API 根路径（区别于默认 system011 / datasource） */
+export const AI011_BASE = '/klsjnh/aicenter';
 
 /** 动作路径（相对路径，请求 URL = AI011_BASE + action） */
 const AI_PROVIDER_ACTIONS = {

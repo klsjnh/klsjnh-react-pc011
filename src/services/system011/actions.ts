@@ -3,9 +3,17 @@
  * 统一 action 路径 = 相对路径：{julyXxx}/v1/{动作}
  * 前端请求 URL = apiBaseUrl（默认 /klsjnh/system011）+ action
  * 禁止在 action 中重复写 /klsjnh/system011 前缀，否则 URL 会重复。
+ *
+ * ⚠️ 2026-09-20 后端换版（192.168.3.160:11160）：user / role / userAudit 三类
+ * 从 system011 迁到 iam 模块（iam => julyUser/v1, julyRole/v1, julyUserAudit/v1）。
+ * 这三组的调用点统一传 baseOverride = IAM_BASE（样板见 storage011 / ai011）。
+ * system011 内其余资源（menu / organization / config / scheduler / dictionary）不变。
  */
+export const IAM_BASE = '/klsjnh/iam';
+
 export const SYSTEM011_ACTIONS = {
   user: {
+    // iam 模块（2026-09-20 后端换版）：调用需传 baseOverride = IAM_BASE
     login: '/julyUser/v1/login',
     loginByUserName: '/julyUser/v1/loginByUserName',
     logout: '/julyUser/v1/logout',
@@ -22,6 +30,7 @@ export const SYSTEM011_ACTIONS = {
     backup011: '/julyUser/v1/backup011',
   },
   userAudit: {
+    // iam 模块（2026-09-20 后端换版）：调用需传 baseOverride = IAM_BASE
     selectListByPage: '/julyUserAudit/v1/selectListByPage',
   },
   menu: {
@@ -38,6 +47,7 @@ export const SYSTEM011_ACTIONS = {
     getById: '/julyMenu/v1/getById',
   },
   role: {
+    // iam 模块（2026-09-20 后端换版）：调用需传 baseOverride = IAM_BASE
     selectListByPage: '/julyRole/v1/selectListByPage',
     insert: '/julyRole/v1/insert',
     update: '/julyRole/v1/update',
