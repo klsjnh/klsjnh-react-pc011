@@ -6,7 +6,7 @@
  *
  * ⚠️ 2026-09-20 后端换版（192.168.3.160:11160）：user / role / userAudit 三类
  * 从 system011 迁到 iam 模块（iam => julyUser/v1, julyRole/v1, julyUserAudit/v1）。
- * 这三组的调用点统一传 baseOverride = IAM_BASE（样板见 storage011 / ai011）。
+ * 这三组的调用点统一传 baseOverride = IAM_BASE（样板见 storageCenter / aiCenter）。
  * system011 内其余资源（menu / organization / config / scheduler / dictionary）不变。
  */
 export const IAM_BASE = '/klsjnh/iam';

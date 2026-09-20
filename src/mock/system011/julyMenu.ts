@@ -72,6 +72,15 @@ export const mockMenus: JulyMenuVo011[] = [
           { id: 'menu0000000000000000000000000502', parentId: 'menu0000000000000000000000root5', menuCode: 'mySettings', menuName: '偏好设置', menuType: '2', menuIcon: 'SettingOutlined', menuRoute: '/personal/settings', permissionCode: null, component: null, sortOrder: 2, status: '1', children: [] },
         ],
       },
+      {
+        // AI 中心：与后端 july_menu 的 aiCenter 目录节点对应（2026-09-20 经菜单接口注册两个子节点）
+        id: 'menu0000000000000000000000root6', parentId: 'menu0000000000000000000000root', menuCode: 'aiCenter', menuName: 'AI 中心', menuType: '1',
+        menuIcon: 'ThunderboltOutlined', menuRoute: '/aiCenter', permissionCode: null, component: null, sortOrder: 6, status: '1',
+        children: [
+          { id: 'menu0000000000000000000000000601', parentId: 'menu0000000000000000000000root6', menuCode: 'julyAiModelProvider', menuName: '模型供应商', menuType: '2', menuIcon: 'KeyOutlined', menuRoute: '/aiCenter/julyAiModelProvider', permissionCode: null, component: null, sortOrder: 10, status: '1', children: [] },
+          { id: 'menu0000000000000000000000000602', parentId: 'menu0000000000000000000000root6', menuCode: 'julyAiChat', menuName: 'AI 聊天', menuType: '2', menuIcon: 'MessageOutlined', menuRoute: '/aiCenter/julyAiChat', permissionCode: null, component: null, sortOrder: 20, status: '1', children: [] },
+        ],
+      },
     ],
   },
 ];

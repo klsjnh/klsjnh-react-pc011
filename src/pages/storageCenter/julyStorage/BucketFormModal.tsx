@@ -5,8 +5,8 @@
  */
 import { useEffect, useMemo } from 'react';
 import { Form, Input, Modal, Select, Tag, Space } from 'antd';
-import type { JulyStorage } from '@/types/storage011';
-import { insertBucket } from '@/services/storage011/storageBucketService';
+import type { JulyStorage } from '@/types/storageCenter';
+import { insertBucket } from '@/services/storageCenter/storageBucketService';
 import { toast } from '@/utils/toast';
 
 interface Props {

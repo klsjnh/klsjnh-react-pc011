@@ -9,11 +9,11 @@ import { DeleteOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table';
 import { PAGE_SIZE_OPTIONS } from '@/utils/pageSizePref';
 import { toast } from '@/utils/toast';
-import type { JulyStorage } from '@/types/storage011';
+import type { JulyStorage } from '@/types/storageCenter';
 import {
   fetchStoragePage, removeStorage, removeStorages, testStorageConnection,
-} from '@/services/storage011/julyStorageService';
-import { useStorageState } from '@/stores/storage011/julyStorageStore';
+} from '@/services/storageCenter/julyStorageService';
+import { useStorageState } from '@/stores/storageCenter/julyStorageStore';
 import { StorageFormModal } from '@/pages/storageCenter/julyStorage/StorageFormModal';
 
 /** 表头单元格水平居中 */

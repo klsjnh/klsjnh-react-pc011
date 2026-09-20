@@ -39,6 +39,21 @@ function toNavItem(m: JulyMenuVo011): NavItem {
 }
 
 /**
+ * 剥掉「单根包装节点」：后端菜单树（julyMenu）顶层可能是唯一的人工根节点
+ * （menuName 如「菜单」、menuRoute 为空串 ''——历史接口约定，真实后端与 mock 均是此形态）。
+ * 侧边栏不需要这一层；且 antd Menu 以 key 索引节点，空串 key 会导致该节点的
+ * children 在渲染时全部丢失（只剩一个孤立 SubMenu）。故映射前先把顶层唯一根剥掉。
+ *
+ * 例外：若顶层多于一个节点（后端改了形态），保持原样不做剥离。
+ */
+function unwrapRoot(items: JulyMenuVo011[]): JulyMenuVo011[] {
+  if (items.length === 1 && !items[0].menuRoute && items[0].children?.length) {
+    return items[0].children;
+  }
+  return items;
+}
+
+/**
  * 导航隐藏清单（仅影响侧边栏入口，不影响路由 / 页面代码）。
  *
  * 2026-09-20 后端换版后以下资源已不存在，菜单项点了必然 404：
@@ -72,7 +87,9 @@ function filterHiddenNav(items: NavItem[]): NavItem[] {
 export function useNavMenus(): NavItem[] {
   const { navMenus } = useMenuState();
   return useMemo(
-    () => filterHiddenNav(globalConfig.menuFromConfig ? GLOBAL_MENUS : navMenus.map(toNavItem)),
+    () => filterHiddenNav(
+      globalConfig.menuFromConfig ? GLOBAL_MENUS : unwrapRoot(navMenus).map(toNavItem),
+    ),
     [navMenus],
   );
 }

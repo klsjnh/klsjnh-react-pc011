@@ -1,5 +1,5 @@
 /**
- * 存储实例新增/编辑弹窗（对接 storage011/storage insert|update）
+ * 存储实例新增/编辑弹窗（对接 storageCenter/storage insert|update）
  * 字段严格对齐后端 JulyStorageSaveVo011（核对于 Java 源码）：
  *   - 必填：storageCode / storageName / provider
  *   - provider 取值：local011 / minio011 / cos011 / tos011 / oss011 / s3011
@@ -11,8 +11,8 @@
 import { useEffect, useState } from 'react';
 import { Button, Form, Input, InputNumber, Modal, Row, Col, Select } from 'antd';
 import { ApiOutlined } from '@ant-design/icons';
-import type { JulyStorage, JulyStorageConnect, StorageTestResult } from '@/types/storage011';
-import { saveStorage, testStorageConnection } from '@/services/storage011/julyStorageService';
+import type { JulyStorage, JulyStorageConnect, StorageTestResult } from '@/types/storageCenter';
+import { saveStorage, testStorageConnection } from '@/services/storageCenter/julyStorageService';
 import { toast } from '@/utils/toast';
 import { TestFeedbackAlert, type TestFeedback, type TestFeedbackDetail } from '@/components/system011/TestFeedbackAlert';
 

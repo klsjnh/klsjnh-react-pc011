@@ -24,6 +24,7 @@ import {
   KeyOutlined,
   LineChartOutlined,
   MenuOutlined,
+  MessageOutlined,
   MonitorOutlined,
   NotificationOutlined,
   PieChartOutlined,
@@ -35,7 +36,7 @@ import {
   UserOutlined,
   UserSwitchOutlined,
 } from '@ant-design/icons';
-import { SYSTEM011_ROUTES, DATASERVICE011_ROUTES, AI011_ROUTES, LOWCODE011_ROUTES } from '@/config/routes';
+import { SYSTEM011_ROUTES, DATASERVICE011_ROUTES, AICENTER_ROUTES, LOWCODE011_ROUTES, MESSAGE_CENTER_ROUTES } from '@/config/routes';
 import type { NavItem } from '@/types/view/layout';
 
 /** 菜单类型：菜单 / 按钮（无目录） */
@@ -104,6 +105,14 @@ export const GLOBAL_MENUS: NavItem[] = [
     ],
   },
   {
+    path: '/messageCenter',
+    label: '消息中心',
+    icon: NotificationOutlined,
+    children: [
+      { path: MESSAGE_CENTER_ROUTES.index, label: '消息管理', icon: MessageOutlined },
+    ],
+  },
+  {
     path: '/dataService011',
     label: '数据管理',
     icon: DatabaseOutlined,
@@ -113,11 +122,12 @@ export const GLOBAL_MENUS: NavItem[] = [
     ],
   },
   {
-    path: '/ai011',
+    path: '/aiCenter',
     label: 'AI 中心',
     icon: ThunderboltOutlined,
     children: [
-      { path: AI011_ROUTES.julyAiModelProvider, label: '模型供应商', icon: KeyOutlined },
+      { path: AICENTER_ROUTES.julyAiModelProvider, label: '模型供应商', icon: KeyOutlined },
+      { path: AICENTER_ROUTES.julyAiChat, label: 'AI 聊天', icon: MessageOutlined },
     ],
   },
   {

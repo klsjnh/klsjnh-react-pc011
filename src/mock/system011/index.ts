@@ -16,9 +16,10 @@ import { handlers as notificationHandlers } from '@/mock/system011/notification'
 import { handlers as julyDatasourceHandlers } from '@/mock/dataservice011/julyDatasource';
 import { handlers as julyBusinessModelingHandlers } from '@/mock/dataservice011/julyBusinessModeling';
 import { handlers as julyDictionaryHandlers } from '@/mock/system011/julyDictionary';
-import { handlers as julyAiModelProviderHandlers } from '@/mock/ai011/julyAiModelProvider';
+import { handlers as julyAiModelProviderHandlers } from '@/mock/aiCenter/julyAiModelProvider';
 import { handlers as julyMetadataHandlers } from '@/mock/lowcode011/julyMetadata';
-import { handlers as storage011Handlers } from '@/mock/storage011';
+import { handlers as storageCenterHandlers } from '@/mock/storageCenter';
+import { handlers as messageCenterHandlers } from '@/mock/messageCenter';
 
 export type { MockEnvelope } from '@/mock/system011/common';
 export { mockRelations } from '@/mock/system011/relations';
@@ -38,7 +39,8 @@ const handlers: Record<string, Handler> = {
   ...julyBusinessModelingHandlers,
   ...julyAiModelProviderHandlers,
   ...julyMetadataHandlers,
-  ...storage011Handlers,
+  ...storageCenterHandlers,
+  ...messageCenterHandlers,
 };
 
 export function getMockResponse(action: string, body?: object): Promise<MockEnvelope<unknown>> | null {

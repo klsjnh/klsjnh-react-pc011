@@ -1,5 +1,5 @@
 /**
- * 对象在线编辑器（整页路由 → STORAGE011_ROUTES.fileEdit = /storageCenter/fileList/edit）
+ * 对象在线编辑器（整页路由 → STORAGE_CENTER_ROUTES.fileEdit = /storageCenter/fileList/edit）
  *
  * 形态来源：老项目 klsjnh-react-dev011_20260909_011 的 `pages/klsjnh011/StorageFileEdit.tsx`
  * （用户要求「用跳转页面不是弹窗」），故不再走 TextEditorModal，改为文件列表页跳本页整页编辑。
@@ -22,11 +22,11 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Button, Card, Input, Popconfirm, Space, Spin, Tag } from 'antd';
 import { ArrowLeftOutlined, ReloadOutlined } from '@ant-design/icons';
 import { KlsjnhMarkdown011, KlsjnhSql011 } from '@/components/system011';
-import { STORAGE011_ROUTES } from '@/config/routes';
+import { STORAGE_CENTER_ROUTES } from '@/config/routes';
 import {
   readObjectText, resolveEditorKind, saveObjectText, type ObjectEditorKind,
-} from '@/services/storage011/storageObjectService';
-import { storageExplorerStore } from '@/stores/storage011/storageExplorerStore';
+} from '@/services/storageCenter/storageObjectService';
+import { storageExplorerStore } from '@/stores/storageCenter/storageExplorerStore';
 import { toast } from '@/utils/toast';
 
 const KIND_LABEL: Record<ObjectEditorKind, string> = { sql: 'SQL', markdown: 'Markdown', text: '文本' };
@@ -112,7 +112,7 @@ export const FileEditorPage = () => {
   /** 返回列表：先把浏览位置写回 explorer（刷新后仍停在同一实例 + 桶 + 目录） */
   const goBack = useCallback(() => {
     storageExplorerStore.setPrefix(backPrefix);
-    navigate(STORAGE011_ROUTES.fileList);
+    navigate(STORAGE_CENTER_ROUTES.fileList);
   }, [backPrefix, navigate]);
 
   const handleSave = async (andBack = false) => {

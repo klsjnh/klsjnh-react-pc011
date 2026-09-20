@@ -6,8 +6,8 @@
  * reload：实例被新增/删除后由「实例管理弹窗」触发，重新拉一次下拉项。
  */
 import { useCallback, useEffect, useState } from 'react';
-import { listStorages } from '@/services/storage011/julyStorageService';
-import type { JulyStorage } from '@/types/storage011';
+import { listStorages } from '@/services/storageCenter/julyStorageService';
+import type { JulyStorage } from '@/types/storageCenter';
 
 export interface StorageOptions {
   storages: JulyStorage[];

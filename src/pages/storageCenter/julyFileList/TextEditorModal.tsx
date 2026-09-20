@@ -1,5 +1,5 @@
 /**
- * 对象在线文本编辑弹窗（对接 storage011/object readText|saveText）
+ * 对象在线文本编辑弹窗（对接 storageCenter/object readText|saveText）
  * 按扩展名挂对应编辑器（规则唯一事实源 = storageObjectService.resolveEditorKind）：
  *   .sql                    → KlsjnhSql011（SQL 编辑器；存储场景不能执行语句，故 disableExecute）
  *   .md / .markdown / .txt  → KlsjnhMarkdown011（工具栏 + 预览）
@@ -11,7 +11,7 @@ import { Button, Input, Modal, Tag } from 'antd';
 import { KlsjnhMarkdown011, KlsjnhSql011 } from '@/components/system011';
 import {
   resolveEditorKind, saveObjectText, type ObjectEditorKind, type ReadTextResult,
-} from '@/services/storage011/storageObjectService';
+} from '@/services/storageCenter/storageObjectService';
 import { toast } from '@/utils/toast';
 
 interface Props {

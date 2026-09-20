@@ -84,7 +84,7 @@ pnpm standards     # 规范自检
     │   └── system011/           # 各模块 store（julyUser / julyRole / julyOrganization / julyMenu ...）
     ├── services/                # 业务编排（page → service → store）
     │   ├── system011/           # 各模块 service + actions.ts（action 路径常量）
-    │   └── dataservice011(=datasource) / storage011 / ai011(=aicenter) / lowcode011(已停用)
+    │   └── dataservice011(=datasource) / storageCenter / aiCenter(=aicenter) / lowcode011(已停用)
     ├── mock/                    # 内置 mock 后端（按真实 action 路径分发）
     ├── components/layout/       # 布局：Top（顶栏）/ Left（侧边栏）/ index
     ├── pages/

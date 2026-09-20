@@ -4,6 +4,7 @@
  * 分层：page → service → store；store 不调用 service。
  */
 import { isMockMode } from '@/config/appConfig';
+import { NAV_MENU_SOURCE } from '@/config/globals';
 import { api, fireApi } from '@/api/request';
 import { SYSTEM011_ACTIONS } from '@/services/system011/actions';
 import { menuStore } from '@/stores/system011/julyMenuStore';
@@ -77,10 +78,14 @@ export async function loadMenus(): Promise<void> {
  * 加载当前登录人的菜单树（RBAC 侧边栏数据源）。
  * 与 loadMenus 分属两个后端接口：本函数走 selectUserMenuTree（非内置角色只返回已授权菜单），
  * 不能与 selectTree 换用，否则导航会绕过权限。
+ *
+ * ⚠️ 联调期例外（globals.NAV_MENU_SOURCE = 'all'）：后端 RBAC 授权数据未就绪时
+ * getUserMenuTree 返回空数组、侧边栏整个空白，此时改走 selectTree 全量树兜底。
+ * 正式上线前（后端授权数据就绪后）必须把 NAV_MENU_SOURCE 切回 'rbac'，否则导航绕过权限。
  */
 export async function loadNavMenus(): Promise<void> {
   try {
-    const tree = await selectUserMenuTree();
+    const tree = NAV_MENU_SOURCE === 'all' ? await selectMenuTree() : await selectUserMenuTree();
     menuStore.setState({ navMenus: tree });
   } catch {
     menuStore.setState({ navMenus: [] });

@@ -292,6 +292,7 @@ export const JulyMenu = () => {
         <Card
           className="menu-sider"
           title="菜单"
+          extra={<Button type="link" onClick={() => openCreate('')}>新建顶级菜单</Button>}
           styles={{ body: { padding: 8, minHeight: 670, maxHeight: 670, overflowY: 'auto' } }}
         >
           {menus.length === 0
@@ -337,7 +338,9 @@ export const JulyMenu = () => {
                 </Row>
                 <Row gutter={24}>
                   <Col span={8}>
-                    <Form.Item name="parentId" label="上级菜单" rules={[{ required: true, message: '请选择上级菜单' }]}>
+                    {/* 上级菜单留空 = 顶级菜单：后端 JulyMenuUpdateVo011 不要求 parentId，
+                        moveMenu 亦以空串表示顶级，故不做必填校验 */}
+                    <Form.Item name="parentId" label="上级菜单">
                       <Select allowClear placeholder="（顶级菜单）" options={buildParentOptions(selectedNode)} />
                     </Form.Item>
                   </Col>
@@ -346,7 +349,7 @@ export const JulyMenu = () => {
                       name="menuRoute"
                       label="路由路径"
                       hidden={editType === '3'}
-                      rules={editType === '3' ? [] : [{ required: true, message: '请输入路由路径' }]}
+                      rules={editType === '2' ? [{ required: true, message: '请输入路由路径' }] : []}
                     >
                       <Input placeholder="如 /business/newpage" />
                     </Form.Item>
@@ -419,7 +422,8 @@ export const JulyMenu = () => {
           </Row>
           <Row gutter={12}>
             <Col span={8}>
-              <Form.Item name="parentId" label="上级菜单" rules={[{ required: true, message: '请选择上级菜单' }]}>
+              {/* 留空 = 顶级菜单（与编辑表单同口径，后端不要求 parentId） */}
+              <Form.Item name="parentId" label="上级菜单">
                 <Select allowClear placeholder="（顶级菜单）" options={buildParentOptions(null)} />
               </Form.Item>
             </Col>
@@ -428,7 +432,7 @@ export const JulyMenu = () => {
                 name="menuRoute"
                 label="路由路径"
                 hidden={createType === '3'}
-                rules={createType === '3' ? [] : [{ required: true, message: '请输入路由路径' }]}
+                rules={createType === '2' ? [{ required: true, message: '请输入路由路径' }] : []}
               >
                 <Input placeholder="如 /business/newpage" />
               </Form.Item>

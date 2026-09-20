@@ -35,9 +35,10 @@ export const DATASERVICE011_ROUTES = {
   julyBusinessModelingEdit: '/dataService011/JulyBusinessModeling/:id',
 } as const;
 
-/* ---------------- ai011 ---------------- */
-export const AI011_ROUTES = {
-  julyAiModelProvider: '/ai011/julyAiModelProvider',
+/* ---------------- aiCenter ---------------- */
+export const AICENTER_ROUTES = {
+  julyAiModelProvider: '/aiCenter/julyAiModelProvider',
+  julyAiChat: '/aiCenter/julyAiChat',
 } as const;
 
 /* ---------------- lowcode011 ---------------- */
@@ -52,11 +53,16 @@ export const LOWCODE011_ROUTES = {
 } as const;
 
 /* ---------------- storageCenter ---------------- */
-export const STORAGE011_ROUTES = {
+export const STORAGE_CENTER_ROUTES = {
   bucketList: '/storageCenter/bucketList',
   fileList: '/storageCenter/fileList',
   /** 对象在线编辑（整页）：参数走 query（storageCode / bucketName / objectName / prefix） */
   fileEdit: '/storageCenter/fileList/edit',
+} as const;
+
+/* ---------------- messageCenter ---------------- */
+export const MESSAGE_CENTER_ROUTES = {
+  index: '/messageCenter/index',
 } as const;
 
 /* ---------------- 通用业务 / 子模块 ---------------- */
@@ -148,7 +154,8 @@ const OnlineUsersPage = BusinessPage; // 占位（原 OnlineUsersPage 暂未实�
 const CachePage = lazy(() => import('@/pages/business-pages').then((m) => ({ default: m.CachePage })));
 const JulyDatasourcePage = lazy(() => import('@/pages/dataService011/JulyDatasources').then((m) => ({ default: m.JulyDatasource })));
 const JulyBusinessModelingPage = lazy(() => import('@/pages/dataService011/JulyBusinessModeling').then((m) => ({ default: m.JulyBusinessModeling })));
-const JulyAiModelProviderPage = lazy(() => import('@/pages/ai011/JulyAiModelProvider').then((m) => ({ default: m.JulyAiModelProvider })));
+const JulyAiModelProviderPage = lazy(() => import('@/pages/aiCenter/JulyAiModelProvider').then((m) => ({ default: m.JulyAiModelProvider })));
+const JulyAiChatPage = lazy(() => import('@/pages/aiCenter/JulyAiChat').then((m) => ({ default: m.JulyAiChat })));
 const JulyMetadataPage = lazy(() => import('@/pages/lowcode011/JulyMetadata').then((m) => ({ default: m.JulyMetadata })));
 const SchemaRuntimePage = lazy(() => import('@/pages/lowcode011/JulyMetadata/SchemaRuntimePage').then((m) => ({ default: m.SchemaRuntimePage })));
 const ParamsPage = lazy(() => import('@/pages/demo16/demo011').then((m) => ({ default: m.Demo011 })));
@@ -177,6 +184,7 @@ const SettingsPage = lazy(() => import('@/pages/demo16/demo011').then((m) => ({ 
 const BucketListPage = lazy(() => import('@/pages/storageCenter/julyStorage/BucketListPage').then((m) => ({ default: m.BucketListPage })));
 const FileListPage = lazy(() => import('@/pages/storageCenter/julyFileList/FileListPage').then((m) => ({ default: m.FileListPage })));
 const FileEditorPage = lazy(() => import('@/pages/storageCenter/julyFileList/FileEditorPage').then((m) => ({ default: m.FileEditorPage })));
+const MessageCenterPage = lazy(() => import('@/pages/messageCenter').then((m) => ({ default: m.MessageCenter })));
 
 // 数据宝宝（暂用 BusinessPage 占位）
 const DataOverviewPage = lazy(() => import('@/pages/BusinessPage').then((m) => ({ default: m.BusinessPage })));
@@ -246,15 +254,18 @@ export const PAGE_MAP: Record<string, PageComponent> = {
   [DATASERVICE011_ROUTES.julyBusinessModeling]: JulyBusinessModelingPage,
   [DATASERVICE011_ROUTES.julyBusinessModelingNew]: JulyBusinessModelingFormPage,
 
-  [AI011_ROUTES.julyAiModelProvider]: JulyAiModelProviderPage,
+  [AICENTER_ROUTES.julyAiModelProvider]: JulyAiModelProviderPage,
+  [AICENTER_ROUTES.julyAiChat]: JulyAiChatPage,
 
   [LOWCODE011_ROUTES.julyMetadata]: JulyMetadataPage,
   [LOWCODE011_ROUTES.julyMetadataNew]: JulyMetadataFormPage,
   [LOWCODE011_ROUTES.schemaRuntime]: SchemaRuntimePage,
 
-  [STORAGE011_ROUTES.bucketList]: BucketListPage,
-  [STORAGE011_ROUTES.fileList]: FileListPage,
-  [STORAGE011_ROUTES.fileEdit]: FileEditorPage,
+  [STORAGE_CENTER_ROUTES.bucketList]: BucketListPage,
+  [STORAGE_CENTER_ROUTES.fileList]: FileListPage,
+  [STORAGE_CENTER_ROUTES.fileEdit]: FileEditorPage,
+
+  [MESSAGE_CENTER_ROUTES.index]: MessageCenterPage,
 
   [COMMON_ROUTES.audit]: AuditPage,
   [COMMON_ROUTES.settings]: SettingsPage,

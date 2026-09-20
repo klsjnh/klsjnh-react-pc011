@@ -1,5 +1,5 @@
 /**
- * 存储中心（storage011）
+ * 存储中心（storageCenter）
  * 三视图：存储实例(storage) / 存储桶(bucket) / 对象(object)，覆盖后端 24 个动作。
  *
  * 分层：page 调 service + 读 store；service 编排业务并写 store（store 不调 service）。
@@ -16,7 +16,7 @@
  *
  * ⚠️ 「存储实例 / 桶 / 目录前缀」的选中态统一放在 storageExplorerStore（**已持久化**），
  *    对象视图与存储桶视图共用一份，刷新 / 切页回来都记得上次浏览位置。
- *    对象在线编辑已改为**整页路由** STORAGE011_ROUTES.fileEdit（见 julyFileList/FileEditorPage），
+ *    对象在线编辑已改为**整页路由** STORAGE_CENTER_ROUTES.fileEdit（见 julyFileList/FileEditorPage），
  *    本文件不再挂编辑弹窗。
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -30,20 +30,20 @@ import type { ColumnsType } from 'antd/es/table';
 import { PAGE_SIZE_OPTIONS } from '@/utils/pageSizePref';
 import { useTableFillHeight } from '@/hooks/useTableFillHeight';
 import { toast } from '@/utils/toast';
-import { STORAGE011_ROUTES } from '@/config/routes';
-import type { JulyStorage, StorageBucket, StorageObject } from '@/types/storage011';
+import { STORAGE_CENTER_ROUTES } from '@/config/routes';
+import type { JulyStorage, StorageBucket, StorageObject } from '@/types/storageCenter';
 import {
   fetchStoragePage, listStorages, removeStorage, removeStorages, testStorageConnection,
-} from '@/services/storage011/julyStorageService';
-import { fetchBucketPage, listBuckets, removeBucket } from '@/services/storage011/storageBucketService';
+} from '@/services/storageCenter/julyStorageService';
+import { fetchBucketPage, listBuckets, removeBucket } from '@/services/storageCenter/storageBucketService';
 import {
   batchRemoveObjects, downloadObject, fetchObjectPage, presignedUrl, removeObject, resolveEditorKind, uploadObject,
   type ObjectEditorKind,
-} from '@/services/storage011/storageObjectService';
-import { useStorageState } from '@/stores/storage011/julyStorageStore';
-import { useStorageBucketState } from '@/stores/storage011/storageBucketStore';
-import { useStorageObjectState } from '@/stores/storage011/storageObjectStore';
-import { storageExplorerStore, useStorageExplorer } from '@/stores/storage011/storageExplorerStore';
+} from '@/services/storageCenter/storageObjectService';
+import { useStorageState } from '@/stores/storageCenter/julyStorageStore';
+import { useStorageBucketState } from '@/stores/storageCenter/storageBucketStore';
+import { useStorageObjectState } from '@/stores/storageCenter/storageObjectStore';
+import { storageExplorerStore, useStorageExplorer } from '@/stores/storageCenter/storageExplorerStore';
 import { StorageFormModal } from '@/pages/storageCenter/julyStorage/StorageFormModal';
 import { BucketFormModal } from '@/pages/storageCenter/julyStorage/BucketFormModal';
 
@@ -586,7 +586,7 @@ export const StorageObjectPane = ({ defaultStorageCode }: { defaultStorageCode?:
       objectName: row.objectName,
     });
     if (currentPrefix) qs.set('prefix', currentPrefix);
-    navigate(`${STORAGE011_ROUTES.fileEdit}?${qs.toString()}`);
+    navigate(`${STORAGE_CENTER_ROUTES.fileEdit}?${qs.toString()}`);
   };
 
   const handleRemove = async (row: StorageObject) => {
