@@ -1,35 +1,30 @@
 /**
- * 配置列表页（julyConfig）- antd 版
- * 列表读 julyConfigStore；分页/保存/删除调 julyConfigService。
- * 字段直接对齐后端：code/data/status。
+ * 配置列表页（julyConfig）页面壳 —— 单表金标准
+ * 组件拆分（3 文件）：
+ *  - 本壳：页头 + 工具栏（搜索/状态筛选 + 新建/批量删除/备份/导出）+ 组装
+ *  - ConfigTable        表格（列定义 / 勾选 / 分页 / 实测高度；行内动作回调上抛）
+ *  - ConfigFormModal    新建 / 编辑弹窗（配置值与备注多行）
+ * 金标准口径（2026-09-21 用户定稿）：green 新建 / blue 备份 / pink 导出 / danger 批量删除；
+ * 行内 filled 小按钮；「新建」不带资源后缀。
  */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { DatabaseOutlined, DeleteOutlined, DownloadOutlined, DownOutlined, PlusOutlined } from '@ant-design/icons';
-import { Button, Card, Dropdown, Input, Popconfirm, Space, Table, Tag } from 'antd';
+import { Button, Dropdown, Input, Popconfirm, Select } from 'antd';
 import type { MenuProps } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
 import { useConfigState } from '@/stores/system011/julyConfigStore';
 import { fetchConfigPage, removeConfig, removeConfigs, exportConfig, backupConfig011 } from '@/services/system011';
-import { useTableFillHeight } from '@/hooks/useTableFillHeight';
-import { PAGE_SIZE_OPTIONS } from '@/utils/pageSizePref';
 import { toast } from '@/utils/toast';
+import { ConfigTable } from '@/pages/system011/julyConfig/ConfigTable';
 import { ConfigFormModal } from '@/pages/system011/julyConfig/ConfigFormModal';
 import type { JulyConfigVo011 } from '@/types/system011/julyConfig';
 
-/** 表头单元格水平居中 */
-const hdrCenter = (): React.HTMLAttributes<HTMLElement> => ({ style: { textAlign: 'center' } });
-
-/** 数据内容左对齐 + 表头居中 */
-const leftCell = { align: 'left' as const, onHeaderCell: hdrCenter };
-
 export const JulyConfig = () => {
-  const { list, total, loading, query } = useConfigState();
+  const { query } = useConfigState();
+  const [keyword, setKeyword] = useState('');
   const [modal, setModal] = useState<{ open: boolean; node: JulyConfigVo011 | null }>({ open: false, node: null });
   const [actionLoading, setActionLoading] = useState<'export' | 'backup' | null>(null);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [batchDeleting, setBatchDeleting] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
-  const tableBodyHeight = useTableFillHeight(cardRef, `${total}-${loading}`);
 
   // 只重置 pageIndex：pageSize 是用户偏好（存在 store 里），传值会把它覆盖回默认值
   useEffect(() => { fetchConfigPage({ pageIndex: 1 }); }, []);
@@ -69,8 +64,6 @@ export const JulyConfig = () => {
     onClick: ({ key }) => handleExport(key as 'json' | 'csv'),
   };
 
-  // 表单初始值逻辑已收敛到 ConfigFormModal（destroyOnHidden + initialValues）
-
   const handleRemove = async (id: string) => {
     try {
       await removeConfig(id);
@@ -95,50 +88,41 @@ export const JulyConfig = () => {
     }
   };
 
-  const rowSelection = {
-    selectedRowKeys,
-    onChange: (keys: React.Key[]) => setSelectedRowKeys(keys),
-  };
-
-  const columns: ColumnsType<JulyConfigVo011> = [
-    { ...leftCell, title: '配置键', dataIndex: 'code', width: 160, render: (v) => <code>{v}</code> },
-    { ...leftCell, title: '配置值', dataIndex: 'data' },
-    { title: '状态', dataIndex: 'status', align: 'center', onHeaderCell: hdrCenter, width: 130, render: (s) => <Tag color={s === '1' ? 'green' : 'red'}>{s === '1' ? '启用' : '停用'}</Tag> },
-    {
-      title: '操作', key: 'action', width: 140, fixed: 'right', align: 'center', onHeaderCell: hdrCenter,
-      render: (_, r) => (
-        <Space size="small">
-          <Button type="link" size="small" onClick={() => setModal({ open: true, node: r })}>编辑</Button>
-          <Popconfirm title="确定删除这条配置吗？" okText="删除" cancelText="取消" okButtonProps={{ danger: true }} onConfirm={() => handleRemove(r.id)}>
-            <Button type="link" size="small" danger>删除</Button>
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ];
-
   return (
     <div className="page-fill">
       <div className="page-header">
         <h2>配置管理</h2>
       </div>
 
+      {/* 工具栏金标准：第一行 搜索 + 状态筛选，第二行 新建 + 批量删除 + 备份 + 导出 */}
       <div className="page-toolbar" style={{ display: 'block' }}>
         <div className="toolbar-row-search" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
           <Input.Search
             allowClear
             placeholder="搜索 code / data"
-            style={{ width: 320 }}
+            style={{ width: 260 }}
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
             onSearch={(v) => fetchConfigPage({ pageIndex: 1, keyword: v || undefined })}
+          />
+          <Select
+            style={{ width: 140 }}
+            value={query.status ?? ''}
+            onChange={(v) => fetchConfigPage({ pageIndex: 1, status: v || undefined })}
+            options={[
+              { value: '', label: '全部状态' },
+              { value: '1', label: '启用' },
+              { value: '0', label: '停用' },
+            ]}
           />
         </div>
         <div className="toolbar-right">
-          {/* 浅底 tonal（variant="filled"）：颜色表达强度、跟随主题 token，不写死色，与用户管理保持一致 */}
+          {/* 浅底 tonal（variant="filled"）：五色语义 —— green 新建 / blue 备份 / pink 导出 / danger 批量删除 */}
           <Button
-            color="primary" variant="filled"
+            color="green" variant="filled"
             icon={<PlusOutlined />}
             onClick={() => setModal({ open: true, node: null })}
-          >新建配置</Button>
+          >新建</Button>
           <Popconfirm
             title={`确定要删除选中的 ${selectedRowKeys.length} 条配置吗？`}
             okText="删除" cancelText="取消" okButtonProps={{ danger: true }}
@@ -153,14 +137,14 @@ export const JulyConfig = () => {
             >批量删除</Button>
           </Popconfirm>
           <Button
-            color="default" variant="filled"
+            color="blue" variant="filled"
             icon={<DatabaseOutlined />}
             loading={actionLoading === 'backup'}
             onClick={handleBackup}
           >备份011</Button>
           <Dropdown menu={exportMenu} trigger={['click']}>
             <Button
-              color="default" variant="filled"
+              color="pink" variant="filled"
               icon={<DownloadOutlined />}
               loading={actionLoading === 'export'}
             >
@@ -170,32 +154,20 @@ export const JulyConfig = () => {
         </div>
       </div>
 
-      <Card className="table-wrapper" ref={cardRef} styles={{ body: { padding: 0 } }}>
-        <Table<JulyConfigVo011>
-          rowKey="id"
-          columns={columns}
-          rowSelection={rowSelection}
-          dataSource={list}
-          loading={loading}
-          scroll={{ x: 800, y: tableBodyHeight }}
-          pagination={{
-            current: query.pageIndex,
-            pageSize: query.pageSize,
-            total,
-            showSizeChanger: true,
-            pageSizeOptions: PAGE_SIZE_OPTIONS,
-            showTotal: (t) => `共 ${t} 条`,
-            onChange: (pageIndex, pageSize) => fetchConfigPage({ pageIndex, pageSize }),
-          }}
-        />
-      </Card>
+      <ConfigTable
+        selectedRowKeys={selectedRowKeys}
+        onSelectionChange={setSelectedRowKeys}
+        onEdit={(row) => setModal({ open: true, node: row })}
+        onRemove={handleRemove}
+      />
 
       <ConfigFormModal
         open={modal.open}
         node={modal.node}
         onClose={() => setModal({ open: false, node: null })}
-        onSaved={() => {}}
       />
     </div>
   );
 };
+
+export default JulyConfig;

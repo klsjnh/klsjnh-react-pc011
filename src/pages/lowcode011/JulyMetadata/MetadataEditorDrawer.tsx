@@ -121,6 +121,9 @@ const EditorBody = ({ node, onClose }: { node: JulyMetadataVo011 | null; onClose
           <Form.Item label="排序" name="sortOrder" rules={[{ required: true, message: '请输入排序' }]}>
             <InputNumber style={{ width: '100%' }} min={0} placeholder="越小越靠前" />
           </Form.Item>
+          <Form.Item label="备注" name="remark" style={{ gridColumn: '1 / -1' }}>
+            <Input.TextArea rows={2} placeholder="可选" />
+          </Form.Item>
           <Form.Item label="状态" name="status" rules={[{ required: true, message: '请选择状态' }]}>
             <Select
               options={[
@@ -128,9 +131,6 @@ const EditorBody = ({ node, onClose }: { node: JulyMetadataVo011 | null; onClose
                 { value: '0', label: '停用' },
               ]}
             />
-          </Form.Item>
-          <Form.Item label="备注" name="remark" style={{ gridColumn: '1 / -1' }}>
-            <Input.TextArea rows={2} placeholder="可选" />
           </Form.Item>
         </div>
       </Form>

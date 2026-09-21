@@ -110,14 +110,14 @@ const PromptFormBody = ({ node, defaultDomain, onClose, onSaved }: Omit<PromptFo
             </Form.Item>
           </Col>
         </Row>
+        <Form.Item name="remark" label="备注">
+          <Input.TextArea rows={2} placeholder="备注说明" />
+        </Form.Item>
         {isEdit && (
           <Form.Item name="status" label="状态" rules={[{ required: true }]}>
             <Select options={STATUS_OPTIONS} />
           </Form.Item>
         )}
-        <Form.Item name="remark" label="备注">
-          <Input placeholder="备注说明" />
-        </Form.Item>
 
         {/* 业务域明细：仅新建态可维护（后端 update 不含明细，编辑态明细走页面级弹窗） */}
         {!isEdit && (

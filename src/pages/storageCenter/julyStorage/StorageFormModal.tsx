@@ -202,11 +202,11 @@ export const StorageFormModal = ({ open, node, onClose, onSaved }: Props) => {
             </Form.Item>
           </Col>
         </Row>
-        <Form.Item name="status" label="状态" initialValue="1">
-          <Select options={[{ value: '1', label: '启用' }, { value: '0', label: '禁用' }]} />
-        </Form.Item>
         <Form.Item name="remark" label="备注">
           <Input.TextArea rows={2} />
+        </Form.Item>
+        <Form.Item name="status" label="状态" initialValue="1">
+          <Select options={[{ value: '1', label: '启用' }, { value: '0', label: '禁用' }]} />
         </Form.Item>
       </Form>
     </Modal>

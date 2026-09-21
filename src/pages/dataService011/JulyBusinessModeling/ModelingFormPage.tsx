@@ -302,6 +302,9 @@ export const ModelingFormPage = ({ id, onNavigate }: Props) => {
                       <Select options={OBJECT_TYPE_011_OPTIONS.map((o) => ({ value: o.value, label: o.label }))} />
                     </Form.Item>
                   </Space>
+                  <Form.Item name="remark" label="备注">
+                    <Input.TextArea rows={2} placeholder="备注说明" />
+                  </Form.Item>
                   <Space size="large" wrap>
                     <Form.Item name="objectDescription" label="对象描述" style={{ width: 240 }}>
                       <Input placeholder="如 订单业务对象" />
@@ -316,9 +319,7 @@ export const ModelingFormPage = ({ id, onNavigate }: Props) => {
                       <Input placeholder="如 /business/ord_order" />
                     </Form.Item>
                   </Space>
-                  <Form.Item name="remark" label="备注">
-                    <Input.TextArea rows={2} placeholder="备注说明" />
-                  </Form.Item>
+
 
                   <div className="sub-table-title">
                     <CodeOutlined /> <span>字段子表（metaData.fieldData，FieldType011）</span>

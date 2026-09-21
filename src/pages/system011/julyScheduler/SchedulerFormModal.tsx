@@ -84,10 +84,10 @@ export const SchedulerFormModal = ({ open, node, onClose }: SchedulerFormModalPr
         <Form.Item name="schedulerCron" label="Cron 表达式" rules={[{ required: true, message: '请输入 Cron' }]}>
           <Input placeholder="如 0 2 * * *" />
         </Form.Item>
+        <Form.Item name="remark" label="备注"><Input.TextArea rows={2} placeholder="备注说明" /></Form.Item>
         <Form.Item name="status" label="状态" rules={[{ required: true, message: '请选择状态' }]}>
           <Select options={SCHEDULER_STATUS_OPTIONS} />
         </Form.Item>
-        <Form.Item name="remark" label="备注"><Input.TextArea rows={2} placeholder="备注说明" /></Form.Item>
       </Form>
     </Modal>
   );

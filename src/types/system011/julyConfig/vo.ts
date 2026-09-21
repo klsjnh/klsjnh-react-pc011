@@ -8,26 +8,32 @@ export interface JulyConfigVo011 extends BaseVo011 {
   code: string;
   data: string;
   status: string;
+  /** 备注（最长 300）；2026-09-21 线上契约核实已上线 */
+  remark?: string;
 }
 
 export interface JulyConfigQueryVo011 {
   pageIndex: number;
   pageSize: number;
   keyword?: string;
+  /** 状态过滤：0 停用 / 1 启用；线上 QueryVo 已有 status（2026-09-21 核实），前端类型补齐 */
+  status?: string;
 }
 
-/** 修改配置值（code 不可变）；status 后端 VO 待补（2026-09-20 前端先行） */
+/** 修改配置值（code 不可变）；status / remark 已上线（2026-09-21 核实） */
 export interface JulyConfigUpdateVo011 {
   id: string;
   data: string;
   status?: string;
+  remark?: string;
 }
 
-/** 新增/更新配置（code 唯一）；status 后端 VO 待补（2026-09-20 前端先行） */
+/** 新增/更新配置（code 唯一）；status / remark 已上线（2026-09-21 核实） */
 export interface JulyConfigUpsertVo {
   code: string;
   data: string;
   status?: string;
+  remark?: string;
 }
 
 // ==================== 平台能力：导出 / 备份（platform011） ====================

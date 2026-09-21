@@ -121,20 +121,14 @@ const ApiFormBody = ({ provider, node, onClose, onSaved }: Omit<ApiFormModalProp
         >
           <Input.Password placeholder={node ? '留空则不修改' : 'sk-...'} autoComplete="new-password" />
         </Form.Item>
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item name="sortOrder" label="排序" rules={[{ required: true, message: '请输入排序' }]}>
-              <Input type="number" placeholder="数字越小越靠前" />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item name="status" label="状态" rules={[{ required: true }]}>
-              <Select options={STATUS_OPTIONS} />
-            </Form.Item>
-          </Col>
-        </Row>
+        <Form.Item name="sortOrder" label="排序" rules={[{ required: true, message: '请输入排序' }]}>
+          <Input type="number" placeholder="数字越小越靠前" />
+        </Form.Item>
         <Form.Item name="remark" label="备注">
           <Input.TextArea rows={2} placeholder="备注说明" />
+        </Form.Item>
+        <Form.Item name="status" label="状态" rules={[{ required: true }]}>
+          <Select options={STATUS_OPTIONS} />
         </Form.Item>
       </Form>
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}>

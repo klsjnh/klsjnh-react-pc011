@@ -83,13 +83,13 @@ const DomainFormBody = ({ node, onClose, onSave }: Omit<DomainFormModalProps, 'o
           </Col>
         </Row>
 
-        {/* 状态、备注各自独占一行（016 §9.1 表单布局铁律） */}
-        <Form.Item name="status" label="状态" initialValue="1">
-          <Select options={STATUS_OPTIONS} />
-        </Form.Item>
-
+        {/* 备注、状态各自独占一行，备注在前（016 §9.1 表单布局铁律 / 2026-09-21 定稿） */}
         <Form.Item name="remark" label="备注">
           <Input.TextArea rows={2} />
+        </Form.Item>
+
+        <Form.Item name="status" label="状态" initialValue="1">
+          <Select options={STATUS_OPTIONS} />
         </Form.Item>
 
       </Form>

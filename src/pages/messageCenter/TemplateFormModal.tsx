@@ -79,7 +79,7 @@ export const TemplateFormModal = ({
           <Input type="number" min={0} />
         </Form.Item>
         <Form.Item name="remark" label="备注">
-          <Input maxLength={255} />
+          <Input.TextArea rows={2} maxLength={255} />
         </Form.Item>
       </Form>
     </Modal>

@@ -71,10 +71,10 @@ export const DictionaryFormModal = ({ open, node, onClose }: DictionaryFormModal
           <Input placeholder="请输入字典名称" />
         </Form.Item>
         <Form.Item name="sortOrder" label="排序"><InputNumber style={{ width: '100%' }} min={0} /></Form.Item>
+        <Form.Item name="remark" label="备注"><Input.TextArea rows={2} placeholder="备注说明" /></Form.Item>
         <Form.Item name="status" label="状态" rules={[{ required: true, message: '请选择状态' }]}>
           <Select options={STATUS_OPTIONS} />
         </Form.Item>
-        <Form.Item name="remark" label="备注"><Input.TextArea rows={2} placeholder="备注说明" /></Form.Item>
       </Form>
     </Modal>
   );

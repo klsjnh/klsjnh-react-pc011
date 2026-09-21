@@ -456,8 +456,8 @@ export const MetadataFormPage = ({ id, onNavigate }: Props) => {
             <Form.Item label="排序" name="sortOrder">
               <InputNumber style={{ width: '100%' }} placeholder="9999" />
             </Form.Item>
-            <Form.Item label="备注" name="remark" style={{ gridColumn: 'span 2' }}>
-              <Input placeholder="可选" />
+            <Form.Item label="备注" name="remark" style={{ gridColumn: '1 / -1' }}>
+              <Input.TextArea rows={2} placeholder="可选" />
             </Form.Item>
             <Form.Item label="状态" name="status" rules={[{ required: true, message: '请选择状态' }]} style={{ gridColumn: '1 / -1' }}>
               <Select options={[{ value: '1', label: '启用' }, { value: '0', label: '停用' }]} />

@@ -16,6 +16,8 @@ export const handlers: Record<string, Handler> = {
     let rows = [...mockConfigs];
     const kw = (body?.keyword || '').trim().toLowerCase();
     if (kw) rows = rows.filter((c) => c.code.toLowerCase().includes(kw) || c.data.toLowerCase().includes(kw));
+    const status = (body?.status || '').trim();
+    if (status) rows = rows.filter((c) => c.status === status);
     return ok(pageResult(rows, body?.pageIndex || 1, body?.pageSize || 10));
   },
   '/julyConfig/v1/insert': async (body) => {
@@ -25,7 +27,7 @@ export const handlers: Record<string, Handler> = {
     if (mockConfigs.some((c) => c.code === code)) return fail(`insert: code already exists, ${code}`, 400);
     const item: JulyConfigVo011 = {
       id: 'cfg' + Math.random().toString(36).slice(2, 12),
-      code, data: body?.data || '', status: body?.status || '1',
+      code, data: body?.data || '', status: body?.status || '1', remark: body?.remark || '',
       createTime: new Date().toISOString().slice(0, 19),
     };
     mockConfigs.unshift(item);
@@ -37,6 +39,7 @@ export const handlers: Record<string, Handler> = {
     if (!item) return fail(`record not found, id=${body?.id}`, 404);
     if (body?.data !== undefined) item.data = body.data;
     if (body?.status !== undefined) item.status = body.status;
+    if (body?.remark !== undefined) item.remark = body.remark;
     item.updateTime = new Date().toISOString().slice(0, 19);
     return ok({ id: item.id });
   },

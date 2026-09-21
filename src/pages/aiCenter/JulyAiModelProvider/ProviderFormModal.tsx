@@ -94,11 +94,11 @@ const ProviderFormBody = ({ node, onClose, onSaved }: Omit<ProviderFormModalProp
         <Form.Item name="models" label="模型列表" extra="多个模型用逗号分隔，如 gpt-4o,gpt-4o-mini">
           <Input.TextArea rows={2} placeholder="gpt-4o,gpt-4o-mini" />
         </Form.Item>
-        <Form.Item name="status" label="状态" rules={[{ required: true }]}>
-          <Select options={STATUS_OPTIONS} />
-        </Form.Item>
         <Form.Item name="remark" label="备注">
           <Input.TextArea rows={2} placeholder="备注说明" />
+        </Form.Item>
+        <Form.Item name="status" label="状态" rules={[{ required: true }]}>
+          <Select options={STATUS_OPTIONS} />
         </Form.Item>
       </Form>
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}>

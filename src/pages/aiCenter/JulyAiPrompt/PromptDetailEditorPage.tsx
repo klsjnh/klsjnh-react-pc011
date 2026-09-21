@@ -182,12 +182,12 @@ export const PromptDetailEditorPage = ({ detailId, promptId, domain, onNavigate 
                 </Form.Item>
               ) : null}
             </Form.Item>
-            {/* 状态、备注各自独占一行（016 §9.1） */}
+            {/* 备注（多行）在前、状态在后，各自独占一行（016 §9.1 / 2026-09-21 定稿） */}
+            <Form.Item name="remark" label="备注">
+              <Input.TextArea rows={2} placeholder="备注说明" />
+            </Form.Item>
             <Form.Item name="status" label="状态" rules={[{ required: true }]}>
               <Select options={STATUS_OPTIONS} style={{ maxWidth: 240 }} />
-            </Form.Item>
-            <Form.Item name="remark" label="备注">
-              <Input placeholder="备注说明" />
             </Form.Item>
           </Form>
         )}

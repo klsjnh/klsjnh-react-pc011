@@ -26,11 +26,11 @@ export async function fetchConfigPage(patch: Partial<JulyConfigQueryVo011> = {})
 }
 
 /** 新增 / 修改配置（有 id = 修改 data；status 后端 VO 待补，2026-09-20 前端先行下发） */
-export async function saveConfig(params: { id?: string; code: string; data: string; status?: string }): Promise<string> {
-  const { id, code, data, status } = params;
+export async function saveConfig(params: { id?: string; code: string; data: string; status?: string; remark?: string }): Promise<string> {
+  const { id, code, data, status, remark } = params;
   const { id: savedId } = id
-    ? await api.post<IdVo011>(SYSTEM011_ACTIONS.config.update, { id, data, status } as JulyConfigUpdateVo011)
-    : await api.post<IdVo011>(SYSTEM011_ACTIONS.config.insert, { code, data, status } as JulyConfigUpsertVo);
+    ? await api.post<IdVo011>(SYSTEM011_ACTIONS.config.update, { id, data, status, remark } as JulyConfigUpdateVo011)
+    : await api.post<IdVo011>(SYSTEM011_ACTIONS.config.insert, { code, data, status, remark } as JulyConfigUpsertVo);
   const q = julyConfigStore.getSnapshot().query;
   await fetchConfigPage({ ...q, pageIndex: id ? q.pageIndex : 1 });
   return savedId;
