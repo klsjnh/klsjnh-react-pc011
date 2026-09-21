@@ -47,7 +47,7 @@ function buildParentOptions(
       options.push({
         value: n.id,
         label: <span>{'　'.repeat(depth)}{n.domainCode} {n.domainName}</span>,
-        disabled: !!exclude && (n.id === exclude.id || containsId([n], exclude.id) === false ? n.id === exclude.id : containsId(n.children || [], exclude.id) || n.id === exclude.id),
+        disabled: !!exclude && containsId([exclude], n.id),
       });
       if (n.children?.length) walk(n.children, depth + 1);
     });

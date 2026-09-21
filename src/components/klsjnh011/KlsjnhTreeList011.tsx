@@ -134,7 +134,7 @@ export const KlsjnhTreeList011 = <T,>({
       ) : (
         <Tree
           blockNode
-          draggable={draggable}
+          draggable={draggable && !!onDrop}
           treeData={toTreeData(nodes)}
           expandedKeys={expandedKeys ?? defaultExpanded}
           selectedKeys={selectedKey != null ? [selectedKey] : []}

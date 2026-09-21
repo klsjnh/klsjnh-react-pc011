@@ -6,7 +6,7 @@
  * 类型见 aiPrompt/vo.ts（JulyAiDomainPromptVo011）。
  */
 
-import type { JulyAiDomainPromptVo011, JulyAiDomainPromptSaveVo011 } from '@/types/aiCenter/aiPrompt/vo';
+import type { JulyAiDomainPromptSaveVo011 } from '@/types/aiCenter/aiPrompt/vo';
 
 /** 业务域条目（对应后端 JulyAiDomainVo011；树节点） */
 export interface JulyAiDomainItem {
@@ -74,13 +74,6 @@ export interface SaveJulyAiDomainParams {
   sortOrder?: number;
   status?: string;
   remark?: string;
-}
-
-/** 域 + 提示词打包（对应 JulyAiDomainBundleVo011；getWithChildren 出参） */
-export interface JulyAiDomainBundleVo011 {
-  domain: JulyAiDomainItem;
-  /** 该域下提示词列表（子表，按排序） */
-  prompts?: JulyAiDomainPromptVo011[];
 }
 
 /** 域 + 提示词整存入参（对应 JulyAiDomainSaveWholeVo011；prompts 整存替换：旧子表逻辑删 + 新列表插入） */

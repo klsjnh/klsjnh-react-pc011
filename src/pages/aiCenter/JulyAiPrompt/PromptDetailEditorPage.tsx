@@ -39,6 +39,8 @@ export const PromptDetailEditorPage = ({ detailId, pkMt, domain, onNavigate }: P
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [node, setNode] = useState<JulyAiDomainPromptVo011 | null>(null);
+  /** 正文（getContent 取回；随 initialValues 定型，避免 setFieldsValue 早于挂载丢值） */
+  const [contentText, setContentText] = useState('');
 
   /** 返回路径：保留主页选中态（?domain=） */
   const backPath = domain
@@ -56,20 +58,18 @@ export const PromptDetailEditorPage = ({ detailId, pkMt, domain, onNavigate }: P
     (async () => {
       try {
         if (isNew) {
-          if (!pkMt) {
-            toast.error('缺少所属业务域上下文（pkMt）——请从列表页「新建提示词」进入');
-            onNavigate?.(backPath);
-            return;
-          }
+          // 新契约下创建走列表页「新建提示词」弹窗（insertDetail）；编辑器只做已有提示词的正文/设置修改
+          toast.error('请先在列表页「新建提示词」，再进入编辑内容');
+          onNavigate?.(backPath);
           return;
         }
         const hit = await getPromptById(detailId);
         if (!alive) return;
-        setNode(hit);
-        // 正文不随 Vo 回传（超长）—— getContent 异步填充，避免保存时空正文写回
+        // 正文不随 Vo 回传（超长）—— getContent 取回后随 initialValues 定型
         const text = await getPromptContent(detailId);
         if (!alive) return;
-        form.setFieldsValue({ content: text });
+        setContentText(text);
+        setNode(hit);
       } catch (e) {
         if (!alive) return;
         toast.error((e as Error)?.message || '加载失败');
@@ -134,7 +134,7 @@ export const PromptDetailEditorPage = ({ detailId, pkMt, domain, onNavigate }: P
                 promptName: node.promptName,
                 scene: node.scene,
                 contentMode: node.contentMode || 'inline',
-                content: '',
+                content: contentText,
                 storageCode: node.storageCode || '',
                 bucket: node.bucket || '',
                 variables: node.variables || '',

@@ -9,7 +9,8 @@ import { AICENTER_BASE } from '@/services/aiCenter/julyAiModelProviderService';
 import { julyAiPromptStore } from '@/stores/aiCenter/julyAiPromptStore';
 import type {
   JulyAiDomainPromptVo011,
-  JulyAiDomainPromptQueryVo011,
+  JulyAiDomainPromptInsertVo011,
+  JulyAiDomainPromptUpdateVo011,
   JulyAiDomainPromptSaveVo011,
   JulyAiDomainPromptRenderVo011,
 } from '@/types/aiCenter/aiPrompt/vo';
@@ -19,7 +20,6 @@ import type { PageResult011, IdVo011 } from '@/types/common';
 const AI_PROMPT_ACTIONS = {
   selectDetailListByPage: '/julyAiDomain/v1/selectDetailListByPage',
   getDetailById: '/julyAiDomain/v1/getDetailById',
-  getDetailByCode: '/julyAiDomain/v1/getDetailByCode',
   getContent: '/julyAiDomain/v1/getContent',
   insertDetail: '/julyAiDomain/v1/insertDetail',
   updateDetail: '/julyAiDomain/v1/updateDetail',
@@ -28,20 +28,8 @@ const AI_PROMPT_ACTIONS = {
 } as const;
 
 /** 提示词分页查询（明细端点；pkMt 过滤 = 查某域下的提示词） */
-export function selectPromptListByPage(body: object = {}): Promise<PageResult011<JulyAiDomainPromptVo011>> {
+function selectPromptListByPage(body: object = {}): Promise<PageResult011<JulyAiDomainPromptVo011>> {
   return api.post<PageResult011<JulyAiDomainPromptVo011>>(AI_PROMPT_ACTIONS.selectDetailListByPage, body, AICENTER_BASE);
-}
-
-/** 拉取提示词分页并写入 store */
-export async function fetchPromptPage(patch: Partial<JulyAiDomainPromptQueryVo011> = {}): Promise<void> {
-  const query = { ...julyAiPromptStore.getSnapshot().query, ...patch } as JulyAiDomainPromptQueryVo011;
-  julyAiPromptStore.setState({ loading: true, query });
-  try {
-    const res = await selectPromptListByPage(query);
-    julyAiPromptStore.setState({ list: res.rows || [], total: res.total || 0, totalPages: res.totalPages || 1, loading: false });
-  } catch {
-    julyAiPromptStore.setState({ list: [], total: 0, totalPages: 1, loading: false });
-  }
 }
 
 /**
@@ -49,7 +37,8 @@ export async function fetchPromptPage(patch: Partial<JulyAiDomainPromptQueryVo01
  * pkMt 必传 —— 新契约按域直查，一次拉取替代旧 N+1 聚合。
  */
 export async function fetchPromptsByDomain(pkMt: string): Promise<void> {
-  julyAiPromptStore.setState({ loading: true });
+  // 回写 query.pkMt：savePrompt/removePrompt 事后按同域刷新依赖它（勿删）
+  julyAiPromptStore.setState({ loading: true, query: { ...julyAiPromptStore.getSnapshot().query, pkMt } });
   try {
     const res = await selectPromptListByPage({ pageIndex: 1, pageSize: 200, pkMt });
     julyAiPromptStore.setState({ list: res.rows || [], total: res.total || 0, totalPages: 1, loading: false });
@@ -61,11 +50,6 @@ export async function fetchPromptsByDomain(pkMt: string): Promise<void> {
 /** 提示词主键查询（明细点查端点，替代旧「拉列表反查」） */
 export function getPromptById(id: string): Promise<JulyAiDomainPromptVo011> {
   return api.get<JulyAiDomainPromptVo011>(AI_PROMPT_ACTIONS.getDetailById, { id }, AICENTER_BASE);
-}
-
-/** 提示词编码查询 */
-export function getPromptByCode(code: string): Promise<JulyAiDomainPromptVo011> {
-  return api.get<JulyAiDomainPromptVo011>(AI_PROMPT_ACTIONS.getDetailByCode, { code }, AICENTER_BASE);
 }
 
 /** 正文读取（storage 模式经后端从对象存储取回；inline 模式同样可用） */
@@ -80,8 +64,8 @@ export function getPromptContent(id: string): Promise<string> {
 export async function savePrompt(params: JulyAiDomainPromptSaveVo011): Promise<string> {
   const { id, pkMt, promptCode, ...rest } = params;
   const { id: savedId } = id
-    ? await api.post<IdVo011>(AI_PROMPT_ACTIONS.updateDetail, { id, ...rest } as JulyAiDomainPromptSaveVo011, AICENTER_BASE)
-    : await api.post<IdVo011>(AI_PROMPT_ACTIONS.insertDetail, { pkMt, promptCode, ...rest } as JulyAiDomainPromptSaveVo011, AICENTER_BASE);
+    ? await api.post<IdVo011>(AI_PROMPT_ACTIONS.updateDetail, { id, ...rest } as JulyAiDomainPromptUpdateVo011, AICENTER_BASE)
+    : await api.post<IdVo011>(AI_PROMPT_ACTIONS.insertDetail, { pkMt, promptCode, ...rest } as JulyAiDomainPromptInsertVo011, AICENTER_BASE);
   const pk = julyAiPromptStore.getSnapshot().query.pkMt;
   if (pk) await fetchPromptsByDomain(pk);
   return savedId;

@@ -5,9 +5,6 @@
  * 旧 julyAiPrompt 主表+明细双层模型废弃 —— 提示词 = 明细行本体。
  */
 
-/** 内容模式：inline 正文入库 / storage 正文写对象存储（缺省桶 ai-prompt） */
-export type AiPromptContentMode = 'inline' | 'storage';
-
 /** 提示词条目（对应后端 JulyAiDomainPromptVo011 —— 域明细子表行） */
 export interface JulyAiDomainPromptVo011 {
   id: string;
