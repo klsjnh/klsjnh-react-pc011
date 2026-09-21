@@ -4,6 +4,7 @@
  * 字段直接使用后端名：menuCode/menuName/menuIcon/menuRoute/menuType/sortOrder/status
  */
 import React, { useState, useEffect, useMemo } from 'react';
+import { PlusOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Dropdown, Empty, Form, Input, Modal, Row, Select, Tree } from 'antd';
 import type { DataNode, TreeProps } from 'antd/es/tree';
 import { useMenuState } from '@/stores/system011/julyMenuStore';
@@ -292,7 +293,7 @@ export const JulyMenu = () => {
         <Card
           className="menu-sider"
           title="菜单"
-          extra={<Button type="link" onClick={() => openCreate('')}>新建顶级菜单</Button>}
+          extra={<Button color="primary" variant="filled" size="small" icon={<PlusOutlined />} onClick={() => openCreate('')}>新建顶级菜单</Button>}
           styles={{ body: { padding: 8, minHeight: 670, maxHeight: 670, overflowY: 'auto' } }}
         >
           {menus.length === 0

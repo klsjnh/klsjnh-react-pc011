@@ -5,7 +5,7 @@
  * 布局参照老前端：表格每行「测试」+ 弹窗底部「测试连接」，双列表单；表头居中、内容左对齐。
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { ApiOutlined } from '@ant-design/icons';
+import { ApiOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button, Card, Input, Popconfirm, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useDatasourceState } from '@/stores/dataservice011/julyDatasourceStore';
@@ -117,7 +117,7 @@ export const JulyDatasource = () => {
           />
         </div>
         <div className="toolbar-right">
-          <Button type="primary" onClick={() => setModal({ open: true, node: null })}>+ 新建数据源</Button>
+          <Button color="primary" variant="filled" icon={<PlusOutlined />} onClick={() => setModal({ open: true, node: null })}>新建数据源</Button>
         </div>
       </div>
 

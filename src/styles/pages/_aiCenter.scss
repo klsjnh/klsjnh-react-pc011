@@ -108,6 +108,11 @@
   line-height: 32px;
 }
 
+/* 左右分栏（复用 permission-layout/sider/main）：业务域列表项，样式对齐 role-item */
+.domain-item { cursor: pointer; padding: 12px 14px !important; }
+.domain-item.active { background: var(--primary-bg); border-left: 3px solid var(--primary); }
+.domain-icon { font-size: 16px; color: var(--primary); }
+
 /* 明细编辑器：块级卡片感，与 antd Form 垂直布局协调 */
 .prompt-detail-editor {
   border: 1px solid var(--border);

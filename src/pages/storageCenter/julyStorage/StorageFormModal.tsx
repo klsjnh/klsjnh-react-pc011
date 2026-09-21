@@ -140,7 +140,7 @@ export const StorageFormModal = ({ open, node, onClose, onSaved }: Props) => {
       footer={[
         <Button key="test" icon={<ApiOutlined />} loading={testing} onClick={handleTest}>测试连接</Button>,
         <Button key="cancel" onClick={onClose}>取消</Button>,
-        <Button key="ok" type="primary" onClick={handleOk}>确定</Button>,
+        <Button key="ok" type="primary" onClick={handleOk}>保存</Button>,
       ]}
     >
       <Form form={form} layout="vertical" style={{ marginTop: 16 }}>

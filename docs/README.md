@@ -16,6 +16,7 @@
 | [017.tech-debt-redlines.md](017.tech-debt-redlines.md) | 技术债红线（架构 / 类型 / 契约 / 门禁 / 文档） |
 | [019.lowcode011-findings.md](019.lowcode011-findings.md) | **低代码模块现状**：后端 `lowcode011/julyMetadata` 接口清单与一主三子模型、实测踩坑、与 `julyBusinessModeling` 的字段/方法错配清单、待拍板的实现方案 |
 | [020.lowcode011-interface-matrix.md](020.lowcode011-interface-matrix.md) | **低代码接口对照矩阵**：三档分流 —— A 真实接口已对接 / B 契约错配已修正 / C PENDING-BACKEND 前端占位（附实时 OpenAPI 证据与后端补齐后的切换方式） |
+| [031.pc-ui-standard.md](031.pc-ui-standard.md) | **PC 端 UI 标准**：按钮 / 工具栏 / 表单按钮 / 页面骨架统一写法与基准实现（【评审】类规则） |
 
 ## 专题与知识库
 

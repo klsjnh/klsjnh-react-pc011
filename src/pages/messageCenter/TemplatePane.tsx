@@ -146,8 +146,8 @@ export const TemplatePane = ({ direction }: TemplatePaneProps) => {
           onPressEnter={() => void reload(1)}
           onBlur={() => void reload(1)}
         />
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); setModalOpen(true); }}>
-          新增模板
+        <Button color="primary" variant="filled" icon={<PlusOutlined />} onClick={() => { setEditing(null); setModalOpen(true); }}>
+          新建模板
         </Button>
         <Popconfirm title={`确认删除选中的 ${selectedKeys.length} 条模板？`} onConfirm={() => void handleBatchRemove()}>
           <Button danger icon={<DeleteOutlined />} disabled={!selectedKeys.length}>批量删除</Button>

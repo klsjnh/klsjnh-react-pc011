@@ -6,7 +6,7 @@
  * 本页只负责：主表查询与分页、选中字典、导出、以及把两个子组件拼到卡片里。
  */
 import React, { useEffect, useState } from 'react';
-import { Button, Card, Popconfirm, Space, Table, Tabs, Tag } from 'antd';
+import { Button, Card, Input, Popconfirm, Select, Space, Table, Tabs, Tag } from 'antd';
 import { DownloadOutlined, PlusOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useDictionaryState } from '@/stores/system011/julyDictionaryStore';
@@ -36,6 +36,8 @@ export const JulyDictionary = () => {
 
   /** 下方明细区页签：items = 明细项（默认） */
   const [detailTab, setDetailTab] = useState('items');
+  /** 搜索关键字（受控；onSearch 才触发请求，与 julyUser 一致） */
+  const [keyword, setKeyword] = useState('');
 
   // 导出（对接 030 /export/v1，objectCode = julyDictionary / julyDictionaryItem）
   const [exporting, setExporting] = useState(false);
@@ -96,8 +98,28 @@ export const JulyDictionary = () => {
         <h2>字典管理</h2>
       </div>
 
-      {/* 工具栏：与 julyUser / julyConfig 一致 —— 页头下方、卡片之外，左对齐一行按钮 */}
+      {/* 工具栏：与 julyUser / julyConfig 同款两行 —— 第一行搜索 + 状态筛选，第二行动作按钮 */}
       <div className="page-toolbar" style={{ display: 'block' }}>
+        <div className="toolbar-row-search" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+          <Input.Search
+            allowClear
+            placeholder="搜索编码 / 名称"
+            style={{ width: 260 }}
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            onSearch={(v) => fetchDictionaryPage({ pageIndex: 1, keyword: v || undefined })}
+          />
+          <Select
+            style={{ width: 140 }}
+            value={query.status ?? ''}
+            onChange={(v) => fetchDictionaryPage({ pageIndex: 1, status: v || undefined })}
+            options={[
+              { value: '', label: '全部状态' },
+              { value: '1', label: '启用' },
+              { value: '0', label: '停用' },
+            ]}
+          />
+        </div>
         <div className="toolbar-right">
           {/* 浅底 tonal（variant="filled"）：颜色表达强度、跟随主题 token，不写死色 */}
           <Button color="primary" variant="filled" icon={<PlusOutlined />}

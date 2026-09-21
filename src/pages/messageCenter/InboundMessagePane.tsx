@@ -98,7 +98,7 @@ export const InboundMessagePane = () => {
           onPressEnter={() => void reload(1)}
           onBlur={() => void reload(1)}
         />
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => setReceiveOpen(true)}>模拟回调</Button>
+        <Button color="primary" variant="filled" icon={<PlusOutlined />} onClick={() => setReceiveOpen(true)}>模拟回调</Button>
         <Popconfirm title={`确认删除选中的 ${selectedKeys.length} 条记录？`} onConfirm={() => void handleBatchRemove()}>
           <Button danger icon={<DeleteOutlined />} disabled={!selectedKeys.length}>批量删除</Button>
         </Popconfirm>

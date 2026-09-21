@@ -92,7 +92,7 @@ export const GLOBAL_MENUS: NavItem[] = [
     children: [
       { path: SYSTEM011_ROUTES.julyConfig, label: '配置管理', icon: SettingOutlined },
       { path: SYSTEM011_ROUTES.julyScheduler, label: '定时任务', icon: FieldTimeOutlined },
-      { path: '/business/dict', label: '字典管理', icon: BookOutlined },
+      { path: SYSTEM011_ROUTES.julyDictionary, label: '字典管理', icon: BookOutlined },
       { path: '/business/monitor', label: '系统监控', icon: MonitorOutlined },
       { path: '/business/online', label: '在线用户', icon: UserSwitchOutlined },
       { path: '/business/cache', label: '缓存管理', icon: ThunderboltOutlined },

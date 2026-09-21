@@ -151,7 +151,6 @@ const JulyDictionaryPage = lazy(() => import('@/pages/system011/julyDictionary')
 
 // 业务功能页（原 business-pages.tsx 导出）
 const BusinessPage = lazy(() => import('@/pages/BusinessPage').then((m) => ({ default: m.BusinessPage })));
-const DictPage = lazy(() => import('@/pages/business-pages').then((m) => ({ default: m.DictPage })));
 const MonitorPage = lazy(() => import('@/pages/business-pages').then((m) => ({ default: m.MonitorPage })));
 const OnlineUsersPage = BusinessPage; // 占位（原 OnlineUsersPage 暂未实现，走 BusinessPage 兜底展示）
 const CachePage = lazy(() => import('@/pages/business-pages').then((m) => ({ default: m.CachePage })));
@@ -210,8 +209,7 @@ const JulyBusinessModelingFormPage = lazy(() => import('@/pages/dataService011/J
 export const BUSINESS_PAGES: Record<string, PageComponent> = {
   config: JulyConfigPage,
   scheduler: JulySchedulerPage,
-  dict: DictPage,
-  monitor: MonitorPage,
+    monitor: MonitorPage,
   online: OnlineUsersPage,
   cache: CachePage,
   datasource: JulyDatasourcePage,

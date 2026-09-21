@@ -41,7 +41,10 @@ export const PromptDetailEditorPage = ({ detailId, promptId, domain, onNavigate 
   const [prompt, setPrompt] = useState<JulyAiPromptItem | null>(null);
   const [node, setNode] = useState<JulyAiPromptDetailItem | null>(null);
 
-  const backPath = `${AICENTER_ROUTES.julyAiPrompt}?promptId=${promptId}`;
+  /** 返回路径：保留主页选中态（?domain=；兼容旧链接的 ?promptId= 形态） */
+  const backPath = domain
+    ? `${AICENTER_ROUTES.julyAiPrompt}?domain=${encodeURIComponent(domain)}`
+    : `${AICENTER_ROUTES.julyAiPrompt}?promptId=${promptId}`;
 
   /** 加载提示词上下文 + （编辑态）明细行反查 */
   useEffect(() => {
@@ -110,16 +113,13 @@ export const PromptDetailEditorPage = ({ detailId, promptId, domain, onNavigate 
 
   return (
     <div>
-      {/* 页头动作区：返回 + 标题 + 提示词标签 + 保存/取消（对齐 016 §9.1 表单布局铁律：按钮不沉底） */}
+      {/* 页头动作区：返回列表 + 保存 同在左侧（取消去掉——返回即放弃）；右侧留空 */}
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
         <Space>
           <Button icon={<ArrowLeftOutlined />} onClick={() => onNavigate?.(backPath)}>返回列表</Button>
+          <Button type="primary" loading={saving} disabled={loading} onClick={handleSave}>保存</Button>
           <h2 style={{ margin: 0 }}>{isNew ? '新增业务域明细' : '编辑业务域明细'}</h2>
           {prompt && <Tag color="blue">{prompt.promptName}（{prompt.promptCode}）</Tag>}
-        </Space>
-        <Space>
-          <Button type="primary" loading={saving} disabled={loading} onClick={handleSave}>保存</Button>
-          <Button onClick={() => onNavigate?.(backPath)}>取消</Button>
         </Space>
       </div>
 
@@ -142,10 +142,10 @@ export const PromptDetailEditorPage = ({ detailId, promptId, domain, onNavigate 
                 status: node.status || '1',
               }
               : {
-                  contentMode: 'inline', sortOrder: 1, status: '1',
-                  // 从主页带域跳转（该提示词在该域下还没有内容）：预填业务域编码
-                  ...(domain ? { domainCode: domain } : {}),
-                }}
+                contentMode: 'inline', sortOrder: 1, status: '1',
+                // 从主页带域跳转（该提示词在该域下还没有内容）：预填业务域编码
+                ...(domain ? { domainCode: domain } : {}),
+              }}
             style={{ maxWidth: 880 }}
           >
             <Row gutter={16}>

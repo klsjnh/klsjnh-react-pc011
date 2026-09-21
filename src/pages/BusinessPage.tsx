@@ -45,7 +45,7 @@ export const BusinessPage = ({ onNavigate }: BusinessPageProps) => {
         { icon: DatabaseOutlined, label: '数据源', path: '/business/datasource', color: '#fff7e6' },
         { icon: HddOutlined, label: '存储中心', path: '/business/storage', color: '#f9f0ff' },
         { icon: ControlOutlined, label: '参数设置', path: '/business/params', color: '#e6fffb' },
-        { icon: BookOutlined, label: '字典管理', path: '/business/dict', color: '#fff1f0' },
+        { icon: BookOutlined, label: '字典管理', path: '/system011/julyDictionary', color: '#fff1f0' },
         { icon: MailOutlined, label: '通知模板', path: '/business/template', color: '#fffbe6' },
         { icon: NotificationOutlined, label: '消息推送', path: '/business/push', color: '#f0f5ff' },
       ],

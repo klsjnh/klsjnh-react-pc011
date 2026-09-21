@@ -4,6 +4,7 @@
  * 字段直接对齐后端：schedulerCode/schedulerName/schedulerHandler/schedulerCron/status。
  */
 import React, { useEffect, useRef, useState } from 'react';
+import { PlusOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Form, Input, Modal, Popconfirm, Row, Select, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useSchedulerState } from '@/stores/system011/julySchedulerStore';
@@ -108,7 +109,7 @@ export const JulyScheduler = () => {
           />
         </div>
         <div className="toolbar-right">
-          <Button color="primary" variant="filled" onClick={() => { form.resetFields(); setModal({ open: true, node: null }); }}>+ 新建任务</Button>
+          <Button color="primary" variant="filled" icon={<PlusOutlined />} onClick={() => { form.resetFields(); setModal({ open: true, node: null }); }}>新建任务</Button>
         </div>
       </div>
 

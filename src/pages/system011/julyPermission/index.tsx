@@ -5,7 +5,7 @@
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { Button, Card, Empty, List, Space, Table, Tabs, Tag, Tree } from 'antd';
-import { KeyOutlined } from '@ant-design/icons';
+import { KeyOutlined, PlusOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import type { DataNode } from 'antd/es/tree';
 import { useRoleState } from '@/stores/system011/julyRoleStore';
@@ -150,7 +150,7 @@ export const JulyPermission = () => {
           styles={{ body: { padding: 8, minHeight: 670, overflowY: 'auto' } }}
           extra={
             <Space size="small">
-              <Button type="primary" onClick={() => setEditModal({ open: true, role: null })}>+ 新建</Button>
+              <Button color="primary" variant="filled" icon={<PlusOutlined />} onClick={() => setEditModal({ open: true, role: null })}>新建角色</Button>
               <Button
                 type="link"
                 disabled={!selectedRole}
@@ -222,7 +222,7 @@ export const JulyPermission = () => {
                         {/* 主操作在右：+ 添加用户 为次要(default)，保存 为唯一 primary */}
                         <div className="text-right mb-2">
                           <Space size="small">
-                            <Button size="small" onClick={() => setAddUserModal(true)}>+ 添加用户</Button>
+                            <Button color="primary" variant="filled" size="small" icon={<PlusOutlined />} onClick={() => setAddUserModal(true)}>添加用户</Button>
                             <Button type="primary" size="small" loading={saving} onClick={saveRoleUsers}>保存</Button>
                           </Space>
                         </div>

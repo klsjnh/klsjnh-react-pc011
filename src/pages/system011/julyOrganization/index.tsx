@@ -3,6 +3,7 @@
  * 树形表格（antd Table 树数据，直接消费 JulyOrganizationVo011）；写操作走 julyOrganizationService。
  */
 import React, { useEffect, useMemo, useState } from 'react';
+import { PlusOutlined } from '@ant-design/icons';
 import { Button, Card, Popconfirm, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useOrganizationState } from '@/stores/system011/julyOrganizationStore';
@@ -62,7 +63,7 @@ export const JulyOrganization = () => {
       render: (_, node) => (
         <Space size="small">
           <Button type="link" size="small" onClick={() => openEdit(node)}>编辑</Button>
-          <Button type="link" size="small" onClick={() => openCreate(node)}>+ 子部门</Button>
+          <Button type="link" size="small" onClick={() => openCreate(node)}>子部门</Button>
           <Popconfirm
             title="确定删除这个组织吗？"
             description="有子组织或挂有用户时后端会拒绝。"
@@ -83,7 +84,7 @@ export const JulyOrganization = () => {
       <div className="page-header"><h2>组织管理</h2><p>集团 → 分公司 → 部门</p></div>
       <div className="page-toolbar">
         <div className="toolbar-right">
-          <Button type="primary" onClick={() => openCreate(null)}>+ 新建集团</Button>
+          <Button color="primary" variant="filled" icon={<PlusOutlined />} onClick={() => openCreate(null)}>新建集团</Button>
         </div>
       </div>
 

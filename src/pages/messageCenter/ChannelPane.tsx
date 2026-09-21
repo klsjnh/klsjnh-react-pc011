@@ -117,8 +117,8 @@ export const ChannelPane = ({ direction }: ChannelPaneProps) => {
           style={{ width: 220 }}
           onSearch={(v) => { setKeyword(v); void reload(1); }}
         />
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); setModalOpen(true); }}>
-          新增通道
+        <Button color="primary" variant="filled" icon={<PlusOutlined />} onClick={() => { setEditing(null); setModalOpen(true); }}>
+          新建通道
         </Button>
         <Popconfirm title={`确认删除选中的 ${selectedKeys.length} 条通道？`} onConfirm={() => void handleBatchRemove()}>
           <Button danger icon={<DeleteOutlined />} disabled={!selectedKeys.length}>批量删除</Button>

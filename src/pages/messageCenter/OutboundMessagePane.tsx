@@ -5,7 +5,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button, Card, Input, Popconfirm, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { DeleteOutlined, PlusOutlined, ReloadOutlined, SendOutlined } from '@ant-design/icons';
+import { DeleteOutlined, ReloadOutlined, SendOutlined } from '@ant-design/icons';
 import { useTableFillHeight } from '@/hooks/useTableFillHeight';
 import { toast } from '@/utils/toast';
 import { outboundStore, useOutboundState } from '@/stores/messageCenter/outboundStore';
@@ -129,7 +129,7 @@ export const OutboundMessagePane = () => {
           onPressEnter={() => void reload(1)}
           onBlur={() => void reload(1)}
         />
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => setSendOpen(true)}>发送消息</Button>
+        <Button color="primary" variant="filled" icon={<SendOutlined />} onClick={() => setSendOpen(true)}>发送消息</Button>
         <Popconfirm title={`确认删除选中的 ${selectedKeys.length} 条记录？`} onConfirm={() => void handleBatchRemove()}>
           <Button danger icon={<DeleteOutlined />} disabled={!selectedKeys.length}>批量删除</Button>
         </Popconfirm>
