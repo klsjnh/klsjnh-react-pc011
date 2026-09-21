@@ -4,7 +4,7 @@ import { SYSTEM011_ACTIONS } from '@/services/system011/actions';
 import { julySchedulerStore } from '@/stores/system011/julySchedulerStore';
 import type {
   JulySchedulerVo011, JulySchedulerQueryVo011, JulySchedulerInsertVo011, JulySchedulerUpdateVo011,
-  SaveSchedulerParams, PageResult011, IdVo011, BatchDeleteResultVo011,
+  SaveSchedulerParams, PageResult011, IdVo011, IdsVo011, BatchDeleteResultVo011,
 } from '@/types/system011';
 
 export function selectSchedulerListByPage(body: object = {}): Promise<PageResult011<JulySchedulerVo011>> {
@@ -25,13 +25,13 @@ export async function fetchSchedulerPage(patch: Partial<JulySchedulerQueryVo011>
 
 /** 新增 / 修改定时任务（有 id = 编辑） */
 export async function saveScheduler(params: SaveSchedulerParams): Promise<string> {
-  const { id, schedulerCode, schedulerName, schedulerHandler, schedulerCron, status } = params;
+  const { id, schedulerCode, schedulerName, schedulerHandler, schedulerCron, status, remark } = params;
   const { id: savedId } = id
     ? await api.post<IdVo011>(SYSTEM011_ACTIONS.scheduler.update, {
-        id, schedulerName, schedulerHandler, schedulerCron, status: status || '0',
+        id, schedulerName, schedulerHandler, schedulerCron, status: status || '0', remark,
       } as JulySchedulerUpdateVo011)
     : await api.post<IdVo011>(SYSTEM011_ACTIONS.scheduler.insert, {
-        schedulerCode, schedulerName, schedulerHandler, schedulerCron,
+        schedulerCode, schedulerName, schedulerHandler, schedulerCron, status: status || '0', remark,
       } as JulySchedulerInsertVo011);
   const q = julySchedulerStore.getSnapshot().query;
   await fetchSchedulerPage({ ...q, pageIndex: id ? q.pageIndex : 1 });
@@ -50,7 +50,15 @@ export async function stopScheduler(id: string): Promise<void> {
 export async function runSchedulerOnce(id: string): Promise<void> {
   await api.post<void>(SYSTEM011_ACTIONS.scheduler.runOnce, { id } as IdVo011);
 }
-export async function removeSchedulers(ids: string[]): Promise<void> {
-  await api.post<BatchDeleteResultVo011>(SYSTEM011_ACTIONS.scheduler.logicDelete, ids);
+/** 逻辑删除单个定时任务（POST /logicDelete，body 为 IdVo011 —— 契约禁裸数组） */
+export async function removeScheduler(id: string): Promise<void> {
+  await api.post<IdVo011>(SYSTEM011_ACTIONS.scheduler.logicDelete, { id } as IdVo011);
   await fetchSchedulerPage(julySchedulerStore.getSnapshot().query);
+}
+
+/** 批量逻辑删除（POST /logicDeleteBatch，body 为 { ids: [...] }），返回删除汇总 */
+export async function removeSchedulerBatch(ids: string[]): Promise<BatchDeleteResultVo011> {
+  const res = await api.post<BatchDeleteResultVo011>(SYSTEM011_ACTIONS.scheduler.logicDeleteBatch, { ids } as IdsVo011);
+  await fetchSchedulerPage(julySchedulerStore.getSnapshot().query);
+  return res;
 }

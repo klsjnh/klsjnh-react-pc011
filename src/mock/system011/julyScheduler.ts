@@ -16,6 +16,8 @@ export const handlers: Record<string, Handler> = {
     const name = (body?.schedulerName || '').trim().toLowerCase();
     if (code) rows = rows.filter((s) => s.schedulerCode.toLowerCase().includes(code));
     if (name) rows = rows.filter((s) => s.schedulerName.toLowerCase().includes(name));
+    const status = (body?.status || '').trim();
+    if (status) rows = rows.filter((s) => s.status === status);
     return ok(pageResult(rows, body?.pageIndex || 1, body?.pageSize || 10));
   },
   '/julyScheduler/v1/insert': async (body) => {
@@ -29,7 +31,7 @@ export const handlers: Record<string, Handler> = {
       schedulerName: body?.schedulerName || '',
       schedulerHandler: body?.schedulerHandler || '',
       schedulerCron: body?.schedulerCron || '',
-      executeTimes: 0, status: '0',
+      executeTimes: 0, status: body?.status || '0', remark: body?.remark || '',
       createTime: new Date().toISOString().slice(0, 19),
     };
     mockSchedulers.unshift(item);
@@ -43,6 +45,7 @@ export const handlers: Record<string, Handler> = {
     if (body?.schedulerHandler !== undefined) item.schedulerHandler = body.schedulerHandler;
     if (body?.schedulerCron !== undefined) item.schedulerCron = body.schedulerCron;
     if (body?.status !== undefined) item.status = body.status;
+    if (body?.remark !== undefined) item.remark = body.remark;
     item.updateTime = new Date().toISOString().slice(0, 19);
     return ok({ id: item.id });
   },
@@ -66,11 +69,22 @@ export const handlers: Record<string, Handler> = {
   },
   '/julyScheduler/v1/logicDelete': async (body) => {
     await delay(300);
-    const ids: string[] = Array.isArray(body) ? body : [];
+    // 契约口径：body 为 IdVo011 {id}（容忍历史裸数组形态）
+    const id = Array.isArray(body) ? body[0] : body?.id;
+    const i = mockSchedulers.findIndex((s) => s.id === id);
+    if (i < 0) return fail(`record not found, id=${id}`, 404);
+    mockSchedulers.splice(i, 1);
+    return ok({ id });
+  },
+  '/julyScheduler/v1/logicDeleteBatch': async (body) => {
+    await delay(300);
+    const ids: string[] = body?.ids || [];
+    let success = 0;
+    const errors: string[] = [];
     for (const id of ids) {
       const i = mockSchedulers.findIndex((s) => s.id === id);
-      if (i >= 0) mockSchedulers.splice(i, 1);
+      if (i >= 0) { mockSchedulers.splice(i, 1); success += 1; } else { errors.push(id); }
     }
-    return ok({ total: ids.length, success: ids.length, failed: 0, errors: [] });
+    return ok({ total: ids.length, success, failed: errors.length, errors });
   },
 };

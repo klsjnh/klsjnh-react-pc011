@@ -20,4 +20,5 @@ export interface SaveSchedulerParams {
   schedulerHandler: string;
   schedulerCron: string;
   status?: string;
+  remark?: string;
 }

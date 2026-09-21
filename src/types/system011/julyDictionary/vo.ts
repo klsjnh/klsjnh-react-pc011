@@ -43,11 +43,12 @@ export interface JulyDictionaryQueryVo011 {
   status?: string;
 }
 
-/** 字典主表新增入参 */
+/** 字典主表新增入参（status 为前端先行字段：线上 InsertVo 暂无，后端补齐后生效，留空后端默认启用） */
 export interface JulyDictionaryInsertVo011 {
   dictionaryCode: string;
   dictionaryName: string;
   sortOrder: number;
+  status?: string;
   remark?: string;
 }
 

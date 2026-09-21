@@ -54,7 +54,7 @@ export const handlers: Record<string, Handler> = {
     const item: JulyDictionaryVo011 = {
       id: 'dict' + Math.random().toString(36).slice(2, 12),
       dictionaryCode: code, dictionaryName: body?.dictionaryName || '', sortOrder: body?.sortOrder ?? 0,
-      status: '1', createTime: new Date().toISOString().slice(0, 19), items: [],
+      status: body?.status || '1', createTime: new Date().toISOString().slice(0, 19), items: [],
     };
     mockDictionaries.push(item);
     return ok({ id: item.id });

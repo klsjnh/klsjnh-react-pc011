@@ -46,7 +46,7 @@ function useTableFillHeight(
   signature?: unknown,
 ): number | undefined {
   const [height, setHeight] = useState<number>();
-  const measureRef = useRef<() => void>(() => {});
+  const measureRef = useRef<() => void>(() => { });
 
   useEffect(() => {
     const card = cardRef.current;

@@ -49,7 +49,7 @@ export async function saveDictionary(params: {
         id, dictionaryName, sortOrder, status, remark,
       } as JulyDictionaryUpdateVo011)
     : await api.post<IdVo011>(SYSTEM011_ACTIONS.dictionary.insert, {
-        dictionaryCode, dictionaryName, sortOrder, remark,
+        dictionaryCode, dictionaryName, sortOrder, status, remark,
       } as JulyDictionaryInsertVo011);
   const q = julyDictionaryStore.getSnapshot().query;
   await fetchDictionaryPage({ ...q, pageIndex: id ? q.pageIndex : 1 });

@@ -5,7 +5,8 @@
  * 页面只需控制 `open` / `node` 与关闭回调 —— 与 ConfigFormModal / JulyUserFormModal 同构。
  */
 import React, { useState } from 'react';
-import { Col, Form, Input, InputNumber, Modal, Row } from 'antd';
+import { Form, Input, InputNumber, Modal, Select } from 'antd';
+import { STATUS_OPTIONS } from '@/config/constants';
 import { saveDictionary } from '@/services/system011';
 import { toast } from '@/utils/toast';
 import type { JulyDictionaryVo011 } from '@/types/system011';
@@ -28,6 +29,7 @@ export const DictionaryFormModal = ({ open, node, onClose }: DictionaryFormModal
     dictionaryCode: node?.dictionaryCode || '',
     dictionaryName: node?.dictionaryName || '',
     sortOrder: node?.sortOrder ?? 0,
+    status: node?.status || '1',
     remark: node?.remark || '',
   };
 
@@ -37,7 +39,7 @@ export const DictionaryFormModal = ({ open, node, onClose }: DictionaryFormModal
       setSaving(true);
       const savedId = await saveDictionary({
         id: node?.id, dictionaryCode: v.dictionaryCode, dictionaryName: v.dictionaryName,
-        sortOrder: v.sortOrder ?? 0, remark: v.remark,
+        sortOrder: v.sortOrder ?? 0, remark: v.remark, status: v.status,
       });
       toast.success(node?.id ? `update ${node.id} success ...` : `insert ${savedId} success ...`);
       onClose();
@@ -61,18 +63,16 @@ export const DictionaryFormModal = ({ open, node, onClose }: DictionaryFormModal
       destroyOnHidden
     >
       <Form form={form} layout="vertical" preserve={false} initialValues={initialValues}>
-        <Row gutter={16}>
-          <Col span={16}>
-            <Form.Item name="dictionaryCode" label="字典编码" rules={[{ required: true, message: '请输入字典编码' }]}>
-              <Input disabled={!!node} placeholder="唯一，创建后不可修改，如 SYS_USER_STATUS" />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item name="sortOrder" label="排序"><InputNumber style={{ width: '100%' }} min={0} /></Form.Item>
-          </Col>
-        </Row>
+        {/* 布局铁律（016 §9.1 / 用户定稿）：编码 / 名称 / 排序各占一行，状态必填独占一行，备注独占一行 */}
+        <Form.Item name="dictionaryCode" label="字典编码" rules={[{ required: true, message: '请输入字典编码' }]}>
+          <Input disabled={!!node} placeholder="唯一，创建后不可修改，如 SYS_USER_STATUS" />
+        </Form.Item>
         <Form.Item name="dictionaryName" label="字典名称" rules={[{ required: true, message: '请输入字典名称' }]}>
           <Input placeholder="请输入字典名称" />
+        </Form.Item>
+        <Form.Item name="sortOrder" label="排序"><InputNumber style={{ width: '100%' }} min={0} /></Form.Item>
+        <Form.Item name="status" label="状态" rules={[{ required: true, message: '请选择状态' }]}>
+          <Select options={STATUS_OPTIONS} />
         </Form.Item>
         <Form.Item name="remark" label="备注"><Input.TextArea rows={2} placeholder="备注说明" /></Form.Item>
       </Form>

@@ -150,9 +150,10 @@ export const JulyPermission = () => {
           styles={{ body: { padding: 8, minHeight: 670, overflowY: 'auto' } }}
           extra={
             <Space size="small">
-              <Button color="primary" variant="filled" icon={<PlusOutlined />} onClick={() => setEditModal({ open: true, role: null })}>新建角色</Button>
+              <Button color="primary" variant="filled" icon={<PlusOutlined />} size="small" onClick={() => setEditModal({ open: true, role: null })}>新建</Button>
               <Button
-                type="link"
+                variant="filled"
+                size="small"
                 disabled={!selectedRole}
                 onClick={() => selectedRole && setEditModal({ open: true, role: selectedRole })}
               >
