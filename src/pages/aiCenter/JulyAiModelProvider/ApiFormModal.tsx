@@ -1,10 +1,13 @@
 /**
  * AI 模型供应商 · API 密钥子表 新增 / 编辑弹窗（antd Form + Modal）
- * 从 ProviderFormModal 抽出（2026-09-20 主子表改造）：子表独立成表后，
- * API 增改弹窗挂页面级，不再嵌在供应商弹窗里。
+ * 2026-09-20 主子表改造：从供应商弹窗抽出，挂页面级。
  * provider 由页面选中态注入；编辑时 apiCode 不可变。
+ *
+ * ⚠️ 回填时序坑（同 ProviderFormModal）：antd6 Modal + destroyOnHidden 下表单内容
+ * 挂载晚于父组件 effect，effect 里 setFieldsValue 会落空。故表单体拆成
+ * ApiFormBody（按 node.id 挂 key，每次打开新 form 实例），initialValues 挂载即定型。
  */
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ApiOutlined } from '@ant-design/icons';
 import { Button, Col, Form, Input, Modal, Row, Select } from 'antd';
 import { saveProviderApi, testProviderApiConnection } from '@/services/aiCenter';
@@ -34,28 +37,17 @@ export interface ApiFormModalProps {
   onSaved: () => void;
 }
 
-/** API 子表 新增 / 编辑 弹窗 */
-export const ApiFormModal = ({ open, provider, node, onClose, onSaved }: ApiFormModalProps) => {
+/** 新建态的默认值 */
+const NEW_DEFAULTS = { status: '1', sortOrder: 1 };
+
+/**
+ * 表单体：每次打开都是新实例（父层按 node.id 挂 key），initialValues 挂载即定型。
+ */
+const ApiFormBody = ({ provider, node, onClose, onSaved }: Omit<ApiFormModalProps, 'open'>) => {
   const [form] = Form.useForm();
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [test, setTest] = useState<TestFeedback | null>(null);
-
-  // intentional reset of test feedback when opening a different API row
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (open) {
-      setTest(null);
-      form.setFieldsValue({
-        apiCode: node?.apiCode || '',
-        apiName: node?.apiName || '',
-        apiKey: node?.apiKey || '',
-        sortOrder: node?.sortOrder ?? 1,
-        status: node?.status || '1',
-        remark: node?.remark || '',
-      });
-    }
-  }, [open, node, form]);
 
   const handleTest = async () => {
     if (!node?.id) { toast.warning('请先保存该 API 后再测试连接'); return; }
@@ -74,7 +66,14 @@ export const ApiFormModal = ({ open, provider, node, onClose, onSaved }: ApiForm
     try {
       const v = await form.validateFields();
       setSaving(true);
-      await saveProviderApi({ id: node?.id, providerCode: provider.providerCode, ...v });
+      // 编辑态密钥留空 = 不修改（后端 selectApiListByProvider 不回传 apiKey，
+      // 若强制必填会导致「不改密钥就无法保存其他字段」——2026-09-20 修）
+      await saveProviderApi({
+        id: node?.id,
+        providerCode: provider.providerCode,
+        ...v,
+        apiKey: v.apiKey || undefined,
+      });
       toast.success(node?.id ? `update api ${node.id} success ...` : 'insert api success ...');
       onSaved();
       onClose();
@@ -85,20 +84,22 @@ export const ApiFormModal = ({ open, provider, node, onClose, onSaved }: ApiForm
   };
 
   return (
-    <Modal
-      title={node ? '编辑 API 密钥' : '新增 API 密钥'}
-      key={node?.id ?? 'new-api'}
-      open={open}
-      onCancel={onClose}
-      footer={[
-        <Button key="test" icon={<ApiOutlined />} loading={testing} onClick={handleTest}>测试连接</Button>,
-        <Button key="cancel" onClick={onClose}>取消</Button>,
-        <Button key="ok" type="primary" loading={saving} onClick={handleSave}>保存</Button>,
-      ]}
-      width={600}
-      destroyOnHidden
-    >
-      <Form form={form} layout="vertical" preserve={false}>
+    <>
+      <Form
+        form={form}
+        layout="vertical"
+        preserve={false}
+        initialValues={node
+          ? {
+              apiCode: node.apiCode,
+              apiName: node.apiName,
+              apiKey: node.apiKey,
+              sortOrder: node.sortOrder ?? 1,
+              status: node.status || '1',
+              remark: node.remark || '',
+            }
+          : NEW_DEFAULTS}
+      >
         {test && <TestFeedbackAlert data={test} />}
         <Row gutter={16}>
           <Col span={12}>
@@ -112,8 +113,13 @@ export const ApiFormModal = ({ open, provider, node, onClose, onSaved }: ApiForm
             </Form.Item>
           </Col>
         </Row>
-        <Form.Item name="apiKey" label="API Key" rules={[{ required: true, message: '请输入 API Key' }]}>
-          <Input.Password placeholder="sk-..." autoComplete="new-password" />
+        <Form.Item
+          name="apiKey"
+          label="API Key"
+          rules={node ? [] : [{ required: true, message: '请输入 API Key' }]}
+          extra={node ? '留空则不修改密钥（后端不回传已保存的密钥）' : undefined}
+        >
+          <Input.Password placeholder={node ? '留空则不修改' : 'sk-...'} autoComplete="new-password" />
         </Form.Item>
         <Row gutter={16}>
           <Col span={12}>
@@ -131,8 +137,26 @@ export const ApiFormModal = ({ open, provider, node, onClose, onSaved }: ApiForm
           <Input.TextArea rows={2} placeholder="备注说明" />
         </Form.Item>
       </Form>
-    </Modal>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}>
+        <Button icon={<ApiOutlined />} loading={testing} onClick={handleTest}>测试连接</Button>
+        <Button onClick={onClose}>取消</Button>
+        <Button type="primary" loading={saving} onClick={handleSave}>保存</Button>
+      </div>
+    </>
   );
 };
+
+export const ApiFormModal = ({ open, provider, node, onClose, onSaved }: ApiFormModalProps) => (
+  <Modal
+    title={node ? '编辑 API 密钥' : '新增 API 密钥'}
+    open={open}
+    onCancel={onClose}
+    footer={null}
+    width={600}
+    destroyOnHidden
+  >
+    {open && <ApiFormBody key={node?.id ?? 'new-api'} provider={provider} node={node} onClose={onClose} onSaved={onSaved} />}
+  </Modal>
+);
 
 export default ApiFormModal;

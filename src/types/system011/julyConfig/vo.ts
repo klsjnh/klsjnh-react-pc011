@@ -16,16 +16,18 @@ export interface JulyConfigQueryVo011 {
   keyword?: string;
 }
 
-/** 修改配置值（code 不可变） */
+/** 修改配置值（code 不可变）；status 后端 VO 待补（2026-09-20 前端先行） */
 export interface JulyConfigUpdateVo011 {
   id: string;
   data: string;
+  status?: string;
 }
 
-/** 新增/更新配置（code 唯一） */
+/** 新增/更新配置（code 唯一）；status 后端 VO 待补（2026-09-20 前端先行） */
 export interface JulyConfigUpsertVo {
   code: string;
   data: string;
+  status?: string;
 }
 
 // ==================== 平台能力：导出 / 备份（platform011） ====================

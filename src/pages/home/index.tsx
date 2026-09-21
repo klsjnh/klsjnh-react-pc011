@@ -13,6 +13,7 @@ import { reloadMenus } from '@/services/system011';
 import {
   LOWCODE011_ROUTES,
   DATASERVICE011_ROUTES,
+  AICENTER_ROUTES,
   DEFAULT_ROUTE,
   PAGE_MAP,
   BUSINESS_PAGES,
@@ -70,6 +71,18 @@ export const Home = () => {
         const Comp = DYNAMIC_ROUTES.JulyBusinessModelingFormPage;
         return <Comp id={suffix} onNavigate={(p: string) => navigate(p)} />;
       }
+    }
+
+    // AI 提示词业务域明细编辑动态路由：/aiCenter/julyAiPrompt/detail/:id（new 或实际 id）
+    // promptId（所属提示词）走 query——明细无「按 id 点查」端点，编辑态靠 promptId 拉列表反查；
+    // domain（主页选中业务域）走 query——新建态预填域编码
+    if (currentPath.startsWith(AICENTER_ROUTES.julyAiPromptDetail + '/')) {
+      const detailId = currentPath.slice(AICENTER_ROUTES.julyAiPromptDetail.length + 1);
+      const q = new URLSearchParams(location.search);
+      const promptId = q.get('promptId') || '';
+      const domain = q.get('domain') || '';
+      const Comp = DYNAMIC_ROUTES.PromptDetailEditorPage;
+      return <Comp detailId={detailId} promptId={promptId} domain={domain} onNavigate={(p: string) => navigate(p)} />;
     }
 
     const OnNavigate = { onNavigate: (p: string) => navigate(p) } as PageNavProps;

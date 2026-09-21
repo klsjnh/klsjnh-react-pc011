@@ -17,6 +17,7 @@ import { handlers as julyDatasourceHandlers } from '@/mock/dataservice011/julyDa
 import { handlers as julyBusinessModelingHandlers } from '@/mock/dataservice011/julyBusinessModeling';
 import { handlers as julyDictionaryHandlers } from '@/mock/system011/julyDictionary';
 import { handlers as julyAiModelProviderHandlers } from '@/mock/aiCenter/julyAiModelProvider';
+import { handlers as julyAiPromptHandlers } from '@/mock/aiCenter/julyAiPrompt';
 import { handlers as julyMetadataHandlers } from '@/mock/lowcode011/julyMetadata';
 import { handlers as storageCenterHandlers } from '@/mock/storageCenter';
 import { handlers as messageCenterHandlers } from '@/mock/messageCenter';
@@ -38,6 +39,7 @@ const handlers: Record<string, Handler> = {
   ...julyDictionaryHandlers,
   ...julyBusinessModelingHandlers,
   ...julyAiModelProviderHandlers,
+  ...julyAiPromptHandlers,
   ...julyMetadataHandlers,
   ...storageCenterHandlers,
   ...messageCenterHandlers,

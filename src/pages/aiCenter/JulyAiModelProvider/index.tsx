@@ -135,7 +135,7 @@ export const JulyAiModelProvider = () => {
   const apiColumns: ColumnsType<AiModelProviderApiItem> = [
     { ...leftCell, title: 'API 编码', dataIndex: 'apiCode', width: 140, render: (v) => <code>{v}</code> },
     { ...leftCell, title: '名称', dataIndex: 'apiName', width: 160 },
-    { ...leftCell, title: 'API Key', dataIndex: 'apiKey', ellipsis: true, render: (v) => <code title={v}>{v}</code> },
+    { ...leftCell, title: 'API Key', dataIndex: 'apiKey', width: 300, ellipsis: true, render: (v) => <code title={v}>{v}</code> },
     { ...leftCell, title: '排序', dataIndex: 'sortOrder', width: 90, align: 'center', onHeaderCell: hdrCenter },
     { title: '状态', dataIndex: 'status', width: 90, align: 'center', onHeaderCell: hdrCenter, render: (s) => <Tag color={s === '1' ? 'green' : 'red'}>{STATUS_LABEL[s] || s}</Tag> },
     {
@@ -215,8 +215,6 @@ export const JulyAiModelProvider = () => {
                     <div className="page-toolbar">
                       <div className="toolbar-left">
                         <Button color="primary" variant="filled" icon={<PlusOutlined />} onClick={() => setApiModal({ open: true, node: null })}>新增 API</Button>
-                      </div>
-                      <div className="toolbar-right">
                         <Button color="default" variant="filled" icon={<ReloadOutlined />} loading={apisLoading} onClick={reloadApis}>刷新</Button>
                       </div>
                     </div>
@@ -247,7 +245,7 @@ export const JulyAiModelProvider = () => {
         open={providerModal.open}
         node={providerModal.node}
         onClose={() => setProviderModal({ open: false, node: null })}
-        onSaved={() => {}}
+        onSaved={() => { }}
       />
 
       <ApiFormModal

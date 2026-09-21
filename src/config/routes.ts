@@ -39,6 +39,9 @@ export const DATASERVICE011_ROUTES = {
 export const AICENTER_ROUTES = {
   julyAiModelProvider: '/aiCenter/julyAiModelProvider',
   julyAiChat: '/aiCenter/julyAiChat',
+  julyAiPrompt: '/aiCenter/julyAiPrompt',
+  /** 提示词业务域明细编辑页（/detail/new 或 /detail/:id；promptId 走 query） */
+  julyAiPromptDetail: '/aiCenter/julyAiPrompt/detail',
 } as const;
 
 /* ---------------- lowcode011 ---------------- */
@@ -156,6 +159,8 @@ const JulyDatasourcePage = lazy(() => import('@/pages/dataService011/JulyDatasou
 const JulyBusinessModelingPage = lazy(() => import('@/pages/dataService011/JulyBusinessModeling').then((m) => ({ default: m.JulyBusinessModeling })));
 const JulyAiModelProviderPage = lazy(() => import('@/pages/aiCenter/JulyAiModelProvider').then((m) => ({ default: m.JulyAiModelProvider })));
 const JulyAiChatPage = lazy(() => import('@/pages/aiCenter/JulyAiChat').then((m) => ({ default: m.JulyAiChat })));
+const JulyAiPromptPage = lazy(() => import('@/pages/aiCenter/JulyAiPrompt').then((m) => ({ default: m.JulyAiPrompt })));
+const PromptDetailEditorPage = lazy(() => import('@/pages/aiCenter/JulyAiPrompt/PromptDetailEditorPage').then((m) => ({ default: m.PromptDetailEditorPage })));
 const JulyMetadataPage = lazy(() => import('@/pages/lowcode011/JulyMetadata').then((m) => ({ default: m.JulyMetadata })));
 const SchemaRuntimePage = lazy(() => import('@/pages/lowcode011/JulyMetadata/SchemaRuntimePage').then((m) => ({ default: m.SchemaRuntimePage })));
 const ParamsPage = lazy(() => import('@/pages/demo16/demo011').then((m) => ({ default: m.Demo011 })));
@@ -256,6 +261,7 @@ export const PAGE_MAP: Record<string, PageComponent> = {
 
   [AICENTER_ROUTES.julyAiModelProvider]: JulyAiModelProviderPage,
   [AICENTER_ROUTES.julyAiChat]: JulyAiChatPage,
+  [AICENTER_ROUTES.julyAiPrompt]: JulyAiPromptPage,
 
   [LOWCODE011_ROUTES.julyMetadata]: JulyMetadataPage,
   [LOWCODE011_ROUTES.julyMetadataNew]: JulyMetadataFormPage,
@@ -286,4 +292,5 @@ export const PAGE_MAP: Record<string, PageComponent> = {
 export const DYNAMIC_ROUTES = {
   JulyMetadataFormPage,
   JulyBusinessModelingFormPage,
+  PromptDetailEditorPage,
 } as const;

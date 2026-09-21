@@ -45,7 +45,7 @@ export const mockMenus: JulyMenuVo011[] = [
         menuIcon: 'DatabaseOutlined', menuRoute: '/dataService011', permissionCode: null, component: null, sortOrder: 3, status: '1',
         children: [
           { id: 'menu0000000000000000000000000610', parentId: 'menu0000000000000000000000rootDataservice', menuCode: 'datasource', menuName: '数据源', menuType: '2', menuIcon: 'DatabaseOutlined', menuRoute: '/dataService011/julyDatasource', permissionCode: 'datasource:view', component: null, sortOrder: 1, status: '1', children: [] },
-          { id: 'menu0000000000000000000000000620', parentId: 'menu0000000000000000000000rootDataservice', menuCode: 'businessModeling', menuName: '业务建模', menuType: '2', menuIcon: 'DeploymentUnitOutlined', menuRoute: '/dataService011/JulyBusinessModeling', permissionCode: 'businessModeling:view', component: null, sortOrder: 2, status: '1', children: [] },
+          // 业务建模（2026-09-20 后端菜单清理时随低代码一并删除，mock 同步移除）
         ],
       },
       {
@@ -79,6 +79,7 @@ export const mockMenus: JulyMenuVo011[] = [
         children: [
           { id: 'menu0000000000000000000000000601', parentId: 'menu0000000000000000000000root6', menuCode: 'julyAiModelProvider', menuName: '模型供应商', menuType: '2', menuIcon: 'KeyOutlined', menuRoute: '/aiCenter/julyAiModelProvider', permissionCode: null, component: null, sortOrder: 10, status: '1', children: [] },
           { id: 'menu0000000000000000000000000602', parentId: 'menu0000000000000000000000root6', menuCode: 'julyAiChat', menuName: 'AI 聊天', menuType: '2', menuIcon: 'MessageOutlined', menuRoute: '/aiCenter/julyAiChat', permissionCode: null, component: null, sortOrder: 20, status: '1', children: [] },
+          { id: 'menu0000000000000000000000000603', parentId: 'menu0000000000000000000000root6', menuCode: 'julyAiPrompt', menuName: '提示词管理', menuType: '2', menuIcon: 'FileTextOutlined', menuRoute: '/aiCenter/julyAiPrompt', permissionCode: null, component: null, sortOrder: 30, status: '1', children: [] },
         ],
       },
     ],

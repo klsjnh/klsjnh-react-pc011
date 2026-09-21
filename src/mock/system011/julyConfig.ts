@@ -25,7 +25,7 @@ export const handlers: Record<string, Handler> = {
     if (mockConfigs.some((c) => c.code === code)) return fail(`insert: code already exists, ${code}`, 400);
     const item: JulyConfigVo011 = {
       id: 'cfg' + Math.random().toString(36).slice(2, 12),
-      code, data: body?.data || '', status: '1',
+      code, data: body?.data || '', status: body?.status || '1',
       createTime: new Date().toISOString().slice(0, 19),
     };
     mockConfigs.unshift(item);
@@ -36,6 +36,7 @@ export const handlers: Record<string, Handler> = {
     const item = mockConfigs.find((c) => c.id === body?.id);
     if (!item) return fail(`record not found, id=${body?.id}`, 404);
     if (body?.data !== undefined) item.data = body.data;
+    if (body?.status !== undefined) item.status = body.status;
     item.updateTime = new Date().toISOString().slice(0, 19);
     return ok({ id: item.id });
   },

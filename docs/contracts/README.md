@@ -15,7 +15,7 @@
 
 | 文件 | 时点 | 端点总数 | 说明 |
 |------|------|----------|------|
-| `2026-09-17-openapi.json` | 2026-09-17 | 137 | 与 [2026-09-17 工作日志](../2026-09-17.md) §6.1「total 137 → 141、lowcode011 7 → 11」的 **137 / 7** 吻合，故定为该时点 |
+| `2026-09-20-openapi.json` | 2026-09-20（**下午刷新**） | 168 | 同一天第二次拉取：新增 aicenter/julyAiPrompt（提示词，+5）与 datasource/julySql·julySync（+6）；模块分布 iam 25 / system011 45 / storagecenter 24 / messagecenter 33 / aicenter 22 / datasource 14 / demo11 5。同日早间版本（157 路径）按「同一服务只留最新一份」被本文件取代 |
 
 ## 脱敏与整理
 

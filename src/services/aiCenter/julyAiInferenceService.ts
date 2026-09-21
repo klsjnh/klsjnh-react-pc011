@@ -15,9 +15,9 @@ import { api } from '@/api/request';
 import { isMockMode } from '@/config/appConfig';
 import { authStore } from '@/stores/authStore';
 import { mockStreamChat } from '@/mock/aiCenter/aiInference';
-import { AICENTER_BASE, selectProviderListByPage } from '@/services/aiCenter/julyAiModelProviderService';
+import { AICENTER_BASE, selectProviderListByPage, selectApiListByProvider } from '@/services/aiCenter/julyAiModelProviderService';
 import type { AiChatRequestVo011, AiChatResponseVo011 } from '@/types/aiCenter';
-import type { AiModelProviderItem } from '@/types/aiCenter';
+import type { AiModelProviderItem, AiModelProviderApiItem } from '@/types/aiCenter';
 
 const INFERENCE_ACTIONS = {
   chat: '/julyAiInference/v1/chat',
@@ -36,6 +36,16 @@ export function chat(req: AiChatRequestVo011): Promise<AiChatResponseVo011> {
 export async function selectChatProviders(): Promise<AiModelProviderItem[]> {
   const res = await selectProviderListByPage({ pageIndex: 1, pageSize: 200, status: '1' });
   return res.rows || [];
+}
+
+/**
+ * 聊天可用的 API 密钥列表（按供应商编码，默认只要启用的）。
+ * 与 selectChatProviders 同源：复用 julyAiModelProvider 的 api 子表查询端点。
+ * 聊天请求的 api 字段收 apiCode（2026-09-20 起 code/id 二选一，前端传 code）。
+ */
+export async function selectChatApies(providerCode: string): Promise<AiModelProviderApiItem[]> {
+  const rows = await selectApiListByProvider({ providerCode, status: '1' });
+  return rows || [];
 }
 
 /**
@@ -68,9 +78,10 @@ export interface StreamChatHandlers {
 }
 
 /**
- * SSE 流式聊天。**双协议兼容**（实测本后端 11160 两种都不保证，按行判别）：
+ * SSE 流式聊天。**双协议兼容**（实测本后端 11160 两种都不保证，按事件判别）：
  *   1. 纯文本增量（后端实际形态）：`data:Hello\n\n` —— 直接 onDelta
- *      （保留冒号后原字符不 trim，实测后端把词间空格放在前导，trim 会丢空格）
+ *      （保留冒号后原字符不 trim，实测后端把词间空格放在前导，trim 会丢空格；
+ *      **空 data 事件 = 原文换行**，必须映射为 '\n'，否则表格/列表行粘连，详见 flushEvent 注释）
  *   2. OpenAI 风格 JSON（老项目口径 / 未来兼容）：`data: {"choices":[{"delta":{"content":"..."}}]}`
  *      —— 取 choices[0].delta.content；reasoning_content（无正文时）触发 onReasoning
  *   3. `data: [DONE]` → onDone 结束
@@ -111,6 +122,55 @@ export async function streamChat(req: AiChatRequestVo011, handlers: StreamChatHa
     }
     const decoder = new TextDecoder();
     let buffer = '';
+    /** 当前 SSE 事件累积的 data 行（标准 SSE：同一事件的多行 data 以 \n 连接） */
+    let dataLines: string[] = [];
+    let streamDone = false;
+
+    /**
+     * 派发一个完整的 SSE 事件。
+     *
+     * ⚠️ 实测口径（2026-09-20，后端 stepfun chat/stream 原始字节）：后端把原文的 `\n`
+     * 拆成**空 data 事件**下发（`data:\n\n`）；个别行内切片则表现为**同一事件多行 data**
+     * （如 `data: 城市 |` + `data:|` 之间只有单个换行）。早期实现两个都没处理——
+     * 空事件被 `if (!trimmed) continue` 跳过、多行 data 被当成独立事件 → 表格/列表等
+     * 块级语法的行全部粘连（`| a | b || --- |`），GFM 解析不出来（加粗不依赖换行所以看着没事）。
+     * 故：空 data 事件必须映射为 '\n'，同事件多行 data 按 SSE 规范 join('\n')。
+     */
+    const flushEvent = () => {
+      if (dataLines.length === 0) return;
+      const raw = dataLines.length === 1 && dataLines[0] === '' ? '\n' : dataLines.join('\n');
+      dataLines = [];
+      const trimmed = raw.trim();
+      if (trimmed === '[DONE]') { streamDone = true; onDone(); return; }
+      if (trimmed.startsWith('{')) {
+        try {
+          const parsed = JSON.parse(trimmed) as {
+            choices?: Array<{ delta?: { content?: string; reasoning_content?: string }; text?: string }>;
+            /** 后端曾用过的扁平形态：{"content":"...","finishReason":null}（2026-09-20 实测出现过） */
+            content?: string;
+            /** 错误信封：后端校验失败时会把 {"statusCode":4xx/5xx,...} 当作 200 流下发（实测过），必须识别 */
+            statusCode?: number;
+            message?: string;
+          };
+          // 错误信封上抛（不吞——否则用户看到空回复还以为模型坏了）
+          if (typeof parsed.statusCode === 'number' && parsed.statusCode !== 200) {
+            streamDone = true;
+            onError(parsed.message || `请求失败(${parsed.statusCode})`);
+            return;
+          }
+          const delta = parsed?.choices?.[0]?.delta;
+          if (delta?.reasoning_content && !delta?.content) onReasoning?.();
+          const text = delta?.content || parsed?.choices?.[0]?.text || parsed?.content || '';
+          if (text) onDelta(text);
+        } catch {
+          /* 忽略单行解析失败（半包/心跳行） */
+        }
+        return;
+      }
+      // 纯文本增量（含空事件映射出的 \n）：不 trim，后端把词间空格放在前导
+      onDelta(raw);
+    };
+
     for (; ;) {
       const { done, value } = await reader.read();
       if (done) break;
@@ -118,30 +178,15 @@ export async function streamChat(req: AiChatRequestVo011, handlers: StreamChatHa
       const lines = buffer.split('\n');
       buffer = lines.pop() ?? '';
       for (const line of lines) {
-        if (!line.startsWith('data:')) continue;
-        const data = line.slice(5).replace(/\r$/, '');
-        const trimmed = data.trim();
-        if (!trimmed) continue;
-        if (trimmed === '[DONE]') { onDone(); return; }
-        if (trimmed.startsWith('{')) {
-          try {
-            const parsed = JSON.parse(trimmed) as {
-              choices?: Array<{ delta?: { content?: string; reasoning_content?: string }; text?: string }>;
-            };
-            const delta = parsed?.choices?.[0]?.delta;
-            if (delta?.reasoning_content && !delta?.content) onReasoning?.();
-            const text = delta?.content || parsed?.choices?.[0]?.text || '';
-            if (text) onDelta(text);
-          } catch {
-            /* 忽略单行解析失败（半包/心跳行） */
-          }
-        } else {
-          // 纯文本增量：本后端 chat/stream 的实际协议
-          onDelta(data);
-        }
+        const clean = line.replace(/\r$/, '');
+        if (clean === '') { flushEvent(); continue; } // 空行 = 事件边界
+        if (!clean.startsWith('data:')) continue; // 注释行（: 开头）/ 其他 SSE 字段跳过
+        dataLines.push(clean.slice(5));
       }
+      if (streamDone) return;
     }
-    onDone();
+    flushEvent(); // 容错：流末尾未以空行收尾时补冲最后一个事件
+    if (!streamDone) onDone();
   } catch (e) {
     onError(e instanceof Error ? e.message : '请求失败');
   }

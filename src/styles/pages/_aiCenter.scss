@@ -1,0 +1,166 @@
+/* ==================== aiCenter：AI 聊天（julyAiChat） ====================
+   聊天气泡与消息面板。取色只读主题令牌（--primary / --bg-card / --border 等），
+   换肤时同步；白色文字仅用于主色底气泡（同 _misc.scss 的先例）。 */
+
+.ai-chat-toolbar {
+  margin-bottom: 0;
+}
+
+/* 页面纵向节奏（page-fill 已是 flex 列） */
+.ai-chat-page {
+  gap: 12px;
+}
+
+/* 消息面板：卡片化，吃满 page-fill 剩余高度，内部滚动 */
+.ai-chat-panel {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.ai-chat-msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.ai-chat-msg:last-child {
+  margin-bottom: 0;
+}
+
+/* 用户消息：角色标签与气泡左右镜像 */
+.ai-chat-msg-user {
+  flex-direction: row-reverse;
+}
+
+.ai-chat-role {
+  flex-shrink: 0;
+  font-size: 12px;
+  line-height: 34px;
+  color: var(--text-muted);
+}
+
+.ai-chat-bubble {
+  max-width: 80%;
+  padding: 8px 14px;
+  border-radius: var(--radius);
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  text-align: left;
+  word-break: break-word;
+}
+
+.ai-chat-msg-user .ai-chat-bubble {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* 流式占位（思考中 / ...） */
+.ai-chat-bubble.is-placeholder {
+  color: var(--text-muted);
+}
+
+/* 气泡内 markdown：首尾块去外边距，避免气泡里出现大面积空白 */
+.ai-chat-bubble .klsjnh-markdown011-body> :first-child {
+  margin-top: 0;
+}
+
+.ai-chat-bubble .klsjnh-markdown011-body> :last-child {
+  margin-bottom: 0;
+}
+
+/* 输入区：左右结构——左文本框吃满，右列按钮 */
+.ai-chat-inputbar {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.ai-chat-inputbar .ai-chat-textarea {
+  flex: 1;
+}
+
+/* 右侧按钮列：清空对话 + 发送，纵向等分输入区高度 */
+.ai-chat-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+  width: 100px;
+}
+
+.ai-chat-actions .ant-btn {
+  flex: 1;
+}
+
+/* ==================== aiCenter：AI 提示词（julyAiPrompt） ====================
+   业务域主子表 + 新建弹窗内的业务域明细编辑器 + 渲染预览。取色只读主题令牌。 */
+
+/* 工具栏操作提示（弱化色） */
+.prompt-domain-hint {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 32px;
+}
+
+/* 明细编辑器：块级卡片感，与 antd Form 垂直布局协调 */
+.prompt-detail-editor {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.prompt-detail-editor-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.prompt-detail-row {
+  border-top: 1px dashed var(--border);
+  padding-top: 8px;
+  margin-bottom: 8px;
+}
+
+.prompt-detail-row-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 渲染预览：变量值行 + 结果区 */
+.render-param-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.render-result {
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+
+.render-result-head {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.render-result pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 13px;
+  line-height: 1.6;
+  max-height: 320px;
+  overflow: auto;
+}

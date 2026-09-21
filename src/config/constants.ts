@@ -36,7 +36,7 @@ import {
   UserOutlined,
   UserSwitchOutlined,
 } from '@ant-design/icons';
-import { SYSTEM011_ROUTES, DATASERVICE011_ROUTES, AICENTER_ROUTES, LOWCODE011_ROUTES, MESSAGE_CENTER_ROUTES } from '@/config/routes';
+import { SYSTEM011_ROUTES, DATASERVICE011_ROUTES, AICENTER_ROUTES, MESSAGE_CENTER_ROUTES } from '@/config/routes';
 import type { NavItem } from '@/types/view/layout';
 
 /** 菜单类型：菜单 / 按钮（无目录） */
@@ -63,6 +63,13 @@ export const STATUS_LABEL: Record<string, string> = {
   '1': '启用',
   '0': '停用',
 };
+
+/** AI 提示词适用能力（scene；对齐后端 insert VO 注释 inference / image / tts） */
+export const AI_SCENE_OPTIONS = [
+  { value: 'inference', label: '推理聊天' },
+  { value: 'image', label: '图像' },
+  { value: 'tts', label: '语音' },
+];
 
 /** 本地菜单列表（开发态使用；非开发态走接口 selectUserMenuTree） */
 export const GLOBAL_MENUS: NavItem[] = [
@@ -118,7 +125,7 @@ export const GLOBAL_MENUS: NavItem[] = [
     icon: DatabaseOutlined,
     children: [
       { path: DATASERVICE011_ROUTES.julyDatasource, label: '数据源', icon: DatabaseOutlined },
-      { path: DATASERVICE011_ROUTES.julyBusinessModeling, label: '业务建模', icon: FormOutlined },
+      // 业务建模：2026-09-20 后端模块迁走，菜单已从后端表 + mock 删除（此处同步移除）
     ],
   },
   {
@@ -128,16 +135,11 @@ export const GLOBAL_MENUS: NavItem[] = [
     children: [
       { path: AICENTER_ROUTES.julyAiModelProvider, label: '模型供应商', icon: KeyOutlined },
       { path: AICENTER_ROUTES.julyAiChat, label: 'AI 聊天', icon: MessageOutlined },
+      { path: AICENTER_ROUTES.julyAiPrompt, label: '提示词管理', icon: FileTextOutlined },
     ],
   },
-  {
-    path: LOWCODE011_ROUTES.root,
-    label: '低代码中心',
-    icon: AppstoreAddOutlined,
-    children: [
-      { path: LOWCODE011_ROUTES.julyMetadata, label: '元数据管理', icon: DatabaseOutlined },
-    ],
-  },
+  // 低代码中心：2026-09-20 模块整体迁去新项目，后端菜单已删（此处同步移除；路由与页面代码保留）
+
   {
     path: '/appcenter',
     label: '应用中心',

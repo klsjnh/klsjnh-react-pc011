@@ -10,10 +10,12 @@ const CHAT_KEY = 'pc011-ai-chat-history';
 const PREF_KEY = 'pc011-ai-chat-pref';
 
 /** 没有历史记录时的欢迎语（assistant 首条） */
-export const CHAT_WELCOME = '你好！我是 AI 助手，请选择供应商和模型后开始对话。';
+export const CHAT_WELCOME = '你好！我是 AI 助手，请选择供应商、API 密钥和模型后开始对话。';
 
 export interface AiChatPref {
   providerCode: string;
+  /** API 密钥编码（供应商下 api 子表的 apiCode；聊天请求的 api 字段） */
+  apiCode: string;
   model: string;
 }
 
@@ -42,9 +44,13 @@ function loadMessages(): AiChatMessageVo011[] {
 function loadPref(): AiChatPref {
   try {
     const raw = localStorage.getItem(PREF_KEY);
-    if (raw) return JSON.parse(raw) as AiChatPref;
+    if (raw) {
+      // 旧版偏好无 apiCode 字段 → 归一化补空串，避免 undefined 流过类型
+      const p = JSON.parse(raw) as Partial<AiChatPref>;
+      return { providerCode: p.providerCode || '', apiCode: p.apiCode || '', model: p.model || '' };
+    }
   } catch { /* ignore */ }
-  return { providerCode: '', model: '' };
+  return { providerCode: '', apiCode: '', model: '' };
 }
 
 /** 仅欢迎语时不落盘（避免一进页面就写一条无意义记录） */

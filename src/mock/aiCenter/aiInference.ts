@@ -4,7 +4,7 @@ import type { AiChatRequestVo011 } from '@/types/aiCenter';
 function buildMockReply(req: AiChatRequestVo011): string {
   const lastUser = [...req.messages].reverse().find((m) => m.role === 'user')?.content || '';
   return [
-    `（Mock 流式）模型 \`${req.model}\``,
+    `（Mock 流式）供应商 \`${req.provider || '-'}\` · 密钥 \`${req.api || '-'}\` · 模型 \`${req.model}\``,
     '',
     `你说：${lastUser}`,
     '',
