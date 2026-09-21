@@ -23,6 +23,7 @@
 | 目录 / 文件 | 内容 |
 |------|------|
 | `contracts/` | 运行时 OpenAPI 契约快照（命名与脱敏见 [contracts/README.md](contracts/README.md)） |
+| `dev-guides/` | 开发手册（文件名与标题英文、内容中文）：[011.single-table-dev-standard](dev-guides/011.single-table-dev-standard.md) — 以配置管理为蓝本的单表页面开发流水线（3 文件拆分 / 壳-表-弹窗职责 / 五色按钮 / 备注状态铁律 / 提交自查清单） |
 | `2026-09-12.md` · `2026-09-17.md` | 当日工作日志（每日一份，历史归档至 `archive011/`） |
 | requirement011/ requirement013/ | 预留：页面级需求与技术方案（当前与后端仓库 018/019/022 同编号贯穿） |
 | archive011/ | 历史工作日志归档 |
