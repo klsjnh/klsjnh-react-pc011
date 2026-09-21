@@ -1,22 +1,22 @@
 /**
- * AI 提示词 · 业务域明细编辑页（julyAiPrompt/detail/new 或 /detail/:id）
+ * AI 提示词 · 正文编辑页（julyAiDomainPrompt 明细，/detail/new 或 /detail/:id）
  * 整页编辑器（对齐元数据 / 业务建模的 FormPage 模式）：正文可长达 2.1 万汉字，
- * 弹窗放不下，按用户要求「子表编辑跳转路由」独立成页。
+ * 弹窗放不下，独立成页（路由 PAGE_COMPONENTS 注入 props）。
  *
- * 数据加载：promptId 走 query（列表页选中态同步到 URL，刷新不丢）；
- * 后端无「明细按 id 点查」端点，编辑态靠 selectDetailListByPrompt(promptId) 拉列表反查。
- * 保存走 insertDetail / updateDetail；storage 模式正文由后端写入对象存储（约定桶 ai-prompt）。
+ * 2026-09-21 新契约：明细点查 getDetailById 替代旧「拉列表反查」；
+ * domainCode 输入改为「所属业务域」（pkMt，新建时从主页选中域预填且只读——归属随创建定型）；
+ * 正文编辑仍为项目唯一 Markdown 编辑器（KlsjnhMarkdown011，016 §9.1）。
  */
 import { useEffect, useState } from 'react';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Form, Input, Row, Select, Space, Tag } from 'antd';
 import { KlsjnhMarkdown011 } from '@/components/system011';
-import { getPromptById, selectDetailListByPrompt, savePromptDetail } from '@/services/aiCenter';
+import { getPromptById, getPromptContent, savePrompt } from '@/services/aiCenter';
 import { toast } from '@/utils/toast';
 import { AICENTER_ROUTES } from '@/config/routes';
-import { STATUS_OPTIONS } from '@/config/constants';
+import { AI_SCENE_OPTIONS, STATUS_OPTIONS } from '@/config/constants';
 import type { PageNavProps } from '@/types/view/page';
-import type { JulyAiPromptItem, JulyAiPromptDetailItem } from '@/types/aiCenter';
+import type { JulyAiDomainPromptVo011 } from '@/types/aiCenter/aiPrompt/vo';
 
 /** 内容模式选项 */
 const CONTENT_MODE_OPTIONS = [
@@ -25,58 +25,55 @@ const CONTENT_MODE_OPTIONS = [
 ];
 
 export interface PromptDetailEditorPageProps extends PageNavProps {
-  /** 'new' = 新增；否则为明细主键 */
+  /** 'new' = 新增；否则为提示词主键 */
   detailId: string;
-  /** 所属提示词主键（query 带入） */
-  promptId: string;
-  /** 预填业务域编码（query 带入；仅新建态生效） */
+  /** 所属业务域 id（query 带入；新建必传，编辑态忽略） */
+  pkMt?: string;
+  /** 预填业务域编码显示用（query 带入） */
   domain?: string;
 }
 
-export const PromptDetailEditorPage = ({ detailId, promptId, domain, onNavigate }: PromptDetailEditorPageProps) => {
+export const PromptDetailEditorPage = ({ detailId, pkMt, domain, onNavigate }: PromptDetailEditorPageProps) => {
   const isNew = detailId === 'new';
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [prompt, setPrompt] = useState<JulyAiPromptItem | null>(null);
-  const [node, setNode] = useState<JulyAiPromptDetailItem | null>(null);
+  const [node, setNode] = useState<JulyAiDomainPromptVo011 | null>(null);
 
-  /** 返回路径：保留主页选中态（?domain=；兼容旧链接的 ?promptId= 形态） */
+  /** 返回路径：保留主页选中态（?domain=） */
   const backPath = domain
     ? `${AICENTER_ROUTES.julyAiPrompt}?domain=${encodeURIComponent(domain)}`
-    : `${AICENTER_ROUTES.julyAiPrompt}?promptId=${promptId}`;
+    : AICENTER_ROUTES.julyAiPrompt;
 
-  /** 加载提示词上下文 + （编辑态）明细行反查 */
+  /** 所属域展示名（树内反查；找不到就显示 id） */
+  const ownerDomain = domain || node?.pkMt || pkMt || '';
+
+  /** 加载：编辑态点查明细；新建态校验 pkMt */
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect -- 加载置位属 intentional reset */
-    if (!promptId) {
-      toast.error('缺少提示词上下文（promptId）');
-      onNavigate?.(AICENTER_ROUTES.julyAiPrompt);
-      return;
-    }
     let alive = true;
     setLoading(true);
     (async () => {
       try {
-        const p = await getPromptById(promptId);
-        if (!alive) return;
-        setPrompt(p);
-        if (!isNew) {
-          const rows = await selectDetailListByPrompt(promptId);
-          if (!alive) return;
-          const hit = rows.find((r) => r.id === detailId);
-          if (!hit) {
-            toast.error('业务域明细不存在或已删除');
+        if (isNew) {
+          if (!pkMt) {
+            toast.error('缺少所属业务域上下文（pkMt）——请从列表页「新建提示词」进入');
             onNavigate?.(backPath);
             return;
           }
-          setNode(hit);
+          return;
         }
+        const hit = await getPromptById(detailId);
+        if (!alive) return;
+        setNode(hit);
+        // 正文不随 Vo 回传（超长）—— getContent 异步填充，避免保存时空正文写回
+        const text = await getPromptContent(detailId);
+        if (!alive) return;
+        form.setFieldsValue({ content: text });
       } catch (e) {
         if (!alive) return;
         toast.error((e as Error)?.message || '加载失败');
         onNavigate?.(backPath);
-        return;
       } finally {
         if (alive) setLoading(false);
       }
@@ -86,14 +83,15 @@ export const PromptDetailEditorPage = ({ detailId, promptId, domain, onNavigate 
   }, []);
 
   const handleSave = async () => {
-    if (!prompt) return;
     try {
       const v = await form.validateFields();
       setSaving(true);
-      await savePromptDetail({
+      await savePrompt({
         id: node?.id,
-        promptId: prompt.id,
-        domainCode: v.domainCode,
+        pkMt: node?.pkMt ?? pkMt,
+        promptCode: node?.promptCode,
+        promptName: String(v.promptName).trim(),
+        scene: v.scene,
         contentMode: v.contentMode,
         content: v.content,
         storageCode: v.contentMode === 'storage' ? v.storageCode : undefined,
@@ -103,7 +101,7 @@ export const PromptDetailEditorPage = ({ detailId, promptId, domain, onNavigate 
         remark: v.remark,
         status: v.status,
       });
-      toast.success(isNew ? 'insert detail success ...' : `update detail ${node?.id} success ...`);
+      toast.success(isNew ? 'insert success ...' : `update ${node?.id} success ...`);
       onNavigate?.(backPath);
     } catch (e) {
       if (e && typeof e === 'object' && 'errorFields' in e) return;
@@ -113,13 +111,14 @@ export const PromptDetailEditorPage = ({ detailId, promptId, domain, onNavigate 
 
   return (
     <div>
-      {/* 页头动作区：返回列表 + 保存 同在左侧（取消去掉——返回即放弃）；右侧留空 */}
+      {/* 页头动作区：返回列表 + 保存 同在左侧（返回即放弃）；右侧展示归属域 */}
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
         <Space>
           <Button icon={<ArrowLeftOutlined />} onClick={() => onNavigate?.(backPath)}>返回列表</Button>
           <Button type="primary" loading={saving} disabled={loading} onClick={handleSave}>保存</Button>
-          <h2 style={{ margin: 0 }}>{isNew ? '新增业务域明细' : '编辑业务域明细'}</h2>
-          {prompt && <Tag color="blue">{prompt.promptName}（{prompt.promptCode}）</Tag>}
+          <h2 style={{ margin: 0 }}>{isNew ? '新增提示词正文' : '编辑提示词正文'}</h2>
+          {node && <Tag color="blue">{node.promptName}（{node.promptCode}）</Tag>}
+          {ownerDomain && <Tag color="purple">所属域：{ownerDomain}</Tag>}
         </Space>
       </div>
 
@@ -132,9 +131,11 @@ export const PromptDetailEditorPage = ({ detailId, promptId, domain, onNavigate 
             preserve={false}
             initialValues={node
               ? {
-                domainCode: node.domainCode,
+                promptName: node.promptName,
+                scene: node.scene,
                 contentMode: node.contentMode || 'inline',
-                content: node.content || '',
+                content: '',
+                storageCode: node.storageCode || '',
                 bucket: node.bucket || '',
                 variables: node.variables || '',
                 sortOrder: node.sortOrder ?? 1,
@@ -143,16 +144,18 @@ export const PromptDetailEditorPage = ({ detailId, promptId, domain, onNavigate 
               }
               : {
                 contentMode: 'inline', sortOrder: 1, status: '1',
-                // 从主页带域跳转（该提示词在该域下还没有内容）：预填业务域编码
-                ...(domain ? { domainCode: domain } : {}),
               }}
             style={{ maxWidth: 880 }}
           >
             <Row gutter={16}>
               <Col span={8}>
-                <Form.Item name="domainCode" label="业务域编码" rules={[{ required: true, message: '请输入业务域编码' }]}
-                  extra="同一提示词下唯一">
-                  <Input placeholder="如 default" />
+                <Form.Item name="promptName" label="提示词名称" rules={[{ required: true, message: '请输入提示词名称' }]}>
+                  <Input placeholder="如 SQL 助手" maxLength={100} disabled={!!node} />
+                </Form.Item>
+              </Col>
+              <Col span={8}>
+                <Form.Item name="scene" label="适用能力" extra="仅分类标注">
+                  <Select allowClear placeholder="未指定" options={AI_SCENE_OPTIONS} />
                 </Form.Item>
               </Col>
               <Col span={8}>
@@ -161,30 +164,43 @@ export const PromptDetailEditorPage = ({ detailId, promptId, domain, onNavigate 
                   <Select options={CONTENT_MODE_OPTIONS} />
                 </Form.Item>
               </Col>
+            </Row>
+            <Row gutter={16}>
               <Col span={8}>
                 <Form.Item name="sortOrder" label="排序" rules={[{ required: true, message: '请输入排序' }]}>
                   <Input type="number" placeholder="越小越靠前" />
                 </Form.Item>
               </Col>
+              <Col span={16}>
+                {/* 变量声明：正文上一行（整行剩余宽度） */}
+                <Form.Item name="variables" label="变量声明" extra="逗号分隔，如 scene,subject；渲染时按名传值替换 ${var}">
+                  <Input placeholder="如 scene,subject" />
+                </Form.Item>
+              </Col>
             </Row>
-            {/* 变量声明：正文上一行（整行） */}
-            <Form.Item name="variables" label="变量声明" extra="逗号分隔，如 scene,subject；渲染时按名传值替换 ${var}">
-              <Input placeholder="如 scene,subject" />
-            </Form.Item>
-            {/* 正文：项目唯一 Markdown 编辑器（016 §9.1） */}
+            {/* 正文：项目唯一 Markdown 编辑器（016 §9.1）；编辑态正文由 getContent 异步填充 */}
             <Form.Item name="content" label="正文" rules={[{ required: true, message: '请输入正文' }]}>
               <KlsjnhMarkdown011 height={360} placeholder="提示词正文（Markdown）" />
             </Form.Item>
             <Form.Item noStyle shouldUpdate={(prev, cur) => prev.contentMode !== cur.contentMode}>
               {({ getFieldValue }) => getFieldValue('contentMode') === 'storage' ? (
-                <Form.Item name="bucket" label="桶" extra="留空用后端约定桶 ai-prompt">
-                  <Input placeholder="ai-prompt" style={{ maxWidth: 320 }} />
-                </Form.Item>
+                <Row gutter={16}>
+                  <Col span={8}>
+                    <Form.Item name="storageCode" label="存储实例" extra="留空用默认实例">
+                      <Input placeholder="default" />
+                    </Form.Item>
+                  </Col>
+                  <Col span={8}>
+                    <Form.Item name="bucket" label="桶" extra="留空用后端约定桶 ai-prompt">
+                      <Input placeholder="ai-prompt" />
+                    </Form.Item>
+                  </Col>
+                </Row>
               ) : null}
             </Form.Item>
             {/* 备注（多行）在前、状态在后，各自独占一行（016 §9.1 / 2026-09-21 定稿） */}
             <Form.Item name="remark" label="备注">
-              <Input.TextArea rows={2} placeholder="备注说明" />
+              <Input.TextArea rows={2} maxLength={300} showCount placeholder="备注说明" />
             </Form.Item>
             <Form.Item name="status" label="状态" rules={[{ required: true }]}>
               <Select options={STATUS_OPTIONS} style={{ maxWidth: 240 }} />

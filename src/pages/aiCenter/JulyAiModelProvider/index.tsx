@@ -27,10 +27,9 @@ import { ApiFormModal } from '@/pages/aiCenter/JulyAiModelProvider/ApiFormModal'
 import type { AiModelProviderItem, AiModelProviderApiItem, AiModelProviderTestResultVo011 } from '@/types/aiCenter/aiModelProvider/vo';
 import { STATUS_LABEL } from '@/config/constants';
 import { useTableFillHeight } from '@/hooks/useTableFillHeight';
-import { PAGE_SIZE_OPTIONS } from '@/utils/pageSizePref';
 
-const hdrCenter = (): React.HTMLAttributes<HTMLElement> => ({ style: { textAlign: 'center' } });
-const leftCell = { align: 'left' as const, onHeaderCell: hdrCenter };
+// 2026-09-21 定稿：单元格与表头一律左对齐
+const leftCell = {};
 
 function buildFeedback(res: AiModelProviderTestResultVo011, startedAt?: number): TestFeedback {
   const elapsedMs = startedAt != null ? Date.now() - startedAt : undefined;
@@ -102,10 +101,10 @@ export const JulyAiModelProvider = () => {
     { ...leftCell, title: '供应商名称', dataIndex: 'providerName', width: 150 },
     { ...leftCell, title: '基础地址', dataIndex: 'baseUrl', width: 260, ellipsis: true, render: (v) => <code>{v}</code> },
     { ...leftCell, title: '模型数', dataIndex: 'models', width: 90, render: (v) => <Tag color="geekblue">{v ? String(v).split(',').filter(Boolean).length : 0}</Tag> },
-    { title: '状态', dataIndex: 'status', width: 90, align: 'center', onHeaderCell: hdrCenter, render: (s) => <Tag color={s === '1' ? 'green' : 'red'}>{STATUS_LABEL[s] || s}</Tag> },
+    { title: '状态', dataIndex: 'status', width: 90, render: (s) => <Tag color={s === '1' ? 'green' : 'red'}>{STATUS_LABEL[s] || s}</Tag> },
     { ...leftCell, title: '备注', dataIndex: 'remark', width: 160, ellipsis: true },
     {
-      title: '操作', key: 'action', width: 140, fixed: 'right', align: 'center', onHeaderCell: hdrCenter,
+      title: '操作', key: 'action', width: 140, fixed: 'right',
       render: (_, r) => (
         <Space size="small">
           <Button type="link" size="small" onClick={() => setProviderModal({ open: true, node: r })}>编辑</Button>
@@ -136,10 +135,10 @@ export const JulyAiModelProvider = () => {
     { ...leftCell, title: 'API 编码', dataIndex: 'apiCode', width: 140, render: (v) => <code>{v}</code> },
     { ...leftCell, title: '名称', dataIndex: 'apiName', width: 160 },
     { ...leftCell, title: 'API Key', dataIndex: 'apiKey', width: 300, ellipsis: true, render: (v) => <code title={v}>{v}</code> },
-    { ...leftCell, title: '排序', dataIndex: 'sortOrder', width: 90, align: 'center', onHeaderCell: hdrCenter },
-    { title: '状态', dataIndex: 'status', width: 90, align: 'center', onHeaderCell: hdrCenter, render: (s) => <Tag color={s === '1' ? 'green' : 'red'}>{STATUS_LABEL[s] || s}</Tag> },
+    { ...leftCell, title: '排序', dataIndex: 'sortOrder', width: 90 },
+    { title: '状态', dataIndex: 'status', width: 90, render: (s) => <Tag color={s === '1' ? 'green' : 'red'}>{STATUS_LABEL[s] || s}</Tag> },
     {
-      title: '操作', key: 'action', width: 200, fixed: 'right', align: 'center', onHeaderCell: hdrCenter,
+      title: '操作', key: 'action', width: 200, fixed: 'right',
       render: (_, r) => (
         <Space size="small">
           <Button type="link" size="small" icon={<ApiOutlined />} loading={apiTestingId === r.id} onClick={() => handleApiTest(r)}>测试连接</Button>
@@ -158,7 +157,8 @@ export const JulyAiModelProvider = () => {
         <h2>AI 模型供应商</h2>
       </div>
 
-      <div className="page-toolbar" style={{ flexWrap: 'wrap' }}>
+      {/* 工具栏（主子表口径）：单行靠左 —— 搜索 + 按钮紧排（toolbar-left 抵消 space-between） */}
+      <div className="page-toolbar">
         <div className="toolbar-left">
           <Input.Search
             allowClear
@@ -166,8 +166,6 @@ export const JulyAiModelProvider = () => {
             style={{ width: 320 }}
             onSearch={(v) => fetchProviderPage({ pageIndex: 1, keyword: v || undefined })}
           />
-        </div>
-        <div className="toolbar-right" style={{ marginTop: 8 }}>
           <Button color="primary" variant="filled" icon={<PlusOutlined />} onClick={() => setProviderModal({ open: true, node: null })}>
             新建供应商
           </Button>
@@ -190,12 +188,11 @@ export const JulyAiModelProvider = () => {
           rowClassName={(row) => (row.id === selectedProvider?.id ? 'master-row-selected' : '')}
           pagination={{
             current: query.pageIndex,
-            pageSize: query.pageSize,
+            pageSize: 10,
             total,
-            showSizeChanger: true,
-            pageSizeOptions: PAGE_SIZE_OPTIONS,
+            showSizeChanger: false,
             showTotal: (t) => `共 ${t} 条`,
-            onChange: (pageIndex, pageSize) => fetchProviderPage({ pageIndex, pageSize }),
+            onChange: (pageIndex) => fetchProviderPage({ pageIndex, pageSize: 10 }),
           }}
         />
       </Card>

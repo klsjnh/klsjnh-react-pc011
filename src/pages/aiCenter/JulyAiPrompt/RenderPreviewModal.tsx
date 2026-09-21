@@ -1,37 +1,29 @@
 /**
  * AI 提示词 · 渲染预览弹窗
- * 调用后端 render（${var} 替换）：domainCode 留空用默认域；params 动态键值对录入。
+ * 2026-09-21 新契约：render(promptCode, params) —— promptCode 全局唯一，
+ * 不再需要业务域上下文（旧 domainCode 选项移除）；变量值动态键值对录入。
  */
 import { useState } from 'react';
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
-import { Button, Form, Input, Modal, Select } from 'antd';
+import { Button, Form, Input, Modal } from 'antd';
 import { renderPrompt } from '@/services/aiCenter';
 import { toast } from '@/utils/toast';
-import type { JulyAiPromptItem, JulyAiPromptDetailItem } from '@/types/aiCenter';
+import type { JulyAiDomainPromptVo011 } from '@/types/aiCenter/aiPrompt/vo';
 
 export interface RenderPreviewModalProps {
   open: boolean;
   /** 待渲染的提示词（页面选中态） */
-  prompt: JulyAiPromptItem | null;
-  /** 已加载的业务域明细（提供 domainCode 选项） */
-  details: JulyAiPromptDetailItem[];
-  /** 预选业务域（主页当前选中域） */
-  defaultDomain?: string;
+  prompt: JulyAiDomainPromptVo011 | null;
   onClose: () => void;
 }
 
 /** 空 params 行 */
 const EMPTY_PARAM = { key: '', value: '' };
 
-export const RenderPreviewModal = ({ open, prompt, details, defaultDomain, onClose }: RenderPreviewModalProps) => {
+export const RenderPreviewModal = ({ open, prompt, onClose }: RenderPreviewModalProps) => {
   const [form] = Form.useForm();
   const [rendering, setRendering] = useState(false);
   const [result, setResult] = useState<string | null>(null);
-
-  const domainOptions = [
-    { value: '', label: '默认域' },
-    ...details.map((d) => ({ value: d.domainCode, label: d.domainCode })),
-  ];
 
   const handleRender = async () => {
     if (!prompt) return;
@@ -43,7 +35,7 @@ export const RenderPreviewModal = ({ open, prompt, details, defaultDomain, onClo
       }
       setRendering(true);
       setResult(null);
-      const text = await renderPrompt({ promptCode: prompt.promptCode, domainCode: v.domainCode || undefined, params });
+      const text = await renderPrompt({ promptCode: prompt.promptCode, params });
       setResult(text);
     } catch (e) {
       if (e && typeof e === 'object' && 'errorFields' in e) return;
@@ -60,15 +52,12 @@ export const RenderPreviewModal = ({ open, prompt, details, defaultDomain, onClo
       width={680}
       destroyOnHidden
     >
-      <Form form={form} layout="vertical" preserve={false} initialValues={{ domainCode: defaultDomain || '', params: [] }}>
-        <Form.Item name="domainCode" label="业务域" extra="留空使用默认域">
-          <Select options={domainOptions} />
-        </Form.Item>
+      <Form form={form} layout="vertical" preserve={false} initialValues={{ params: [] }}>
         <Form.List name="params">
           {(fields, { add, remove }) => (
             <div>
               <div className="prompt-detail-editor-head">
-                <span>变量值（${'${var}'} 替换）</span>
+                <span>变量值（${'${var}'} 替换；变量声明见提示词 variables 字段）</span>
                 <Button size="small" icon={<PlusOutlined />} onClick={() => add({ ...EMPTY_PARAM })}>添加变量</Button>
               </div>
               {fields.map(({ key, name, ...restField }) => (

@@ -63,7 +63,7 @@ export const DictionaryFormModal = ({ open, node, onClose }: DictionaryFormModal
       destroyOnHidden
     >
       <Form form={form} layout="vertical" preserve={false} initialValues={initialValues}>
-        {/* 布局铁律（016 §9.1 / 用户定稿）：编码 / 名称 / 排序各占一行，状态必填独占一行，备注独占一行 */}
+        {/* 布局铁律（016 §9.1）：编码 / 名称 / 排序各占一行；备注（多行）在前、状态在后 */}
         <Form.Item name="dictionaryCode" label="字典编码" rules={[{ required: true, message: '请输入字典编码' }]}>
           <Input disabled={!!node} placeholder="唯一，创建后不可修改，如 SYS_USER_STATUS" />
         </Form.Item>

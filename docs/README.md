@@ -16,6 +16,7 @@
 | [017.tech-debt-redlines.md](017.tech-debt-redlines.md) | 技术债红线（架构 / 类型 / 契约 / 门禁 / 文档） |
 | [019.lowcode011-findings.md](019.lowcode011-findings.md) | **低代码模块现状**：后端 `lowcode011/julyMetadata` 接口清单与一主三子模型、实测踩坑、与 `julyBusinessModeling` 的字段/方法错配清单、待拍板的实现方案 |
 | [020.lowcode011-interface-matrix.md](020.lowcode011-interface-matrix.md) | **低代码接口对照矩阵**：三档分流 —— A 真实接口已对接 / B 契约错配已修正 / C PENDING-BACKEND 前端占位（附实时 OpenAPI 证据与后端补齐后的切换方式） |
+| [021.aicenter-prompt-redesign-findings.md](021.aicenter-prompt-redesign-findings.md) | **AI 提示词线重构评估**：线上 bundle 新契约实测（julyAiDomain 域树+提示词明细+saveWhole）、当天两次快照对照、迁移实施记录（KlsjnhTreeList011 树面板组件 + 15 文件重写，已完成） |
 | [031.pc-ui-standard.md](031.pc-ui-standard.md) | **PC 端 UI 标准**：按钮 / 工具栏 / 表单按钮 / 页面骨架统一写法与基准实现（【评审】类规则） |
 
 ## 专题与知识库
@@ -23,7 +24,7 @@
 | 目录 / 文件 | 内容 |
 |------|------|
 | `contracts/` | 运行时 OpenAPI 契约快照（命名与脱敏见 [contracts/README.md](contracts/README.md)） |
-| `dev-guides/` | 开发手册（文件名与标题英文、内容中文）：[011.single-table-dev-standard](dev-guides/011.single-table-dev-standard.md) — 以配置管理为蓝本的单表页面开发流水线（3 文件拆分 / 壳-表-弹窗职责 / 五色按钮 / 备注状态铁律 / 提交自查清单） |
+| `dev-guides/` | 开发手册（文件名与标题英文、内容中文）：[011.single-table-dev-standard](dev-guides/011.single-table-dev-standard.md) — 以配置管理为蓝本的单表页面开发流水线（3 文件拆分 / 壳-表-弹窗职责 / 五色按钮 / 备注状态铁律 / 提交自查清单）；[013.master-sub-dev-standard](dev-guides/013.master-sub-dev-standard.md) — 以字典管理为蓝本的主子表（上下结构）开发流水线（4 文件拆分 / 单行靠左工具栏 / 固定分页 10 / 子表草稿模型） |
 | `2026-09-12.md` · `2026-09-17.md` | 当日工作日志（每日一份，历史归档至 `archive011/`） |
 | requirement011/ requirement013/ | 预留：页面级需求与技术方案（当前与后端仓库 018/019/022 同编号贯穿） |
 | archive011/ | 历史工作日志归档 |

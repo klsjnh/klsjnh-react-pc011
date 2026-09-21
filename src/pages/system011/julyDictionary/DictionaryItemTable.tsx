@@ -22,10 +22,8 @@ import type { JulyDictionaryVo011, DictionaryItemDraft } from '@/types/system011
 
 const STATUS_TAG = (s?: string) => <Tag color={s === '1' ? 'green' : 'red'}>{s === '1' ? '启用' : '停用'}</Tag>;
 
-/** 表头一律居中（antd 的 align 只管表体，表头要另给 onHeaderCell） */
-const hdrCenter = (): React.HTMLAttributes<HTMLElement> => ({ style: { textAlign: 'center' } });
-/** 内容左对齐 + 表头居中（编码 / 名称类列） */
-const leftCell = { align: 'left' as const, onHeaderCell: hdrCenter };
+/** 2026-09-21 定稿：单元格与表头一律左对齐 */
+const leftCell = {};
 
 export interface DictionaryItemTableProps {
   /** 当前选中的字典（null = 未选中：按钮禁用、表格给提示） */
@@ -155,7 +153,7 @@ export const DictionaryItemTable = ({ active }: DictionaryItemTableProps) => {
         await removeDictionaryItem(r.id);
       }
       for (const r of upserts) {
-        const savedId = await saveDictionaryItem({
+        await saveDictionaryItem({
           id: r._isNew ? undefined : r.id,
           dictionaryCode: active.dictionaryCode,
           itemCode: r.itemCode.trim(),
@@ -164,13 +162,7 @@ export const DictionaryItemTable = ({ active }: DictionaryItemTableProps) => {
           remark: r.remark,
           status: r.status,
         });
-        // 后端 insertItem 契约不含 status（新行一律落为启用）→ 用户在新行选了停用时补一次 updateItem
-        if (r._isNew && r.status === '0') {
-          await saveDictionaryItem({
-            id: savedId, dictionaryCode: active.dictionaryCode, itemCode: r.itemCode.trim(),
-            itemLabel: r.itemLabel.trim(), sortOrder: r.sortOrder ?? 0, remark: r.remark, status: '0',
-          });
-        }
+
       }
       const parts: string[] = [];
       if (deletions.length) parts.push(`delete ${deletions.length}`);
@@ -199,13 +191,19 @@ export const DictionaryItemTable = ({ active }: DictionaryItemTableProps) => {
         : v),
     },
     {
-      title: '排序', dataIndex: 'sortOrder', align: 'center', onHeaderCell: hdrCenter, width: 100,
+      title: '备注', dataIndex: 'remark', ...leftCell,
+      render: (v, r) => (r._editing
+        ? <Input size="small" value={v} placeholder="备注说明" onChange={(e) => patchRow(r._key, { remark: e.target.value })} />
+        : (v || '—')),
+    },
+    {
+      title: '排序', dataIndex: 'sortOrder', width: 100,
       render: (v, r) => (r._editing
         ? <InputNumber size="small" min={0} value={v} style={{ width: 72 }} onChange={(nv) => patchRow(r._key, { sortOrder: Number(nv) || 0 })} />
         : v),
     },
     {
-      title: '状态', dataIndex: 'status', align: 'center', onHeaderCell: hdrCenter, width: 110,
+      title: '状态', dataIndex: 'status', width: 110,
       render: (v, r) => (r._editing
         ? (
           <Switch size="small" checked={r.status === '1'} checkedChildren="启用" unCheckedChildren="停用"
@@ -214,25 +212,25 @@ export const DictionaryItemTable = ({ active }: DictionaryItemTableProps) => {
         : STATUS_TAG(v)),
     },
     {
-      title: '操作', key: 'action', width: 130, align: 'center', onHeaderCell: hdrCenter,
+      title: '操作', key: 'action', width: 130,
       render: (_, r) => {
         // 已标记删除：未保存前可撤销（删除不立刻生效，随保存一起提交）
         if (r._deleted) {
-          return <Button type="link" size="small" onClick={() => undoRowRemove(r._key)}>撤销删除</Button>;
+          return <Button color="default" variant="filled" size="small" onClick={() => undoRowRemove(r._key)}>撤销删除</Button>;
         }
         if (r._editing) {
           return (
             <Space size="small">
-              <Button type="link" size="small" loading={rowsSaving}
+              <Button color="primary" variant="filled" size="small" loading={rowsSaving}
                 onClick={() => (r._dirty ? submitRows([r]) : exitEdit(r._key))}>保存</Button>
-              <Button type="link" size="small" onClick={() => cancelEdit(r._key)}>取消</Button>
+              <Button color="default" variant="filled" size="small" onClick={() => cancelEdit(r._key)}>取消</Button>
             </Space>
           );
         }
         return (
           <Space size="small">
-            <Button type="link" size="small" onClick={() => enterEdit(r._key)}>编辑</Button>
-            <Button type="link" size="small" danger onClick={() => handleRowRemove(r)}>删除</Button>
+            <Button color="primary" variant="filled" size="small" onClick={() => enterEdit(r._key)}>编辑</Button>
+            <Button color="danger" variant="filled" size="small" danger onClick={() => handleRowRemove(r)}>删除</Button>
           </Space>
         );
       },
@@ -243,10 +241,10 @@ export const DictionaryItemTable = ({ active }: DictionaryItemTableProps) => {
     <>
       {/* 行编辑操作条：在表格上方 */}
       <div className="detail-actions">
-        <Button icon={<PlusOutlined />} color="primary" variant="filled" disabled={!active} onClick={handleAddRow}>
+        <Button color="primary" variant="filled" size="small" icon={<PlusOutlined />} disabled={!active} onClick={handleAddRow}>
           新增一行
         </Button>
-        <Button type="primary" icon={<SaveOutlined />} loading={rowsSaving}
+        <Button color="primary" variant="filled" size="small" icon={<SaveOutlined />} loading={rowsSaving}
           disabled={!active || !dirtyCount} onClick={() => submitRows(dirtyRows)}>
           保存
         </Button>
@@ -261,7 +259,7 @@ export const DictionaryItemTable = ({ active }: DictionaryItemTableProps) => {
         columns={itemColumns}
         dataSource={draftItems}
         loading={itemsLoading}
-        scroll={{ x: 800 }}
+        scroll={{ x: 1000 }}
         pagination={false}
         rowClassName={(r) => (r._deleted ? 'draft-row-deleted' : r._dirty ? 'draft-row-dirty' : '')}
         locale={{ emptyText: active ? '暂无明细，点上方「新增一行」开始录入' : '请先在上方选中一个字典' }}

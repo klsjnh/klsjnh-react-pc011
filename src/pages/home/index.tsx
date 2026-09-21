@@ -79,10 +79,10 @@ export const Home = () => {
     if (currentPath.startsWith(AICENTER_ROUTES.julyAiPromptDetail + '/')) {
       const detailId = currentPath.slice(AICENTER_ROUTES.julyAiPromptDetail.length + 1);
       const q = new URLSearchParams(location.search);
-      const promptId = q.get('promptId') || '';
+      const pkMt = q.get('pkMt') || '';
       const domain = q.get('domain') || '';
       const Comp = DYNAMIC_ROUTES.PromptDetailEditorPage;
-      return <Comp detailId={detailId} promptId={promptId} domain={domain} onNavigate={(p: string) => navigate(p)} />;
+      return <Comp detailId={detailId} pkMt={pkMt} domain={domain} onNavigate={(p: string) => navigate(p)} />;
     }
 
     const OnNavigate = { onNavigate: (p: string) => navigate(p) } as PageNavProps;

@@ -43,7 +43,7 @@ export interface JulyDictionaryQueryVo011 {
   status?: string;
 }
 
-/** 字典主表新增入参（status 为前端先行字段：线上 InsertVo 暂无，后端补齐后生效，留空后端默认启用） */
+/** 字典主表新增入参（status / remark 已上线：2026-09-21 15:49 线上核实，留空默认启用） */
 export interface JulyDictionaryInsertVo011 {
   dictionaryCode: string;
   dictionaryName: string;
@@ -61,12 +61,13 @@ export interface JulyDictionaryUpdateVo011 {
   remark?: string;
 }
 
-/** 字典明细新增入参（用 dictionaryCode 定位主表） */
+/** 字典明细新增入参（status / remark 已上线：2026-09-21 线上核实） */
 export interface JulyDictionaryItemInsertVo011 {
   dictionaryCode: string;
   itemCode: string;
   itemLabel: string;
   sortOrder: number;
+  status?: string;
   remark?: string;
 }
 

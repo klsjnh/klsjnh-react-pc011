@@ -1,50 +1,67 @@
 /**
  * AI 业务域类型（aiCenter · julyAiDomain）
- * 2026-09-20 前端先行：后端域实体端点未上线（swagger 178 路径已核实），
- * service/mock 按约定路径先行，后端补齐后零改动生效。
- * 域与提示词明细通过 domainCode 关联（明细的 domainCode 即域编码）。
+ * 2026-09-21 对齐线上新契约（bundle 模型，11160 实测 17 端点）：
+ *   域主表（树：parentId/children）+ 提示词明细（pkMt 挂域）+ saveWhole/getWithChildren 打包。
+ * 明细子表 = 提示词本体（promptCode 全局唯一、contentMode inline/storage），
+ * 类型见 aiPrompt/vo.ts（JulyAiDomainPromptVo011）。
  */
 
-/** 业务域条目（域实体主表） */
+import type { JulyAiDomainPromptVo011, JulyAiDomainPromptSaveVo011 } from '@/types/aiCenter/aiPrompt/vo';
+
+/** 业务域条目（对应后端 JulyAiDomainVo011；树节点） */
 export interface JulyAiDomainItem {
   id: string;
-  /** 业务域编码（全局唯一；提示词明细的 domainCode 指向它） */
+  /** 域编码（全局唯一，创建后不可修改） */
   domainCode: string;
-  /** 业务域名称 */
+  /** 域名称 */
   domainName: string;
-  /** 排序 */
+  /** 上级域 id（根为空串） */
+  parentId?: string;
+  /** 排序（越小越靠前） */
   sortOrder?: number;
   /** 状态：0 停用 / 1 启用 */
   status: string;
   /** 备注 */
   remark?: string;
+  /** 子域（selectTree / getWithChildren 返回；按排序） */
+  children?: JulyAiDomainItem[];
+  createBy?: string;
+  updateBy?: string;
+  createTime?: string;
+  updateTime?: string;
 }
 
-/** 业务域分页查询入参 */
+/** 业务域分页查询入参（对应 JulyAiDomainQueryVo011） */
 export interface JulyAiDomainQueryVo011 {
   pageIndex: number;
   pageSize: number;
+  /** 编码/名称关键字 */
   keyword?: string;
+  /** 上级域 id 过滤 */
+  parentId?: string;
+  /** 状态过滤（0/1） */
   status?: string;
 }
 
-/** 新增业务域入参 */
+/** 新增业务域入参（对应 JulyAiDomainInsertVo011；不收 status，默认启用） */
 export interface JulyAiDomainInsertVo011 {
   domainCode: string;
   domainName: string;
+  /** 上级域 id（根传空串） */
+  parentId?: string;
   sortOrder?: number;
-  status?: string;
   remark?: string;
 }
 
-/** 修改业务域入参（domainCode 可改——改名需同步明细的 domainCode，service 内级联） */
+/** 修改业务域入参（对应 JulyAiDomainUpdateVo011；status/remark 留空保持） */
 export interface JulyAiDomainUpdateVo011 {
   id: string;
-  domainCode: string;
   domainName: string;
+  /** 移动挂载点（根传空串） */
+  parentId?: string;
   sortOrder?: number;
-  status?: string;
   remark?: string;
+  status?: string;
 }
 
 /** 页面保存参数（service 按有无 id 分流 insert/update） */
@@ -52,15 +69,31 @@ export interface SaveJulyAiDomainParams {
   id?: string;
   domainCode: string;
   domainName: string;
+  /** 上级域 id（空串=顶级） */
+  parentId?: string;
   sortOrder?: number;
   status?: string;
   remark?: string;
 }
 
-/** 域下的一条明细引用（删域 / 改名级联用：定位到具体明细行） */
-export interface JulyAiDomainDetailRef {
-  /** 明细主键 */
-  detailId: string;
-  /** 所属提示词主键 */
-  promptId: string;
+/** 域 + 提示词打包（对应 JulyAiDomainBundleVo011；getWithChildren 出参） */
+export interface JulyAiDomainBundleVo011 {
+  domain: JulyAiDomainItem;
+  /** 该域下提示词列表（子表，按排序） */
+  prompts?: JulyAiDomainPromptVo011[];
+}
+
+/** 域 + 提示词整存入参（对应 JulyAiDomainSaveWholeVo011；prompts 整存替换：旧子表逻辑删 + 新列表插入） */
+export interface JulyAiDomainSaveWholeVo011 {
+  /** 域主键（留空=新增；非空=修改） */
+  id?: string;
+  /** 域编码（仅新增时用，不可变） */
+  domainCode?: string;
+  domainName: string;
+  parentId?: string;
+  sortOrder?: number;
+  remark?: string;
+  status?: string;
+  /** 提示词列表（整存替换） */
+  prompts?: JulyAiDomainPromptSaveVo011[];
 }

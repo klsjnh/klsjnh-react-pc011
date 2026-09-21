@@ -1,44 +1,46 @@
 /**
- * Mock：AI 提示词（julyAiPrompt）—— 对齐后端 AiPromptController 11 端点
- * ⚠️ selectDetailListByPrompt 为前端约定端点（后端 use case 已有 details(pkMt)，
- *   待补 HTTP 暴露）；mock 先行实现，API 模式待后端就绪后自动生效。
+ * Mock：AI 提示词（julyAiDomainPrompt 明细端点）—— 对齐线上新契约（2026-09-21 bundle 模型）
+ * 提示词 = 业务域明细子表：pkMt 挂域 id；端点走 /julyAiDomain/v1/*Detail* + render + getContent。
+ * 契约口径：Vo 不回传正文（超长）——正文仓 CONTENT_REPO 承载，getContent/render 取用。
  */
 import { ok, fail, delay, pageResult, type Handler } from '@/mock/system011/common';
-import type { JulyAiPromptItem, JulyAiPromptDetailItem } from '@/types/aiCenter/aiPrompt/vo';
+import type { JulyAiDomainPromptVo011 } from '@/types/aiCenter/aiPrompt/vo';
 
-/** mock 数据源自增 id */
-let nextId = 200;
+/** mock 数据源自增 id（与 julyAiDomain.ts 序列错开段） */
+let nextPromptId = 400;
 
-/** Mock 提示词主表（字段对齐后端 JulyAiPromptVo011） */
-export const mockPrompts: JulyAiPromptItem[] = [
-  { id: 'prm-0001', promptCode: 'chat.table.output', promptName: '表格输出约束', scene: 'inference', status: '1' },
-  { id: 'prm-0002', promptCode: 'chat.sql.assistant', promptName: 'SQL 助手', scene: 'inference', status: '1' },
-  { id: 'prm-0003', promptCode: 'image.poster.copy', promptName: '海报文案', scene: 'image', status: '0' },
-];
-
-/** Mock 业务域明细（字段对齐后端 JulyAiPromptDetailVo011） */
-export const mockDetails: JulyAiPromptDetailItem[] = [
-  {
-    id: 'dtl-0001', domainCode: 'default', contentMode: 'inline',
-    content: '你是一个智能助手。当用户要求表格时，必须输出 Markdown 表格（含表头行与分隔行），不得用列表替代。\n当前场景：${scene}',
-    variables: 'scene', sortOrder: 1, status: '1',
-  },
-  {
-    id: 'dtl-0002', domainCode: 'finance', contentMode: 'inline',
-    content: '你是财务分析助手，请用表格输出 ${subject} 的 ${period} 数据，列：项目 / 金额 / 占比。',
-    variables: 'subject,period', sortOrder: 2, status: '1',
-  },
-  {
-    id: 'dtl-0003', domainCode: 'default', contentMode: 'inline',
-    content: '你是 SQL 专家。根据用户问题生成可执行 SQL，禁止写操作，必须附执行计划说明。',
-    variables: '', sortOrder: 1, status: '1',
-  },
-];
-
-/** 明细归属（mock 简化处理：按提示词编码段映射，detail 数据带 _promptCode 不可见字段由下方查找表维护） */
-const detailOwner: Record<string, string> = {
-  'dtl-0001': 'prm-0001', 'dtl-0002': 'prm-0001', 'dtl-0003': 'prm-0002',
+/** 正文仓（mock：getContent / render 时取用；Vo 本体不回传正文） */
+const CONTENT_REPO: Record<string, string> = {
+  'prm-0101': '你是一个智能助手。当用户要求表格时，必须输出 Markdown 表格（含表头行与分隔行），不得用列表替代。\n当前场景：${scene}',
+  'prm-0102': '你是 SQL 专家。根据用户问题生成可执行 SQL，禁止写操作，必须附执行计划说明。',
+  'prm-0103': '你是财务分析助手，请用表格输出 ${subject} 的 ${period} 数据，列：项目 / 金额 / 占比。',
 };
+
+/** 正文仓写入（updateDetail / saveWhole mock 落正文用） */
+export function appendPromptContent(id: string, content: string): void {
+  CONTENT_REPO[id] = content;
+}
+
+/** Mock 提示词（域明细子表；pkMt 对应 mockDomains 的 id） */
+export const mockPrompts: JulyAiDomainPromptVo011[] = [
+  {
+    id: 'prm-0101', pkMt: 'dom-0001', promptCode: 'chat.table.output', promptName: '表格输出约束', scene: 'inference',
+    contentMode: 'inline', variables: 'scene', sortOrder: 1, status: '1', remark: '通用表格约束',
+  },
+  {
+    id: 'prm-0102', pkMt: 'dom-0001', promptCode: 'chat.sql.assistant', promptName: 'SQL 助手', scene: 'inference',
+    contentMode: 'inline', variables: '', sortOrder: 2, status: '1', remark: '',
+  },
+  {
+    id: 'prm-0103', pkMt: 'dom-0002', promptCode: 'finance.report.summary', promptName: '财报摘要', scene: 'inference',
+    contentMode: 'inline', variables: 'subject,period', sortOrder: 1, status: '1', remark: '',
+  },
+  {
+    id: 'prm-0104', pkMt: 'dom-0003', promptCode: 'image.poster.copy', promptName: '海报文案', scene: 'image',
+    contentMode: 'storage', storageCode: 'default', bucket: 'ai-prompt', objectKey: 'prompts/poster-copy.md', contentHash: 'mock-hash', contentSize: 128,
+    variables: '', sortOrder: 1, status: '0', remark: '已停用示例（storage 模式）',
+  },
+];
 
 /** ${var} 替换（未提供的变量保留原样） */
 function renderText(text: string, params?: Record<string, string>): string {
@@ -47,13 +49,15 @@ function renderText(text: string, params?: Record<string, string>): string {
 }
 
 export const handlers: Record<string, Handler> = {
-  // ===== 提示词分页查询（keyword 模糊 code/name，scene/status 过滤） =====
-  '/julyAiPrompt/v1/selectListByPage': async (body) => {
-    await delay(300);
+  // ===== 提示词分页查询（明细端点：pkMt 精确过滤 + keyword/scene/status） =====
+  '/julyAiDomain/v1/selectDetailListByPage': async (body) => {
+    await delay(250);
     const kw = (body?.keyword || '').trim().toLowerCase();
+    const pkMt = body?.pkMt;
     const scene = body?.scene;
     const status = body?.status;
     let rows = [...mockPrompts];
+    if (pkMt) rows = rows.filter((r) => r.pkMt === pkMt);
     if (kw) {
       rows = rows.filter((r) =>
         r.promptCode.toLowerCase().includes(kw) ||
@@ -61,112 +65,90 @@ export const handlers: Record<string, Handler> = {
     }
     if (scene) rows = rows.filter((r) => r.scene === scene);
     if (status) rows = rows.filter((r) => r.status === status);
-    rows.sort((a, b) => a.promptCode.localeCompare(b.promptCode));
+    rows.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
     return ok(pageResult(rows, body?.pageIndex || 1, body?.pageSize || 10));
   },
 
-  // ===== 主键 / 编码点查 =====
-  '/julyAiPrompt/v1/getById': async (body) => {
+  // ===== 明细点查（getDetailById / getDetailByCode） =====
+  '/julyAiDomain/v1/getDetailById': async (body) => {
     await delay(200);
-    const item = mockPrompts.find((p) => p.id === body?.id);
-    if (!item) return fail(`record not found, id=${body?.id}`, 404);
-    return ok(structuredClone(item));
-  },
-  '/julyAiPrompt/v1/getByCode': async (body) => {
-    await delay(200);
-    const item = mockPrompts.find((p) => p.promptCode === body?.promptCode);
-    if (!item) return fail(`record not found, promptCode=${body?.promptCode}`, 404);
-    return ok(structuredClone(item));
+    const hit = mockPrompts.find((p) => p.id === body?.id);
+    if (!hit) return fail(`record not found, id=${body?.id}`, 404);
+    return ok({ ...hit });
   },
 
-  // ===== 新增提示词（含业务域明细） =====
-  '/julyAiPrompt/v1/insert': async (body) => {
-    await delay(400);
+  '/julyAiDomain/v1/getDetailByCode': async (body) => {
+    await delay(200);
+    const hit = mockPrompts.find((p) => p.promptCode === body?.code);
+    if (!hit) return fail(`record not found, code=${body?.code}`, 404);
+    return ok({ ...hit });
+  },
+
+  // ===== 正文读取（inline 回正文仓；storage 回存储模拟内容） =====
+  '/julyAiDomain/v1/getContent': async (body) => {
+    await delay(200);
+    const hit = mockPrompts.find((p) => p.id === body?.id);
+    if (!hit) return fail(`record not found, id=${body?.id}`, 404);
+    if (hit.contentMode === 'storage') {
+      return ok(`（对象存储正文 · ${hit.bucket || 'ai-prompt'}/${hit.objectKey || 'mock.md'}）\n存储模式正文内容由后端从对象存储取回。`);
+    }
+    return ok(CONTENT_REPO[hit.id] || '');
+  },
+
+  // ===== 新增提示词（pkMt 必传；promptCode 全局唯一） =====
+  '/julyAiDomain/v1/insertDetail': async (body) => {
+    await delay(350);
+    const pkMt = body?.pkMt;
     const promptCode = (body?.promptCode || '').trim();
     const promptName = (body?.promptName || '').trim();
-    if (!promptCode) return fail('insert: promptCode is required', 400);
-    if (!promptName) return fail('insert: promptName is required', 400);
-    if (mockPrompts.some((p) => p.promptCode === promptCode)) return fail(`insert: promptCode ${promptCode} already exists`, 400);
-    const id = `prm-${String(nextId++)}`;
-    const item: JulyAiPromptItem = { id, promptCode, promptName, scene: body?.scene || '', status: '1' };
-    mockPrompts.unshift(item);
-    // 明细随主表单次下发（对齐后端 insert 语义）
-    let order = 1;
-    for (const d of body?.details || []) {
-      if (!d?.domainCode) return fail('insert: detail domainCode is required', 400);
-      const detailId = `dtl-${String(nextId++)}`;
-      detailOwner[detailId] = id;
-      mockDetails.push({
-        id: detailId, domainCode: d.domainCode, contentMode: d.contentMode || 'inline',
-        content: d.content || '', storageCode: d.storageCode, bucket: d.bucket,
-        variables: d.variables || '', sortOrder: d.sortOrder ?? order, status: d.status || '1',
-      });
-      order++;
-    }
+    if (!pkMt) return fail('insertDetail: pkMt is required', 400);
+    if (!promptCode) return fail('insertDetail: promptCode is required', 400);
+    if (!promptName) return fail('insertDetail: promptName is required', 400);
+    if (mockPrompts.some((p) => p.promptCode === promptCode)) return fail(`insertDetail: promptCode ${promptCode} already exists`, 400);
+    const id = `prm-${String(nextPromptId++)}`;
+    mockPrompts.push({
+      id,
+      pkMt, promptCode, promptName,
+      scene: body?.scene,
+      contentMode: body?.contentMode || 'inline',
+      storageCode: body?.storageCode,
+      bucket: body?.bucket,
+      objectKey: body?.contentMode === 'storage' ? `prompts/${promptCode}.md` : undefined,
+      contentHash: body?.contentMode === 'storage' ? 'mock-hash' : undefined,
+      contentSize: body?.content ? body.content.length : undefined,
+      variables: body?.variables || '',
+      sortOrder: body?.sortOrder ?? 1,
+      status: body?.status || '1',
+      remark: body?.remark || '',
+    });
+    if (body?.content !== undefined) appendPromptContent(id, body.content);
     return ok({ id });
   },
 
-  // ===== 修改提示词（promptCode 不可变；不含明细） =====
-  '/julyAiPrompt/v1/update': async (body) => {
-    await delay(400);
+  // ===== 修改提示词（promptCode/pkMt 不可变） =====
+  '/julyAiDomain/v1/updateDetail': async (body) => {
+    await delay(350);
     const item = mockPrompts.find((p) => p.id === body?.id);
     if (!item) return fail(`record not found, id=${body?.id}`, 404);
+    if (body?.promptCode !== undefined && String(body.promptCode).trim() !== item.promptCode) {
+      return fail('updateDetail: promptCode is immutable', 400);
+    }
+    if (body?.pkMt !== undefined && body.pkMt !== item.pkMt) {
+      return fail('updateDetail: pkMt is immutable', 400);
+    }
     if (body?.promptName !== undefined) item.promptName = body.promptName;
     if (body?.scene !== undefined) item.scene = body.scene;
-    if (body?.status !== undefined) item.status = body.status;
-    return ok({ id: item.id });
-  },
-
-  // ===== 逻辑删除提示词（级联清理业务域明细） =====
-  '/julyAiPrompt/v1/logicDelete': async (body) => {
-    await delay(300);
-    const i = mockPrompts.findIndex((p) => p.id === body?.id);
-    if (i < 0) return fail(`record not found, id=${body?.id}`, 404);
-    const [removed] = mockPrompts.splice(i, 1);
-    for (let j = mockDetails.length - 1; j >= 0; j--) {
-      if (detailOwner[mockDetails[j].id || ''] === removed.id) mockDetails.splice(j, 1);
-    }
-    return ok({ id: removed.id });
-  },
-
-  // ===== 业务域明细：按提示词查询（⚠️ 前端约定端点，后端待补） =====
-  '/julyAiPrompt/v1/selectDetailListByPrompt': async (body) => {
-    await delay(250);
-    const promptId = body?.promptId || '';
-    const rows = mockDetails
-      .filter((d) => detailOwner[d.id || ''] === promptId)
-      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-    return ok(rows.map((r) => ({ ...r })));
-  },
-
-  // ===== 业务域明细：新增 =====
-  '/julyAiPrompt/v1/insertDetail': async (body) => {
-    await delay(350);
-    const domainCode = (body?.domainCode || '').trim();
-    if (!domainCode) return fail('insertDetail: domainCode is required', 400);
-    if (!mockPrompts.some((p) => p.id === body?.promptId)) return fail(`prompt not found, id=${body?.promptId}`, 404);
-    if (mockDetails.some((d) => detailOwner[d.id || ''] === body?.promptId && d.domainCode === domainCode)) {
-      return fail(`insertDetail: domainCode ${domainCode} already exists`, 400);
-    }
-    const id = `dtl-${String(nextId++)}`;
-    detailOwner[id] = body.promptId;
-    mockDetails.push({
-      id, domainCode, contentMode: body?.contentMode || 'inline',
-      content: body?.content || '', storageCode: body?.storageCode, bucket: body?.bucket,
-      variables: body?.variables || '', sortOrder: body?.sortOrder ?? mockDetails.length + 1,
-      status: '1', remark: body?.remark || '',
-    });
-    return ok({ id });
-  },
-
-  // ===== 业务域明细：修改 =====
-  '/julyAiPrompt/v1/updateDetail': async (body) => {
-    await delay(350);
-    const item = mockDetails.find((d) => d.id === body?.id);
-    if (!item) return fail(`record not found, id=${body?.id}`, 404);
-    if (body?.domainCode !== undefined) item.domainCode = body.domainCode;
     if (body?.contentMode !== undefined) item.contentMode = body.contentMode;
-    if (body?.content !== undefined) item.content = body.content;
+    if (body?.content !== undefined) {
+      if (item.contentMode === 'storage') {
+        item.contentHash = 'mock-hash';
+        item.contentSize = body.content?.length ?? 0;
+      } else {
+        appendPromptContent(item.id, body.content);
+      }
+    }
+    if (body?.storageCode !== undefined) item.storageCode = body.storageCode;
+    if (body?.bucket !== undefined) item.bucket = body.bucket;
     if (body?.variables !== undefined) item.variables = body.variables;
     if (body?.sortOrder !== undefined) item.sortOrder = body.sortOrder;
     if (body?.remark !== undefined) item.remark = body.remark;
@@ -174,25 +156,24 @@ export const handlers: Record<string, Handler> = {
     return ok({ id: item.id });
   },
 
-  // ===== 业务域明细：逻辑删除 =====
-  '/julyAiPrompt/v1/logicDeleteDetail': async (body) => {
-    await delay(250);
-    const i = mockDetails.findIndex((d) => d.id === body?.id);
+  // ===== 删除提示词 =====
+  '/julyAiDomain/v1/logicDeleteDetail': async (body) => {
+    await delay(300);
+    const i = mockPrompts.findIndex((p) => p.id === body?.id);
     if (i < 0) return fail(`record not found, id=${body?.id}`, 404);
-    const [removed] = mockDetails.splice(i, 1);
+    const [removed] = mockPrompts.splice(i, 1);
     return ok({ id: removed.id });
   },
 
-  // ===== 渲染提示词（${var} 替换；domainCode 留空取默认域） =====
-  '/julyAiPrompt/v1/render': async (body) => {
+  // ===== 渲染（promptCode 全局唯一；${var} 替换） =====
+  '/julyAiDomain/v1/render': async (body) => {
     await delay(300);
-    const prompt = mockPrompts.find((p) => p.promptCode === body?.promptCode);
-    if (!prompt) return fail(`prompt not found, promptCode=${body?.promptCode}`, 404);
-    const own = mockDetails.filter((d) => detailOwner[d.id || ''] === prompt.id);
-    const detail = body?.domainCode
-      ? own.find((d) => d.domainCode === body.domainCode)
-      : own.find((d) => d.domainCode === 'default') ?? own[0];
-    if (!detail) return fail(`no detail for promptCode=${body.promptCode}`, 404);
-    return ok(renderText(detail.content || '', body?.params));
+    const hit = mockPrompts.find((p) => p.promptCode === body?.promptCode);
+    if (!hit) return fail(`render: prompt not found, code=${body?.promptCode}`, 404);
+    if (hit.status !== '1') return fail(`render: prompt ${hit.promptCode} is disabled`, 400);
+    if (hit.contentMode === 'storage') {
+      return ok(`（对象存储正文渲染 · ${hit.bucket || 'ai-prompt'}）\n变量：${JSON.stringify(body?.params || {})}`);
+    }
+    return ok(renderText(CONTENT_REPO[hit.id] || '', body?.params));
   },
 };

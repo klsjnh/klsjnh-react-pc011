@@ -104,7 +104,7 @@ export async function saveDictionaryItem(params: {
         id, itemLabel, sortOrder, status, remark,
       } as JulyDictionaryItemUpdateVo011)
     : await api.post<IdVo011>(SYSTEM011_ACTIONS.dictionary.insertItem, {
-        dictionaryCode, itemCode, itemLabel, sortOrder, remark,
+        dictionaryCode, itemCode, itemLabel, sortOrder, status, remark,
       } as JulyDictionaryItemInsertVo011);
   return savedId;
 }

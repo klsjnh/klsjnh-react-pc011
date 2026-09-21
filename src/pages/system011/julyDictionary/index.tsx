@@ -55,9 +55,9 @@ export const JulyDictionary = () => {
         <h2>字典管理</h2>
       </div>
 
-      {/* 工具栏：与 julyUser 同款两行 —— 第一行搜索 + 状态筛选，第二行动作按钮 */}
-      <div className="page-toolbar" style={{ display: 'block' }}>
-        <div className="toolbar-row-search" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+      {/* 工具栏（主子表口径）：单行靠左 —— 搜索 + 状态筛选 + 按钮紧排（toolbar-left 抵消 space-between） */}
+      <div className="page-toolbar">
+        <div className="toolbar-left">
           <Input.Search
             allowClear
             placeholder="搜索编码 / 名称"
@@ -76,12 +76,10 @@ export const JulyDictionary = () => {
               { value: '0', label: '停用' },
             ]}
           />
-        </div>
-        <div className="toolbar-right">
-          {/* 浅底 tonal（variant="filled"）：颜色表达强度、跟随主题 token，不写死色 */}
-          <Button color="primary" variant="filled" icon={<PlusOutlined />}
-            onClick={() => setDictModal({ open: true, node: null })}>新建字典</Button>
-          <Button color="default" variant="filled" icon={<DownloadOutlined />} loading={exporting}
+          {/* 五色语义（031 §016）：green 新建 / pink 导出 */}
+          <Button color="green" variant="filled" icon={<PlusOutlined />}
+            onClick={() => setDictModal({ open: true, node: null })}>新建</Button>
+          <Button color="pink" variant="filled" icon={<DownloadOutlined />} loading={exporting}
             onClick={handleExport}>导出</Button>
         </div>
       </div>
