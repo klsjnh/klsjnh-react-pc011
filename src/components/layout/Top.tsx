@@ -18,7 +18,7 @@
  * 且固定在视口底部容易被忽略，故在品牌左侧再提供一个显式开关。
  */
 import React, { useState } from 'react';
-import { Layout, Popover, Avatar, Badge, Modal, Form, Input } from 'antd';
+import { Layout, Popover, Avatar, Badge } from 'antd';
 import {
   ApartmentOutlined,
   BellOutlined,
@@ -37,9 +37,9 @@ import { uiStore, useUiState } from '@/stores/uiStore';
 import { appConfigStore, useAppConfig, type DataMode } from '@/config/appConfig';
 import { THEME_LIST, getThemeColor } from '@/config/theme';
 import { themeStore, useThemeKey } from '@/stores/themeStore';
-import { reloadMenus, reloadRoles, changePassword } from '@/services/system011';
+import { reloadMenus, reloadRoles } from '@/services/system011';
 import { globalConfig } from '@/config/constants';
-import { toast } from '@/utils/toast';
+import ChangePasswordModal from '@/components/layout/ChangePasswordModal';
 import type { TopProps } from '@/types/view/layout';
 
 const { Header } = Layout;
@@ -60,7 +60,6 @@ export const Top = ({ onNavigate }: TopProps) => {
   const [pwdOpen, setPwdOpen] = useState(false);
   const [modeOpen, setModeOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
-  const [form] = Form.useForm();
 
   const isApi = appCfg.dataMode === 'api';
 
@@ -156,7 +155,7 @@ export const Top = ({ onNavigate }: TopProps) => {
         <button
           type="button"
           className="user-action"
-          onClick={() => { setUserOpen(false); form.resetFields(); setPwdOpen(true); }}
+          onClick={() => { setUserOpen(false); setPwdOpen(true); }}
         >
           <LockOutlined />
           <span>修改密码</span>
@@ -177,22 +176,7 @@ export const Top = ({ onNavigate }: TopProps) => {
     </div>
   );
 
-  const savePwd = async () => {
-    const v = await form.validateFields();
-    if (v.newPwd !== v.confirmPwd) { toast.error('两次输入的新密码不一致'); return; }
-    try {
-      await changePassword({
-        userAccount: user?.username || '',
-        oldPassword: v.oldPwd,
-        newPassword: v.newPwd,
-      });
-      setPwdOpen(false);
-      form.resetFields();
-      toast.success('密码修改成功');
-    } catch (e) {
-      toast.error((e as Error)?.message || '密码修改失败');
-    }
-  };
+
 
   return (
     <Header className="app-header">
@@ -264,27 +248,11 @@ export const Top = ({ onNavigate }: TopProps) => {
         </Popover>
       </div>
 
-      <Modal
-        title="修改密码"
+      <ChangePasswordModal
         open={pwdOpen}
-        onCancel={() => setPwdOpen(false)}
-        onOk={savePwd}
-        okText="保存"
-        cancelText="取消"
-        destroyOnHidden
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item name="oldPwd" label="原密码" rules={[{ required: true, message: '请输入原密码' }]}>
-            <Input.Password placeholder="请输入原密码" />
-          </Form.Item>
-          <Form.Item name="newPwd" label="新密码" rules={[{ required: true, message: '请输入新密码' }, { min: 6, message: '至少 6 位' }]}>
-            <Input.Password placeholder="至少 6 位" />
-          </Form.Item>
-          <Form.Item name="confirmPwd" label="确认新密码" rules={[{ required: true, message: '请确认新密码' }]}>
-            <Input.Password placeholder="再次输入新密码" />
-          </Form.Item>
-        </Form>
-      </Modal>
+        userAccount={user?.username}
+        onClose={() => setPwdOpen(false)}
+      />
     </Header>
   );
 };

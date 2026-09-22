@@ -78,7 +78,7 @@ export const RoleFormModal = ({ open, role, onClose }: RoleFormModalProps) => {
         </Row>
 
         <Form.Item name="remark" label="描述">
-          <Input.TextArea rows={3} placeholder="备注 / 描述" />
+          <Input.TextArea rows={2} placeholder="备注 / 描述" />
         </Form.Item>
 
         <Form.Item name="status" label="状态" rules={[{ required: true, message: '请选择状态' }]}>

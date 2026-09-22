@@ -171,7 +171,7 @@ export const DatasourceFormModal = ({ open, node, onClose, onSaved }: Datasource
           <Input placeholder="如 com.mysql.cj.jdbc.Driver" />
         </Form.Item>
         <Form.Item name="remark" label="备注">
-          <Input.TextArea rows={3} placeholder="备注说明" />
+          <Input.TextArea rows={2} placeholder="备注说明" />
         </Form.Item>
       </Form>
     </Modal>
