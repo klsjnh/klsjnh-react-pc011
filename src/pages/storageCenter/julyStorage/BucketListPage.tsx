@@ -12,6 +12,7 @@ import { toast } from '@/utils/toast';
 import type { JulyStorage, JulyStorageConnect, StorageTestResult } from '@/types/storageCenter';
 import { fetchStoragePage, removeStorage, testStorageConnection } from '@/services/storageCenter/julyStorageService';
 import { useStorageState } from '@/stores/storageCenter/julyStorageStore';
+import { KlsjnhStatusTag011 } from '@/components/klsjnh011';
 import { storageExplorerStore, useStorageExplorer } from '@/stores/storageCenter/storageExplorerStore';
 import { PAGE_SIZE_OPTIONS } from '@/utils/pageSizePref';
 import { TestFeedbackAlert, type TestFeedback, type TestFeedbackDetail } from '@/components/system011/TestFeedbackAlert';
@@ -120,7 +121,7 @@ export const BucketListPage = () => {
     { ...leftCell, title: '默认桶', dataIndex: 'defaultBucket', width: 130, render: (v) => v || '-' },
     {
       title: '状态', dataIndex: 'status', width: 100, align: 'center', onHeaderCell: hdrCenter,
-      render: (s) => <Tag color={s === '1' ? 'green' : 'red'}>{s === '1' ? '启用' : '停用'}</Tag>,
+      render: (s) => <KlsjnhStatusTag011 value={s} />,
     },
     {
       title: '操作', key: 'action', width: 210, fixed: 'right', align: 'center', onHeaderCell: hdrCenter,
@@ -150,7 +151,7 @@ export const BucketListPage = () => {
           <Input.Search allowClear placeholder="搜索编码 / 名称" style={{ width: 320 }} onSearch={search} />
         </div>
         <div className="toolbar-right" style={{ marginTop: 8 }}>
-          <Button color="primary" variant="filled" icon={<PlusOutlined />} onClick={() => setModal({ open: true, node: null })}>
+          <Button color="green" variant="filled" icon={<PlusOutlined />} onClick={() => setModal({ open: true, node: null })}>
             新建存储实例
           </Button>
           <Button

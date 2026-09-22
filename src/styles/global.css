@@ -144,7 +144,7 @@ body {
 .text-primary { color: var(--primary); }
 .flex-between { display: flex; align-items: center; justify-content: space-between; }
 .flex-center { display: flex; align-items: center; }
-.search-input { width: 240px; }
+.search-input { width: 260px; }
 .filter-select { width: 140px; }
 
 /* ==================== 登录页 ==================== */

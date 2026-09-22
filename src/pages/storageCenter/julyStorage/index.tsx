@@ -28,6 +28,7 @@ import {
 import { Button, Card, Popconfirm, Select, Space, Table, Tag, Upload } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { PAGE_SIZE_OPTIONS } from '@/utils/pageSizePref';
+import { KlsjnhStatusTag011 } from '@/components/klsjnh011';
 import { useTableFillHeight } from '@/hooks/useTableFillHeight';
 import { toast } from '@/utils/toast';
 import { STORAGE_CENTER_ROUTES } from '@/config/routes';
@@ -160,7 +161,7 @@ export const StorageBucketPane = ({ defaultStorageCode }: { defaultStorageCode?:
   const statusOf = (code?: string) => {
     const s = storages.find((x) => x.storageCode === code);
     if (!s) return '-';
-    return <Tag color={s.status === '1' ? 'green' : 'red'}>{s.status === '1' ? '启用' : '停用'}</Tag>;
+    return <KlsjnhStatusTag011 value={s.status} />;
   };
 
   const handleRemove = async (row: StorageBucket) => {
@@ -203,7 +204,7 @@ export const StorageBucketPane = ({ defaultStorageCode }: { defaultStorageCode?:
     <>
       <div className="page-toolbar">
         <div className="toolbar-right">
-          <Button color="primary" variant="filled" icon={<PlusOutlined />} disabled={!ready} onClick={() => setModalOpen(true)}>
+          <Button color="green" variant="filled" icon={<PlusOutlined />} disabled={!ready} onClick={() => setModalOpen(true)}>
             新建桶
           </Button>
           <Button color="default" variant="filled" icon={<ReloadOutlined />} onClick={() => reload()}>刷新</Button>
@@ -543,7 +544,7 @@ export const StorageObjectPane = ({ defaultStorageCode }: { defaultStorageCode?:
       <div className="page-toolbar">
         <div className="toolbar-left">
           <Select
-            allowClear placeholder="存储实例" style={{ width: 240 }}
+            allowClear placeholder="存储实例" style={{ width: 140 }}
             value={storageCode}
             onChange={(v) => {
               storageExplorerStore.selectStorage(v);
@@ -567,7 +568,7 @@ export const StorageObjectPane = ({ defaultStorageCode }: { defaultStorageCode?:
             disabled={!effectiveBucket}
             beforeUpload={(file) => { void handleUpload(file as unknown as File); return false; }}
           >
-            <Button color="primary" variant="filled" icon={<UploadOutlined />} loading={uploading} disabled={!effectiveBucket}>
+            <Button color="green" variant="filled" icon={<UploadOutlined />} loading={uploading} disabled={!effectiveBucket}>
               上传对象
             </Button>
           </Upload>

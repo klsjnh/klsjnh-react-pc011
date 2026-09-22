@@ -11,6 +11,12 @@
 }
 .toolbar-left, .toolbar-right { display: flex; align-items: center; gap: 8px; }
 
+/* 工具栏两行结构（金标准 julyUser 口径，031 §015/016）：
+   第一行搜索区靠左，第二行动作区靠右；行结构由 KlsjnhPageToolbar011 原语输出，
+   间距/对齐以下面为准，页面不再写 inline style。 */
+.toolbar-row-search { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.klsjnh-toolbar-actions { justify-content: flex-end; }
+
 .table-wrapper {
   background: var(--bg-card); border-radius: var(--radius);
   box-shadow: var(--shadow); overflow: hidden;
@@ -46,8 +52,9 @@
 .text-primary { color: var(--primary); }
 .flex-between { display: flex; align-items: center; justify-content: space-between; }
 .flex-center { display: flex; align-items: center; }
-.search-input { width: 240px; }
+.search-input { width: 260px; }
 .filter-select { width: 140px; }
+.klsjnh-search-input011 { width: 260px; }
 
 /* ==================== 间距 / 文字工具类（about / help 页使用） ==================== */
 .text-center { text-align: center; }

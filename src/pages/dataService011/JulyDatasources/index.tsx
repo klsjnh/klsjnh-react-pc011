@@ -6,15 +6,15 @@
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { ApiOutlined, PlusOutlined } from '@ant-design/icons';
-import { Button, Card, Input, Popconfirm, Space, Table, Tag } from 'antd';
+import { Button, Card, Popconfirm, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useDatasourceState } from '@/stores/dataservice011/julyDatasourceStore';
+import { KlsjnhPageToolbar011, KlsjnhSearchInput011, KlsjnhStatusTag011 } from '@/components/klsjnh011';
 import { fetchDatasourcePage, removeDatasource, testDatasourceConnection } from '@/services/dataservice011';
 import { toast } from '@/utils/toast';
 import { TestFeedbackAlert, type TestFeedback } from '@/components/system011/TestFeedbackAlert';
 import { DatasourceFormModal } from '@/pages/dataService011/JulyDatasources/DatasourceFormModal';
 import type { DataSourceItem, JulyDatasourceTestResultVo011 } from '@/types/dataservice011/datasource';
-import { STATUS_LABEL } from '@/config/constants';
 import { useTableFillHeight } from '@/hooks/useTableFillHeight';
 import { PAGE_SIZE_OPTIONS } from '@/utils/pageSizePref';
 
@@ -86,7 +86,7 @@ export const JulyDatasource = () => {
     { ...leftCell, title: 'JDBC URL', dataIndex: 'jdbcUrl', width: 230, ellipsis: true, render: (v) => <code>{v}</code> },
     { ...leftCell, title: '库名/Schema', dataIndex: 'schemaName', width: 130 },
     { ...leftCell, title: '用户名', dataIndex: 'username', width: 120 },
-    { ...leftCell, title: '状态', dataIndex: 'status', width: 90, render: (s) => <Tag color={s === '1' ? 'green' : 'red'}>{STATUS_LABEL[s] || s}</Tag> },
+    { ...leftCell, title: '状态', dataIndex: 'status', width: 90, render: (s) => <KlsjnhStatusTag011 value={s} /> },
     {
       title: '操作', key: 'action', width: 200, align: 'left',
       render: (_, r) => (
@@ -107,19 +107,18 @@ export const JulyDatasource = () => {
         <h2>数据源</h2>
       </div>
 
-      <div className="page-toolbar">
-        <div className="toolbar-left">
-          <Input.Search
-            allowClear
+      <KlsjnhPageToolbar011
+        layout="inline"
+        search={
+          <KlsjnhSearchInput011
             placeholder="搜索编码 / 名称 / JDBC URL"
-            className="search-input"
             onSearch={(v) => fetchDatasourcePage({ pageIndex: 1, keyword: v || undefined })}
           />
-        </div>
-        <div className="toolbar-right">
-          <Button color="primary" variant="filled" icon={<PlusOutlined />} onClick={() => setModal({ open: true, node: null })}>新建数据源</Button>
-        </div>
-      </div>
+        }
+        actions={
+          <Button color="green" variant="filled" icon={<PlusOutlined />} onClick={() => setModal({ open: true, node: null })}>新建数据源</Button>
+        }
+      />
 
       {pageTest && <TestFeedbackAlert data={pageTest} />}
 

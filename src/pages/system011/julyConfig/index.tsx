@@ -9,9 +9,10 @@
  */
 import React, { useEffect, useState } from 'react';
 import { DatabaseOutlined, DeleteOutlined, DownloadOutlined, DownOutlined, PlusOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Input, Popconfirm, Select } from 'antd';
+import { Button, Dropdown, Popconfirm, Select } from 'antd';
 import type { MenuProps } from 'antd';
 import { useConfigState } from '@/stores/system011/julyConfigStore';
+import { KlsjnhPageToolbar011, KlsjnhSearchInput011 } from '@/components/klsjnh011';
 import { fetchConfigPage, removeConfig, removeConfigs, exportConfig, backupConfig011 } from '@/services/system011';
 import { toast } from '@/utils/toast';
 import { ConfigTable } from '@/pages/system011/julyConfig/ConfigTable';
@@ -94,29 +95,30 @@ export const JulyConfig = () => {
         <h2>配置管理</h2>
       </div>
 
-      {/* 工具栏金标准：第一行 搜索 + 状态筛选，第二行 新建 + 批量删除 + 备份 + 导出 */}
-      <div className="page-toolbar" style={{ display: 'block' }}>
-        <div className="toolbar-row-search" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-          <Input.Search
-            allowClear
-            placeholder="搜索 code / data"
-            style={{ width: 260 }}
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            onSearch={(v) => fetchConfigPage({ pageIndex: 1, keyword: v || undefined })}
-          />
-          <Select
-            style={{ width: 140 }}
-            value={query.status ?? ''}
-            onChange={(v) => fetchConfigPage({ pageIndex: 1, status: v || undefined })}
-            options={[
-              { value: '', label: '全部状态' },
-              { value: '1', label: '启用' },
-              { value: '0', label: '停用' },
-            ]}
-          />
-        </div>
-        <div className="toolbar-right">
+      {/* 工具栏金标准（031 §015/016）：第一行 搜索 + 状态筛选，第二行 新建 + 批量删除 + 备份 + 导出 —— KlsjnhPageToolbar011 原语 */}
+      <KlsjnhPageToolbar011
+        search={
+          <>
+            <KlsjnhSearchInput011
+              placeholder="搜索 code / data"
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              onSearch={(v) => fetchConfigPage({ pageIndex: 1, keyword: v || undefined })}
+            />
+            <Select
+              style={{ width: 140 }}
+              value={query.status ?? ''}
+              onChange={(v) => fetchConfigPage({ pageIndex: 1, status: v || undefined })}
+              options={[
+                { value: '', label: '全部状态' },
+                { value: '1', label: '启用' },
+                { value: '0', label: '停用' },
+              ]}
+            />
+          </>
+        }
+        actions={
+          <>
           {/* 浅底 tonal（variant="filled"）：五色语义 —— green 新建 / blue 备份 / pink 导出 / danger 批量删除 */}
           <Button
             color="green" variant="filled"
@@ -151,8 +153,8 @@ export const JulyConfig = () => {
               导出 <DownOutlined />
             </Button>
           </Dropdown>
-        </div>
-      </div>
+          </>}
+      />
 
       <ConfigTable
         selectedRowKeys={selectedRowKeys}

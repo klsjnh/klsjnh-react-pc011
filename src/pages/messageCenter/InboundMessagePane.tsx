@@ -9,6 +9,7 @@ import { DeleteOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useTableFillHeight } from '@/hooks/useTableFillHeight';
 import { toast } from '@/utils/toast';
 import { inboundStore, useInboundState } from '@/stores/messageCenter/inboundStore';
+import { KlsjnhBatchDeleteButton011 } from '@/components/klsjnh011';
 import {
   removeInboundMessage, removeInboundMessageBatch, selectInboundMessageListByPage,
 } from '@/services/messageCenter/julyInboundMessageService';
@@ -98,10 +99,8 @@ export const InboundMessagePane = () => {
           onPressEnter={() => void reload(1)}
           onBlur={() => void reload(1)}
         />
-        <Button color="primary" variant="filled" icon={<PlusOutlined />} onClick={() => setReceiveOpen(true)}>模拟回调</Button>
-        <Popconfirm title={`确认删除选中的 ${selectedKeys.length} 条记录？`} onConfirm={() => void handleBatchRemove()}>
-          <Button danger icon={<DeleteOutlined />} disabled={!selectedKeys.length}>批量删除</Button>
-        </Popconfirm>
+        <Button color="green" variant="filled" icon={<PlusOutlined />} onClick={() => setReceiveOpen(true)}>模拟回调</Button>
+        <KlsjnhBatchDeleteButton011 selectedCount={selectedKeys.length} onDelete={() => void handleBatchRemove()} />
         <Button icon={<ReloadOutlined />} onClick={() => void reload()}>刷新</Button>
       </Space>
 

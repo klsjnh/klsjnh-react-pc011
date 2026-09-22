@@ -3,12 +3,13 @@
  * direction 决定 store 段、service 调用与表格列细节。
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { Button, Card, Input, Popconfirm, Space, Table, Tag } from 'antd';
+import { Button, Card, Input, Popconfirm, Space, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTableFillHeight } from '@/hooks/useTableFillHeight';
 import { toast } from '@/utils/toast';
 import { outboundStore, useOutboundState } from '@/stores/messageCenter/outboundStore';
+import { KlsjnhBatchDeleteButton011, KlsjnhStatusTag011 } from '@/components/klsjnh011';
 import { inboundStore, useInboundState } from '@/stores/messageCenter/inboundStore';
 import {
   removeOutboundTemplate, removeOutboundTemplateBatch, saveOutboundTemplate, selectOutboundTemplateListByPage,
@@ -105,7 +106,7 @@ export const TemplatePane = ({ direction }: TemplatePaneProps) => {
     { title: '标题', dataIndex: 'title', ellipsis: true },
     {
       title: '状态', dataIndex: 'status', width: 80,
-      render: (v: string) => <Tag color={v === '1' ? 'green' : 'default'}>{v === '1' ? '启用' : '停用'}</Tag>,
+      render: (v: string) => <KlsjnhStatusTag011 value={v} colors={{ '0': 'default' }} />,
     },
     { title: '备注', dataIndex: 'remark', width: 160, ellipsis: true },
     {
@@ -146,12 +147,10 @@ export const TemplatePane = ({ direction }: TemplatePaneProps) => {
           onPressEnter={() => void reload(1)}
           onBlur={() => void reload(1)}
         />
-        <Button color="primary" variant="filled" icon={<PlusOutlined />} onClick={() => { setEditing(null); setModalOpen(true); }}>
+        <Button color="green" variant="filled" icon={<PlusOutlined />} onClick={() => { setEditing(null); setModalOpen(true); }}>
           新建模板
         </Button>
-        <Popconfirm title={`确认删除选中的 ${selectedKeys.length} 条模板？`} onConfirm={() => void handleBatchRemove()}>
-          <Button danger icon={<DeleteOutlined />} disabled={!selectedKeys.length}>批量删除</Button>
-        </Popconfirm>
+        <KlsjnhBatchDeleteButton011 selectedCount={selectedKeys.length} onDelete={() => void handleBatchRemove()} />
         <Button icon={<ReloadOutlined />} onClick={() => void reload()}>刷新</Button>
       </Space>
 

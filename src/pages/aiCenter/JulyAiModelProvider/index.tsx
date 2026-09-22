@@ -13,7 +13,8 @@
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ApiOutlined, KeyOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
-import { Button, Card, Input, Popconfirm, Space, Table, Tabs, Tag } from 'antd';
+import { Button, Card, Popconfirm, Space, Table, Tabs, Tag } from 'antd';
+import { KlsjnhPageToolbar011, KlsjnhSearchInput011, KlsjnhStatusTag011 } from '@/components/klsjnh011';
 import type { ColumnsType } from 'antd/es/table';
 import { useAiModelProviderState } from '@/stores/aiCenter/julyAiModelProviderStore';
 import {
@@ -25,7 +26,6 @@ import { TestFeedbackAlert, type TestFeedback } from '@/components/system011/Tes
 import { ProviderFormModal } from '@/pages/aiCenter/JulyAiModelProvider/ProviderFormModal';
 import { ApiFormModal } from '@/pages/aiCenter/JulyAiModelProvider/ApiFormModal';
 import type { AiModelProviderItem, AiModelProviderApiItem, AiModelProviderTestResultVo011 } from '@/types/aiCenter/aiModelProvider/vo';
-import { STATUS_LABEL } from '@/config/constants';
 import { useTableFillHeight } from '@/hooks/useTableFillHeight';
 
 // 2026-09-21 定稿：单元格与表头一律左对齐
@@ -101,7 +101,7 @@ export const JulyAiModelProvider = () => {
     { ...leftCell, title: '供应商名称', dataIndex: 'providerName', width: 150 },
     { ...leftCell, title: '基础地址', dataIndex: 'baseUrl', width: 260, ellipsis: true, render: (v) => <code>{v}</code> },
     { ...leftCell, title: '模型数', dataIndex: 'models', width: 90, render: (v) => <Tag color="geekblue">{v ? String(v).split(',').filter(Boolean).length : 0}</Tag> },
-    { title: '状态', dataIndex: 'status', width: 90, render: (s) => <Tag color={s === '1' ? 'green' : 'red'}>{STATUS_LABEL[s] || s}</Tag> },
+    { title: '状态', dataIndex: 'status', width: 90, render: (s) => <KlsjnhStatusTag011 value={s} /> },
     { ...leftCell, title: '备注', dataIndex: 'remark', width: 160, ellipsis: true },
     {
       title: '操作', key: 'action', width: 140, fixed: 'right',
@@ -136,7 +136,7 @@ export const JulyAiModelProvider = () => {
     { ...leftCell, title: '名称', dataIndex: 'apiName', width: 160 },
     { ...leftCell, title: 'API Key', dataIndex: 'apiKey', width: 300, ellipsis: true, render: (v) => <code title={v}>{v}</code> },
     { ...leftCell, title: '排序', dataIndex: 'sortOrder', width: 90 },
-    { title: '状态', dataIndex: 'status', width: 90, render: (s) => <Tag color={s === '1' ? 'green' : 'red'}>{STATUS_LABEL[s] || s}</Tag> },
+    { title: '状态', dataIndex: 'status', width: 90, render: (s) => <KlsjnhStatusTag011 value={s} /> },
     {
       title: '操作', key: 'action', width: 200, fixed: 'right',
       render: (_, r) => (
@@ -158,23 +158,25 @@ export const JulyAiModelProvider = () => {
       </div>
 
       {/* 工具栏（主子表口径）：单行靠左 —— 搜索 + 按钮紧排（toolbar-left 抵消 space-between） */}
-      <div className="page-toolbar">
-        <div className="toolbar-left">
-          <Input.Search
-            allowClear
+      <KlsjnhPageToolbar011
+        layout="inline"
+        search={
+          <KlsjnhSearchInput011
             placeholder="搜索编码 / 名称 / 基础地址"
-            style={{ width: 320 }}
             onSearch={(v) => fetchProviderPage({ pageIndex: 1, keyword: v || undefined })}
           />
-          <Button color="primary" variant="filled" icon={<PlusOutlined />} onClick={() => setProviderModal({ open: true, node: null })}>
+        }
+        actions={
+          <>
+          <Button color="green" variant="filled" icon={<PlusOutlined />} onClick={() => setProviderModal({ open: true, node: null })}>
             新建供应商
           </Button>
           <Button
             color="default" variant="filled" icon={<ReloadOutlined />}
             onClick={() => fetchProviderPage({ pageIndex: 1 })}
           >刷新</Button>
-        </div>
-      </div>
+          </>}
+      />
 
       {/* 主表：供应商（行点击选中，联动下方 API 子表） */}
       <Card className="table-wrapper" ref={masterCardRef} title="供应商" styles={{ body: { padding: 0 } }}>

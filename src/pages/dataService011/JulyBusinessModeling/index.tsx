@@ -11,10 +11,10 @@ import { CodeOutlined, PlayCircleOutlined, PlusOutlined, ProfileOutlined } from 
 import { Button, Card, Input, Popconfirm, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useBusinessModelingState } from '@/stores/dataservice011/julyBusinessModelingStore';
+import { KlsjnhStatusTag011 } from '@/components/klsjnh011';
 import { fetchModelingPage, removeModeling } from '@/services/dataservice011';
 import { toast } from '@/utils/toast';
 import type { JulyBusinessModelingVo011 } from '@/types/dataservice011/businessModeling';
-import { STATUS_LABEL } from '@/config/constants';
 import { useTableFillHeight } from '@/hooks/useTableFillHeight';
 import { PAGE_SIZE_OPTIONS } from '@/utils/pageSizePref';
 import { DATASERVICE011_ROUTES, LOWCODE011_ROUTES } from '@/config/routes';
@@ -42,7 +42,7 @@ export const JulyBusinessModeling = ({ onNavigate }: PageNavProps) => {
     { ...leftCell, title: '对象名', dataIndex: 'objectName', width: 150, render: (v) => <code>{v}</code> },
     { ...leftCell, title: '数据源', dataIndex: 'dataSourceCode', width: 130, render: (v) => v ? <Tag color="blue">{v}</Tag> : <span style={{ color: 'var(--text-muted)' }}>—</span> },
     { ...leftCell, title: '字段数', key: 'fieldCount', width: 90, render: (_: unknown, r: JulyBusinessModelingVo011) => <Tag color="geekblue">{r.metaData?.fieldData?.length || 0}</Tag> },
-    { ...leftCell, title: '状态', dataIndex: 'status', width: 90, render: (s) => <Tag color={s === '1' ? 'green' : 'red'}>{STATUS_LABEL[s] || s}</Tag> },
+    { ...leftCell, title: '状态', dataIndex: 'status', width: 90, render: (s) => <KlsjnhStatusTag011 value={s} /> },
     { ...leftCell, title: '备注', dataIndex: 'remark', width: 160, ellipsis: true },
     {
       title: '操作', key: 'action', width: 250, align: 'left',
@@ -85,7 +85,7 @@ export const JulyBusinessModeling = ({ onNavigate }: PageNavProps) => {
           />
         </div>
         <div className="toolbar-right">
-          <Button color="primary" variant="filled" icon={<PlusOutlined />} onClick={() => onNavigate?.(DATASERVICE011_ROUTES.julyBusinessModelingNew)}>新建业务模型</Button>
+          <Button color="green" variant="filled" icon={<PlusOutlined />} onClick={() => onNavigate?.(DATASERVICE011_ROUTES.julyBusinessModelingNew)}>新建业务模型</Button>
         </div>
       </div>
 

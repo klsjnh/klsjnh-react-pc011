@@ -45,3 +45,6 @@ Thumbs.db
 *.orig
 tmp_*
 temp-*
+
+# Gate marker files (openclaw check runs)
+.openclaw-*.exit

@@ -3,12 +3,13 @@
  * config 列为 JSON 字符串，展示截断；providerType 直接展示。
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { Button, Card, Input, Popconfirm, Space, Table } from 'antd';
+import { Button, Card, Popconfirm, Space, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTableFillHeight } from '@/hooks/useTableFillHeight';
 import { toast } from '@/utils/toast';
 import { outboundStore, useOutboundState } from '@/stores/messageCenter/outboundStore';
+import { KlsjnhPageToolbar011, KlsjnhBatchDeleteButton011, KlsjnhSearchInput011 } from '@/components/klsjnh011';
 import { inboundStore, useInboundState } from '@/stores/messageCenter/inboundStore';
 import {
   removeOutboundChannel, removeOutboundChannelBatch, saveOutboundChannel, selectOutboundChannelListByPage,
@@ -110,21 +111,23 @@ export const ChannelPane = ({ direction }: ChannelPaneProps) => {
 
   return (
     <>
-      <Space wrap style={{ marginBottom: 12 }}>
-        <Input.Search
-          allowClear
-          placeholder="编码 / 名称关键字"
-          style={{ width: 220 }}
-          onSearch={(v) => { setKeyword(v); void reload(1); }}
-        />
-        <Button color="primary" variant="filled" icon={<PlusOutlined />} onClick={() => { setEditing(null); setModalOpen(true); }}>
-          新建通道
-        </Button>
-        <Popconfirm title={`确认删除选中的 ${selectedKeys.length} 条通道？`} onConfirm={() => void handleBatchRemove()}>
-          <Button danger icon={<DeleteOutlined />} disabled={!selectedKeys.length}>批量删除</Button>
-        </Popconfirm>
-        <Button icon={<ReloadOutlined />} onClick={() => void reload()}>刷新</Button>
-      </Space>
+      <KlsjnhPageToolbar011
+        layout="inline"
+        search={
+          <KlsjnhSearchInput011
+            placeholder="编码 / 名称关键字"
+            onSearch={(v) => { setKeyword(v); void reload(1); }}
+          />
+        }
+        actions={
+          <>
+            <Button color="green" variant="filled" icon={<PlusOutlined />} onClick={() => { setEditing(null); setModalOpen(true); }}>
+              新建通道
+            </Button>
+            <KlsjnhBatchDeleteButton011 selectedCount={selectedKeys.length} onDelete={() => void handleBatchRemove()} />
+            <Button icon={<ReloadOutlined />} onClick={() => void reload()}>刷新</Button>
+          </>}
+      />
 
       <Card ref={cardRef} className="table-wrapper" style={{ flex: 1, minHeight: 0 }}>
         <Table

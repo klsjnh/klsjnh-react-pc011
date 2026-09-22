@@ -7,8 +7,9 @@
  * 备注 / 状态为前端先行字段（后端 Insert/Query VO 暂无），用户将补后端，mock 已支持。
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
-import { Button, Card, Input, Popconfirm, Select, Space, Table, Tag } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
+import { Button, Card, Popconfirm, Select, Space, Table } from 'antd';
+import { KlsjnhPageToolbar011, KlsjnhBatchDeleteButton011, KlsjnhSearchInput011, KlsjnhStatusTag011 } from '@/components/klsjnh011';
 import type { ColumnsType } from 'antd/es/table';
 import { useSchedulerState } from '@/stores/system011/julySchedulerStore';
 import {
@@ -83,7 +84,7 @@ export const JulyScheduler = () => {
     { ...leftCell, title: '处理器', dataIndex: 'schedulerHandler', width: 220 },
     { title: 'Cron', dataIndex: 'schedulerCron', width: 150, align: 'center', onHeaderCell: hdrCenter, render: (v) => <code>{v}</code> },
     { title: '执行次数', dataIndex: 'executeTimes', width: 90, align: 'center', onHeaderCell: hdrCenter },
-    { title: '状态', dataIndex: 'status', width: 90, align: 'center', onHeaderCell: hdrCenter, render: (s) => <Tag color={s === '1' ? 'green' : 'default'}>{s === '1' ? '运行中' : '已停止'}</Tag> },
+    { title: '状态', dataIndex: 'status', width: 90, align: 'center', onHeaderCell: hdrCenter, render: (s) => <KlsjnhStatusTag011 value={s} labels={{ '1': '运行中', '0': '已停止' }} colors={{ '0': 'default' }} /> },
     { ...leftCell, title: '备注', dataIndex: 'remark', render: (v) => v || '—' },
     {
       title: '操作', key: 'action', width: 200, fixed: 'right', align: 'center', onHeaderCell: hdrCenter,
@@ -105,48 +106,37 @@ export const JulyScheduler = () => {
         <h2>定时任务</h2>
       </div>
 
-      {/* 工具栏对齐金标准（julyUser / julyConfig）：第一行 搜索 + 状态筛选，第二行 新建 + 批量删除 */}
-      <div className="page-toolbar" style={{ display: 'block' }}>
-        <div className="toolbar-row-search" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-          <Input.Search
-            allowClear
-            placeholder="搜索编码 / 名称"
-            style={{ width: 260 }}
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            onSearch={(v) => fetchSchedulerPage({ pageIndex: 1, schedulerName: v || undefined })}
-          />
-          {/* status 为前端先行查询字段（线上 QueryVo 暂无），后端补齐后生效 */}
-          <Select
-            style={{ width: 140 }}
-            value={query.status ?? ''}
-            onChange={(v) => fetchSchedulerPage({ pageIndex: 1, status: v || undefined })}
-            options={[
-              { value: '', label: '全部状态' },
-              { value: '1', label: '运行中' },
-              { value: '0', label: '已停止' },
-            ]}
-          />
-        </div>
-        <div className="toolbar-right">
+      {/* 工具栏对齐金标准（julyUser / julyConfig）：第一行 搜索 + 状态筛选，第二行 新建 + 批量删除 —— KlsjnhPageToolbar011 原语 */}
+      <KlsjnhPageToolbar011
+        search={
+          <>
+            <KlsjnhSearchInput011
+              placeholder="搜索编码 / 名称"
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              onSearch={(v) => fetchSchedulerPage({ pageIndex: 1, schedulerName: v || undefined })}
+            />
+            {/* status 为前端先行查询字段（线上 QueryVo 暂无），后端补齐后生效 */}
+            <Select
+              style={{ width: 140 }}
+              value={query.status ?? ''}
+              onChange={(v) => fetchSchedulerPage({ pageIndex: 1, status: v || undefined })}
+              options={[
+                { value: '', label: '全部状态' },
+                { value: '1', label: '运行中' },
+                { value: '0', label: '已停止' },
+              ]}
+            />
+          </>
+        }
+        actions={
+          <>
           {/* 浅底 tonal（variant="filled"）：颜色表达强度、跟随主题 token，不写死色，与配置管理保持一致 */}
-          <Button color="primary" variant="filled" icon={<PlusOutlined />}
+          <Button color="green" variant="filled" icon={<PlusOutlined />}
             onClick={() => setModal({ open: true, node: null })}>新建任务</Button>
-          <Popconfirm
-            title={`确定要删除选中的 ${selectedRowKeys.length} 个任务吗？`}
-            okText="删除" cancelText="取消" okButtonProps={{ danger: true }}
-            onConfirm={handleBatchRemove}
-            disabled={!selectedRowKeys.length}
-          >
-            <Button
-              color="danger" variant="filled"
-              icon={<DeleteOutlined />}
-              disabled={!selectedRowKeys.length}
-              loading={batchDeleting}
-            >批量删除</Button>
-          </Popconfirm>
-        </div>
-      </div>
+          <KlsjnhBatchDeleteButton011 selectedCount={selectedRowKeys.length} onDelete={handleBatchRemove} deleting={batchDeleting} />
+          </>}
+      />
 
       <Card className="table-wrapper" ref={cardRef} styles={{ body: { padding: 0 } }}>
         <Table<JulySchedulerVo011>

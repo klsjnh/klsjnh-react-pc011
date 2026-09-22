@@ -4,11 +4,12 @@
  * 关联用户采用「草稿 + 保存」模式，与菜单权限 tab 一致。
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Card, Empty, List, Space, Table, Tabs, Tag, Tree } from 'antd';
+import { Button, Card, Empty, List, Space, Table, Tabs, Tree } from 'antd';
 import { KeyOutlined, PlusOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import type { DataNode } from 'antd/es/tree';
 import { useRoleState } from '@/stores/system011/julyRoleStore';
+import { KlsjnhStatusTag011 } from '@/components/klsjnh011';
 import { useMenuState } from '@/stores/system011/julyMenuStore';
 import { loadMenus, loadRoles, assignPermissions, assignUsersToRole, getMenusByRole } from '@/services/system011';
 import { isMockMode } from '@/config/appConfig';
@@ -176,7 +177,7 @@ export const JulyPermission = () => {
                   title={role.roleName}
                   description={`${role.roleCode}`}
                 />
-                <Tag color={role.status === '1' ? 'green' : 'red'}>{role.status === '1' ? '启用' : '停用'}</Tag>
+                <KlsjnhStatusTag011 value={role.status} />
               </List.Item>
             )}
           />

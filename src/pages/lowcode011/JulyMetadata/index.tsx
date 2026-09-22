@@ -11,9 +11,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { App } from 'antd';
-import { Button, Card, Input, Popconfirm, Space, Table, Tag } from 'antd';
+import { Button, Card, Popconfirm, Space, Table, Tag } from 'antd';
 import { DeleteOutlined, EditOutlined, PlayCircleOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import { KlsjnhBatchDeleteButton011, KlsjnhSearchInput011 } from '@/components/klsjnh011';
 import { useMetadataState, julyMetadataStore } from '@/stores/lowcode011/julyMetadataStore';
 import {
   fetchMetadataPage, removeMetadata, removeMetadataBatch,
@@ -116,18 +117,19 @@ export const JulyMetadata = ({ onNavigate }: PageNavProps) => {
 
       {/* 工具栏：卡片之外、左对齐一行（搜索 + 按钮） */}
       <div className="page-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Input.Search
+        <KlsjnhSearchInput011
           placeholder="按对象名 / 描述搜索"
-          allowClear
-          style={{ width: 280 }}
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
           onSearch={handleSearch}
         />
         <div className="toolbar-right">
-          <Button color="primary" variant="filled" icon={<PlusOutlined />} onClick={() => onNavigate?.(LOWCODE011_ROUTES.julyMetadataNew)}>新建元数据</Button>
+          <Button color="green" variant="filled" icon={<PlusOutlined />} onClick={() => onNavigate?.(LOWCODE011_ROUTES.julyMetadataNew)}>新建元数据</Button>
           <Button color="default" variant="filled" icon={<ReloadOutlined />} onClick={() => fetchMetadataPage({ pageIndex: 1 })}>刷新</Button>
-          <Button danger icon={<DeleteOutlined />} disabled={!selectedRowKeys.length} onClick={handleBatchRemove}>批量删除</Button>
+          <KlsjnhBatchDeleteButton011
+            selectedCount={selectedRowKeys.length}
+            onDelete={handleBatchRemove}
+          />
         </div>
       </div>
 

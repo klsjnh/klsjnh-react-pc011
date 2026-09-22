@@ -5,7 +5,7 @@
  * 父层按 node.id 挂 key，每次打开都是全新 form 实例 + initialValues 定型。
  */
 import { useState } from 'react';
-import { Button, Col, Form, Input, Modal, Row, Select } from 'antd';
+import { Col, Form, Input, Modal, Row, Select } from 'antd';
 import type { ReactNode } from 'react';
 import { toast } from '@/utils/toast';
 import { STATUS_OPTIONS } from '@/config/constants';
@@ -98,7 +98,17 @@ const DomainFormBody = ({ node, parentId, domainTree, onClose, onSave }: Omit<Do
     };
 
   return (
-    <>
+    <Modal
+      title={node ? '编辑业务域' : '新建业务域'}
+      open
+      onCancel={onClose}
+      onOk={handleSave}
+      okText="保存"
+      cancelText="取消"
+      confirmLoading={saving}
+      width={600}
+      destroyOnHidden
+    >
       <Form form={form} layout="vertical" preserve={false} initialValues={initialValues}>
         <Row gutter={16}>
           <Col span={8}>
@@ -140,34 +150,20 @@ const DomainFormBody = ({ node, parentId, domainTree, onClose, onSave }: Omit<Do
           </Form.Item>
         )}
       </Form>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}>
-        <Button onClick={onClose}>取消</Button>
-        <Button type="primary" loading={saving} onClick={handleSave}>保存</Button>
-      </div>
-    </>
+    </Modal>
   );
 };
 
-export const DomainFormModal = ({ open, node, parentId, domainTree, onClose, onSave }: DomainFormModalProps) => (
-  <Modal
-    title={node ? '编辑业务域' : '新建业务域'}
-    open={open}
-    onCancel={onClose}
-    footer={null}
-    width={600}
-    destroyOnHidden
-  >
-    {open && (
-      <DomainFormBody
-        key={node?.id ?? `new-${parentId ?? 'root'}`}
-        node={node}
-        parentId={parentId}
-        domainTree={domainTree}
-        onClose={onClose}
-        onSave={onSave}
-      />
-    )}
-  </Modal>
-);
+export const DomainFormModal = ({ open, node, parentId, domainTree, onClose, onSave }: DomainFormModalProps) =>
+  open ? (
+    <DomainFormBody
+      key={node?.id ?? `new-${parentId ?? 'root'}`}
+      node={node}
+      parentId={parentId}
+      domainTree={domainTree}
+      onClose={onClose}
+      onSave={onSave}
+    />
+  ) : null;
 
 export default DomainFormModal;

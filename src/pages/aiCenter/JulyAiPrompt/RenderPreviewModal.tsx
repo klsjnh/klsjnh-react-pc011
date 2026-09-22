@@ -68,7 +68,7 @@ export const RenderPreviewModal = ({ open, prompt, onClose }: RenderPreviewModal
                   <Form.Item {...restField} name={[name, 'value']} style={{ flex: 2, marginBottom: 8 }}>
                     <Input placeholder="变量值" />
                   </Form.Item>
-                  <Button type="text" danger icon={<MinusCircleOutlined />} onClick={() => remove(name)} />
+                  <Button type="text" danger size="small" icon={<MinusCircleOutlined />} onClick={() => remove(name)} />
                 </div>
               ))}
             </div>

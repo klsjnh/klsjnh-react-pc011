@@ -7,7 +7,7 @@
  * 父层按 node.id 挂 key，每次打开都是全新 form 实例 + initialValues 定型。
  */
 import { useState } from 'react';
-import { Button, Col, Form, Input, Modal, Row, Select } from 'antd';
+import { Col, Form, Input, Modal, Row, Select } from 'antd';
 import { savePrompt } from '@/services/aiCenter';
 import { toast } from '@/utils/toast';
 import { AI_SCENE_OPTIONS, STATUS_OPTIONS } from '@/config/constants';
@@ -64,7 +64,17 @@ const PromptFormBody = ({ node, pkMt, onClose }: Omit<PromptFormModalProps, 'ope
     : { ...NEW_DEFAULTS, promptCode: '', promptName: '' };
 
   return (
-    <>
+    <Modal
+      title={node ? '编辑提示词' : '新建提示词'}
+      open
+      onCancel={onClose}
+      onOk={handleSave}
+      okText="保存"
+      cancelText="取消"
+      confirmLoading={saving}
+      width={640}
+      destroyOnHidden
+    >
       <Form form={form} layout="vertical" preserve={false} initialValues={initialValues}>
         <Row gutter={16}>
           <Col span={8}>
@@ -101,32 +111,18 @@ const PromptFormBody = ({ node, pkMt, onClose }: Omit<PromptFormModalProps, 'ope
           <Select options={STATUS_OPTIONS} />
         </Form.Item>
       </Form>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}>
-        <Button onClick={onClose}>取消</Button>
-        <Button type="primary" loading={saving} onClick={handleSave}>保存</Button>
-      </div>
-    </>
+    </Modal>
   );
 };
 
-export const PromptFormModal = ({ open, node, pkMt, onClose }: PromptFormModalProps) => (
-  <Modal
-    title={node ? '编辑提示词' : '新建提示词'}
-    open={open}
-    onCancel={onClose}
-    footer={null}
-    width={640}
-    destroyOnHidden
-  >
-    {open && (
-      <PromptFormBody
-        key={node?.id ?? `new-${pkMt ?? 'no-domain'}`}
-        node={node}
-        pkMt={pkMt}
-        onClose={onClose}
-      />
-    )}
-  </Modal>
-);
+export const PromptFormModal = ({ open, node, pkMt, onClose }: PromptFormModalProps) =>
+  open ? (
+    <PromptFormBody
+      key={node?.id ?? `new-${pkMt ?? 'no-domain'}`}
+      node={node}
+      pkMt={pkMt}
+      onClose={onClose}
+    />
+  ) : null;
 
 export default PromptFormModal;
