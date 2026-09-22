@@ -22,9 +22,3 @@ export interface JulyMenuVo011 extends BaseVo011 {
   children?: JulyMenuVo011[];    // 子菜单
 }
 
-/** 菜单查询参数（julyMenu/v1/selectListByPage） */
-export interface JulyMenuQueryVo011 {
-  pageIndex: number;
-  pageSize: number;
-  keyword?: string;
-}

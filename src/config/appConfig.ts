@@ -74,15 +74,7 @@ export const appConfigStore = {
 };
 
 /** 当前是否 mock 模式（非响应式，供 store 内部同步判断） */
-export const isMockMode = () => state.dataMode === 'mock';
-
-/** 当前数据模式（非响应式） */
-export const getDataMode = (): DataMode => state.dataMode;
-
-/** 当前运行态（非响应式） */
-export const getRunState = (): RunState => state.runState;
-
-/** 当前是否开发态（非响应式，供 store / 页面内部同步判断；开发态可用免密登录） */
+export const isMockMode = () => state.dataMode === 'mock';/** 当前是否开发态（非响应式，供 store / 页面内部同步判断；开发态可用免密登录） */
 export const isDevelopment = () => state.runState === 'development';
 
 export function useAppConfig(): AppConfigState {

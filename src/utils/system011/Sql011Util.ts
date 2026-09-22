@@ -89,29 +89,4 @@ export function compressSQL(sql: string): string {
     .trim();
 }
 
-export function stripSqlSemicolon(sql: string): string {
-  return sql.trim().replace(/[;\uFF1B]+\s*$/u, '');
-}
 
-export function buildCountSql(_dbType: string, innerSql: string): string {
-  const inner = stripSqlSemicolon(innerSql);
-  return `SELECT COUNT(*) AS cnt FROM (${inner}) subq`;
-}
-
-export function buildPageSql(
-  dbType: string,
-  innerSql: string,
-  offset: number,
-  pageSize: number,
-): string {
-  const inner = stripSqlSemicolon(innerSql);
-  const type = (dbType || 'mysql').trim().toLowerCase();
-  if (type === 'oracle') {
-    const endRow = offset + pageSize;
-    return `SELECT * FROM (SELECT a.*, ROWNUM rn FROM (${inner}) a WHERE ROWNUM <= ${endRow}) WHERE rn > ${offset}`;
-  }
-  if (type === 'sqlserver' || type === 'mssql') {
-    return `SELECT * FROM (${inner}) july_import_page ORDER BY (SELECT NULL) OFFSET ${offset} ROWS FETCH NEXT ${pageSize} ROWS ONLY`;
-  }
-  return `SELECT * FROM (${inner}) july_import_page LIMIT ${pageSize} OFFSET ${offset}`;
-}

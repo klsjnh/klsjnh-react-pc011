@@ -32,12 +32,6 @@ export interface JulyOrganizationUpdateVo011 {
   sortOrder?: number;
 }
 
-export interface JulyOrganizationQueryVo011 {
-  pageIndex: number;
-  pageSize: number;
-  keyword?: string;
-}
-
 /** 组织保存入参（service 编排用：有 id = 编辑） */
 export interface SaveOrganizationParams {
   id?: string;

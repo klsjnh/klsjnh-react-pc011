@@ -12,12 +12,6 @@ export interface JulyRoleVo011 extends BaseVo011 {
   status: string;
 }
 
-export interface JulyRoleQueryVo011 {
-  pageIndex: number;
-  pageSize: number;
-  keyword?: string;
-}
-
 export interface JulyRoleAssignMenusVo011 {
   id: string;
   pkMenus: string[];

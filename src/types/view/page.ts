@@ -7,12 +7,6 @@ export interface PageNavProps {
 
 export type BusinessPageProps = PageNavProps;
 export type ProfilePageProps = PageNavProps;
-export type UserListPageProps = PageNavProps;
-export type MenuListPageProps = PageNavProps;
-
-/** 帮助反馈分类 */
-export type FeedbackCategory = 'bug' | 'feature' | 'other';
-
 /** 帮助反馈项 */
 export interface FeedbackItem {
   id: number;

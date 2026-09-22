@@ -142,38 +142,6 @@ export const CachePage = () => {
 
 // ==================== 存储中心（演示） ====================
 
-export const StoragePage = () => {
-  const [files] = useState([
-    { id: 1, name: '报表_202609.pdf', size: '2.5MB', type: 'PDF', time: '2026-09-12', path: '/reports/' },
-    { id: 2, name: '产品图.png', size: '1.2MB', type: '图片', time: '2026-09-11', path: '/images/' },
-    { id: 3, name: '系统日志.zip', size: '15.8MB', type: '压缩包', time: '2026-09-08', path: '/logs/' },
-  ]);
-  const used = 20.7, totalGb = 100;
-  const usagePercent = Math.round((used / totalGb) * 100);
-
-  const columns: ColumnsType<typeof files[number]> = [
-    { title: '文件名', dataIndex: 'name' },
-    { title: '类型', dataIndex: 'type', render: (v) => <Tag color="blue">{v}</Tag> },
-    { title: '大小', dataIndex: 'size' },
-    { title: '路径', dataIndex: 'path', render: (v) => <code>{v}</code> },
-    { title: '时间', dataIndex: 'time' },
-    { title: '操作', key: 'action', width: 80, render: () => <Button type="link" size="small">下载</Button> },
-  ];
-
-  return (
-    <div>
-      <div className="page-header"><h2>存储中心</h2><p>{used}GB / {totalGb}GB</p></div>
-      <Card title="存储使用率" className="table-wrapper" style={{ marginBottom: 16 }} extra={<span className="text-muted text-xs">适配器: 本地存储 / MinIO</span>}>
-        <Progress percent={usagePercent} strokeColor={usagePercent > 80 ? '#f5222d' : '#1890ff'} />
-        <div className="text-muted text-xs mt-2">已用 {used}GB / 总容量 {totalGb}GB · 使用率 {usagePercent}%</div>
-      </Card>
-      <Card className="table-wrapper" styles={{ body: { padding: 0 } }}>
-        <Table rowKey="id" columns={columns} dataSource={files} pagination={false} />
-      </Card>
-    </div>
-  );
-};
-
 // ==================== 通知模板（演示） ====================
 
 export const TemplatePage = () => {

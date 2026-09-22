@@ -20,10 +20,6 @@ export function selectInboundTemplateListByPage(body: JulyInboundTemplateQueryVo
   return api.post<PageResult011<JulyInboundTemplateVo011>>(ACTIONS.selectListByPage, body, MESSAGE_CENTER_BASE);
 }
 
-export function getInboundTemplateById(id: string): Promise<JulyInboundTemplateVo011> {
-  return api.get<JulyInboundTemplateVo011>(ACTIONS.getById, { id }, MESSAGE_CENTER_BASE);
-}
-
 export async function saveInboundTemplate(params: JulyInboundTemplateInsertVo011 & { id?: string }): Promise<string> {
   const { id, ...rest } = params;
   const { id: savedId } = id

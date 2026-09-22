@@ -67,12 +67,6 @@ export async function fetchModelingPage(patch: Partial<JulyBusinessModelingQuery
 export function getModelingById(id: string): Promise<JulyBusinessModelingVo011> {
   return api.get<JulyBusinessModelingVo011>(MODELING_ACTIONS.getById, { id }, DATASERVICE011_BASE);
 }
-
-/** 按建模编码点查（GET，modelCode 走 query） */
-export function getModelingByCode(modelCode: string): Promise<JulyBusinessModelingVo011> {
-  return api.get<JulyBusinessModelingVo011>(MODELING_ACTIONS.getByCode, { modelCode }, DATASERVICE011_BASE);
-}
-
 /**
  * 交接产物（GET，仅收 id）—— ★ **业务建模 → 低代码元数据** 的桥。
  * 返回 `metaData` + `fieldData` 两段（含后端自动补齐的公共列）。
@@ -109,13 +103,6 @@ export async function removeModeling(id: string): Promise<void> {
   await api.post<IdVo011>(MODELING_ACTIONS.logicDelete, { id }, DATASERVICE011_BASE);
   await fetchModelingPage(julyBusinessModelingStore.getSnapshot().query);
 }
-
-/** 逻辑删除（批量） */
-export async function removeModelingBatch(ids: string[]): Promise<void> {
-  await api.post<IdVo011>(MODELING_ACTIONS.logicDeleteBatch, { ids }, DATASERVICE011_BASE);
-  await fetchModelingPage(julyBusinessModelingStore.getSnapshot().query);
-}
-
 /**
  * SQL 探针（草稿态可用，不落库）。
  * ★ 后端 `probe` 即 `probeAndInfer`：**直接返回推断好的 fieldData**（含公共列补齐），

@@ -105,13 +105,6 @@ export async function fetchObjectPage(patch: Partial<StorageObjectQuery> = {}): 
     storageObjectStore.setState({ list: [], total: 0, totalPages: 1, loading: false });
   }
 }
-
-/** 某桶下的对象键列表（树/前缀浏览用）：后端返回 List<String> */
-export async function listObjects(query: StorageObjectQuery): Promise<StorageObject[]> {
-  const keys = await api.post<string[]>(OBJECT_ACTIONS.selectList, query, STORAGECENTER_BASE);
-  return toObjectRows(keys, query.storageCode, query.bucketName);
-}
-
 /**
  * 对象元数据（GET + query）：列表只有键，size/lastModified/contentType 靠它补齐。
  * 对象不存在时后端 404，调用方按需降级为 '-'。

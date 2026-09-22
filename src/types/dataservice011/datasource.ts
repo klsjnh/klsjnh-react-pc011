@@ -16,10 +16,6 @@ export const DB_TYPE_OPTIONS: { value: DataSourceDbType; label: string }[] = [
   { value: 'sqlserver', label: 'SQL Server' },
   { value: 'postgresql', label: 'PostgreSQL' },
 ];
-
-/** 状态：0 停用 / 1 启用 */
-export type DataSourceStatus = '0' | '1';
-
 /**
  * 数据源条目（对应后端 JulyDatasourceVo011，不含 password）。
  */

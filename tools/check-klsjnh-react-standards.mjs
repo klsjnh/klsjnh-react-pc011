@@ -55,6 +55,51 @@ function scan(file) {
 
 walk(SRC);
 
+/* ---------------- 零引用导出扫描（§4.2 导出纪律，2026-09-21） ----------------
+ * 原理：收集所有 export 符号 → 汇总全部源码的标识符出现次数 →
+ *       导出符号若「在其他文件零出现，且本文件除 export 声明行外零出现」→ 判死。
+ * 豁免：mock 目录导出（跨 mock 引用 + 手动排查）；宁误报不漏报（不做字符串/注释剔除）。
+ */
+function scanDeadExports() {
+  const files = [];
+  (function w(dir) {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const p = join(dir, e.name);
+      if (e.isDirectory()) w(p);
+      else if (EXT.has(extname(p))) files.push(p);
+    }
+  })(SRC);
+
+  const texts = new Map(files.map((f) => [f, readFileSync(f, 'utf8')]));
+  const exportsMap = new Map(); // 符号名 -> 声明文件
+  for (const [f, text] of texts) {
+    if (f.replaceAll('\\', '/').includes('/mock/')) continue; // mock 目录豁免
+    const re = /export\s+(?:async\s+)?(?:const|function|class|type|interface|enum)\s+([A-Za-z_$][\w$]*)/g;
+    let m;
+    while ((m = re.exec(text))) {
+      if (!exportsMap.has(m[1])) exportsMap.set(m[1], f);
+    }
+  }
+  for (const [name, file] of exportsMap) {
+    const ident = new RegExp('\\b' + name + '\\b', 'g');
+    let otherRefs = 0;
+    for (const [f, text] of texts) {
+      if (f !== file) otherRefs += (text.match(ident) || []).length;
+    }
+    const selfText = texts.get(file);
+    const stripped = selfText.replace(
+      new RegExp('export\\s+(?:async\\s+)?(?:const|function|class|type|interface|enum)\\s+' + name + '\\b[^;{\\n]*', 'g'),
+      '',
+    );
+    const selfRefs = (stripped.match(ident) || []).length;
+    if (otherRefs === 0 && selfRefs === 0) {
+      warnings.push({ file, count: 1, msg: '零引用导出「' + name + '」（§4.2 导出纪律：转私有或删除，或注明保留理由）' });
+    }
+  }
+}
+scanDeadExports();
+
+
 function print(list, tag) {
   if (!list.length) return;
   for (const it of list) {

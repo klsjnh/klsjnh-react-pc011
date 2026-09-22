@@ -12,7 +12,6 @@ import type {
   AiModelProviderQueryVo011,
   AiModelProviderInsertVo011,
   AiModelProviderUpdateVo011,
-  AiModelProviderTestVo011,
   AiModelProviderTestResultVo011,
   AiModelProviderApiQueryVo011,
   AiModelProviderApiInsertVo011,
@@ -56,12 +55,6 @@ export async function fetchProviderPage(patch: Partial<AiModelProviderQueryVo011
     julyAiModelProviderStore.setState({ list: [], total: 0, totalPages: 1, loading: false });
   }
 }
-
-/** 供应商主键查询 */
-export function getProviderById(id: string): Promise<AiModelProviderItem> {
-  return api.post<AiModelProviderItem>(AI_PROVIDER_ACTIONS.getById, { id }, AICENTER_BASE);
-}
-
 /** 新增 / 修改供应商（有 id = 编辑；编辑时 providerCode 不可变） */
 export async function saveProvider(params: SaveAiModelProviderParams): Promise<string> {
   const { id, providerCode, providerName, baseUrl, models, sortOrder, status, remark } = params;
@@ -82,12 +75,6 @@ export async function removeProvider(id: string): Promise<void> {
   await api.post<IdVo011>(AI_PROVIDER_ACTIONS.logicDelete, { id }, AICENTER_BASE);
   await fetchProviderPage(julyAiModelProviderStore.getSnapshot().query);
 }
-
-/** 供应商测试连接（恒 200；连通与否看 data.success） */
-export function testProviderConnection(body: AiModelProviderTestVo011): Promise<AiModelProviderTestResultVo011> {
-  return api.post<AiModelProviderTestResultVo011>(AI_PROVIDER_ACTIONS.testConnection, body, AICENTER_BASE);
-}
-
 /** API 子表：按供应商编码查询 */
 export function selectApiListByProvider(body: AiModelProviderApiQueryVo011): Promise<AiModelProviderApiItem[]> {
   return api.post<AiModelProviderApiItem[]>(AI_PROVIDER_ACTIONS.selectApiListByProvider, body, AICENTER_BASE);

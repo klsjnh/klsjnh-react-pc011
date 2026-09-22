@@ -24,12 +24,6 @@ import type { PageResult011 } from '@/types/system011';
 export function selectRoleListByPage(body: object = {}): Promise<PageResult011<JulyRoleVo011>> {
   return api.post<PageResult011<JulyRoleVo011>>(SYSTEM011_ACTIONS.role.selectListByPage, body, IAM_BASE);
 }
-
-/** 主键查询 */
-export function getRoleById(id: string): Promise<JulyRoleVo011> {
-  return api.get<JulyRoleVo011>(`${SYSTEM011_ACTIONS.role.getById}?id=${encodeURIComponent(id)}`, undefined, IAM_BASE);
-}
-
 /** 角色已授权菜单（平铺列表，前端用于校验/回显） */
 export function getMenusByRole(id: string): Promise<JulyMenuVo011[]> {
   return api.get<JulyMenuVo011[]>(`${SYSTEM011_ACTIONS.role.getMenusByRole}?id=${encodeURIComponent(id)}`, undefined, IAM_BASE);
@@ -188,14 +182,6 @@ export function updateRole(id: string, data: Partial<Pick<RoleDetail, 'roleName'
   roleStore.setState({ roles: s.roles.map((r) => (r.id === id ? { ...r, ...data } : r)) });
   if (!isMockMode()) fireApi(SYSTEM011_ACTIONS.role.update, { id, ...data }, IAM_BASE);
 }
-
-/** 删除角色 */
-export function removeRole(id: string): void {
-  const s = roleStore.getSnapshot();
-  roleStore.setState({ roles: s.roles.filter((r) => r.id !== id) });
-  if (!isMockMode()) fireApi(SYSTEM011_ACTIONS.role.logicDelete, { id }, IAM_BASE);
-}
-
 /**
  * 分配菜单权限：POST /julyRole/v1/assignMenus，body = { id, pkMenus }（整存替换）。
  * pkMenus 必须是「菜单 id 全量列表」（后端 JulyRoleAssignMenusVo011 定义），

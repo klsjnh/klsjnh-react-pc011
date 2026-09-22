@@ -84,44 +84,7 @@ export const COMMON_ROUTES = {
 export const HOME_ROUTES = {
   help: '/home/help',
   about: '/home/about',
-} as const;
-
-/* ---------------- Business 子路由 action 名 ---------------- */
-export const BUSINESS_ROUTE_ACTIONS = {
-  config: 'config',
-  scheduler: 'scheduler',
-  dict: 'dict',
-  monitor: 'monitor',
-  online: 'online',
-  cache: 'cache',
-  datasource: 'datasource',
-  storage: 'storage',
-  params: 'params',
-  template: 'template',
-  push: 'push',
-  stats: 'stats',
-  trend: 'trend',
-  charts: 'charts',
-  export: 'export',
-  dashboard: 'dashboard',
-  calc: 'calc',
-  servicelog: 'servicelog',
-  markdown: 'markdown',
-  sql: 'sql',
-} as const;
-
-/* ---------------- 数据宝宝子路由 action 名 ---------------- */
-export const DATA_BABY_ROUTE_ACTIONS = {
-  overview: 'overview',
-  query: 'query',
-} as const;
-
-/* ---------------- 个人中心子路由 action 名 ---------------- */
-export const PERSONAL_ROUTE_ACTIONS = {
-  profile: 'profile',
-  settings: 'settings',
-} as const;
-
+} as const;/* ---------------- 个人中心子路由 action 名 ---------------- */
 /* ---------------- 默认落地页 ---------------- */
 export const DEFAULT_ROUTE = '/dashboard';
 

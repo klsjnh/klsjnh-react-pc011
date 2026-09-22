@@ -25,26 +25,22 @@ import {
   DeleteOutlined, FileOutlined, FileTextOutlined, FolderOutlined,
   HomeOutlined, PlusOutlined, ReloadOutlined, UploadOutlined,
 } from '@ant-design/icons';
-import { Button, Card, Input, Popconfirm, Select, Space, Table, Tag, Upload } from 'antd';
+import { Button, Card, Popconfirm, Select, Space, Table, Tag, Upload } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { PAGE_SIZE_OPTIONS } from '@/utils/pageSizePref';
 import { useTableFillHeight } from '@/hooks/useTableFillHeight';
 import { toast } from '@/utils/toast';
 import { STORAGE_CENTER_ROUTES } from '@/config/routes';
 import type { JulyStorage, StorageBucket, StorageObject } from '@/types/storageCenter';
-import {
-  fetchStoragePage, listStorages, removeStorage, removeStorages, testStorageConnection,
-} from '@/services/storageCenter/julyStorageService';
+import { listStorages } from '@/services/storageCenter/julyStorageService';
 import { fetchBucketPage, listBuckets, removeBucket } from '@/services/storageCenter/storageBucketService';
 import {
   batchRemoveObjects, downloadObject, fetchObjectPage, presignedUrl, removeObject, resolveEditorKind, uploadObject,
   type ObjectEditorKind,
 } from '@/services/storageCenter/storageObjectService';
-import { useStorageState } from '@/stores/storageCenter/julyStorageStore';
 import { useStorageBucketState } from '@/stores/storageCenter/storageBucketStore';
 import { useStorageObjectState } from '@/stores/storageCenter/storageObjectStore';
 import { storageExplorerStore, useStorageExplorer } from '@/stores/storageCenter/storageExplorerStore';
-import { StorageFormModal } from '@/pages/storageCenter/julyStorage/StorageFormModal';
 import { BucketFormModal } from '@/pages/storageCenter/julyStorage/BucketFormModal';
 
 /** 表头单元格水平居中 */
@@ -126,164 +122,6 @@ function useStorageOptions(): { storages: JulyStorage[]; ready: boolean } {
   }, []);
   return state;
 }
-
-/* ==================== 视图一：存储实例 ==================== */
-
-export const StorageInstancePane = ({ onSelectInstance }: { onSelectInstance?: (code: string) => void } = {}) => {
-  const { list, total, loading, query } = useStorageState();
-  const [modal, setModal] = useState<{ open: boolean; node: JulyStorage | null }>({ open: false, node: null });
-  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-  const [batchDeleting, setBatchDeleting] = useState(false);
-  const [testingId, setTestingId] = useState<string | null>(null);
-  const [keyword, setKeyword] = useState('');
-  const cardRef = useRef<HTMLDivElement>(null);
-  const tableBodyHeight = useTableFillHeight(cardRef, `${total}-${loading}`);
-
-  // 只重置 pageIndex：pageSize 是用户偏好（存在 store 里），传值会把它覆盖回默认值
-  useEffect(() => { void fetchStoragePage({ pageIndex: 1 }); }, []);
-
-  // 搜索：后端 JulyStorageQueryVo011 的模糊条件字段是 keyword（编码 / 名称），
-  // 传 storageName / storageCode 后端收不到（旧实现的错因就在这）。
-  const search = (v: string) => { setKeyword(v); void fetchStoragePage({ pageIndex: 1, keyword: v || undefined }); };
-
-  const handleTest = async (row: JulyStorage) => {
-    setTestingId(row.id);
-    try {
-      // 后端 testConnection 入参是 JulyStorageConnectVo011：已保存实例只 id，secretKey 默认不回显所以不能拿整行测
-      const res = await testStorageConnection({ id: row.id });
-      if (res?.success) toast.success(`连接成功${res.message ? '：' + res.message : ''}`);
-      else toast.error(`连接失败：${res?.message || '未知原因'}`);
-    } catch (e) {
-      toast.error((e as Error)?.message || '测试失败');
-    } finally {
-      setTestingId(null);
-    }
-  };
-
-  const handleRemove = async (id: string) => {
-    try {
-      await removeStorage(id);
-      toast.success('删除成功');
-    } catch (e) {
-      toast.error((e as Error)?.message || '删除失败，请重试');
-    }
-  };
-
-  const handleBatchRemove = async () => {
-    if (!selectedRowKeys.length) return;
-    setBatchDeleting(true);
-    try {
-      const res = await removeStorages(selectedRowKeys.map(String));
-      setSelectedRowKeys([]);
-      toast.success(`批量删除成功 ${res.success} 条，失败 ${res.failed} 条`);
-    } catch (e) {
-      toast.error((e as Error)?.message || '批量删除失败，请重试');
-    } finally {
-      setBatchDeleting(false);
-    }
-  };
-
-  const columns: ColumnsType<JulyStorage> = [
-    { ...leftCell, title: '编码', dataIndex: 'storageCode', width: 150, render: (v) => <code>{v}</code> },
-    { ...leftCell, title: '名称', dataIndex: 'storageName', width: 170 },
-    {
-      title: '类型', dataIndex: 'provider', width: 130, align: 'center', onHeaderCell: hdrCenter,
-      render: (v: string) => {
-        const meta = PROVIDER_META[v] || { label: v || '-', color: 'default' };
-        return <Tag color={meta.color}>{meta.label}</Tag>;
-      },
-    },
-    {
-      ...leftCell, title: '接入点 / 根路径', key: 'endpoint', width: 300,
-      render: (_, r) => <code>{r.endpoint || r.basePath || '-'}</code>,
-    },
-    { ...leftCell, title: '默认桶', dataIndex: 'defaultBucket', width: 130, render: (v) => v || '-' },
-    {
-      title: '状态', dataIndex: 'status', width: 100, align: 'center', onHeaderCell: hdrCenter,
-      render: (s) => <Tag color={s === '1' ? 'green' : 'red'}>{s === '1' ? '启用' : '停用'}</Tag>,
-    },
-    {
-      title: '操作', key: 'action', width: 210, fixed: 'right', align: 'center', onHeaderCell: hdrCenter,
-      render: (_, r) => (
-        <Space size="small">
-          <Button type="link" size="small" loading={testingId === r.id} onClick={() => handleTest(r)}>测试连接</Button>
-          <Button type="link" size="small" onClick={() => setModal({ open: true, node: r })}>编辑</Button>
-          <Popconfirm
-            title="确定删除该存储实例吗？" okText="删除" cancelText="取消" okButtonProps={{ danger: true }}
-            onConfirm={() => handleRemove(r.id)}
-          >
-            <Button type="link" size="small" danger>删除</Button>
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ];
-
-  return (
-    <>
-      <div className="page-toolbar">
-        <div className="toolbar-left">
-          <Input.Search allowClear placeholder="搜索编码 / 名称" style={{ width: 320 }} onSearch={search} />
-        </div>
-        <div className="toolbar-right">
-          <Button color="primary" variant="filled" icon={<PlusOutlined />} onClick={() => setModal({ open: true, node: null })}>
-            新建存储实例
-          </Button>
-          <Popconfirm
-            title={`确定要删除选中的 ${selectedRowKeys.length} 条存储实例吗？`}
-            okText="删除" cancelText="取消" okButtonProps={{ danger: true }}
-            onConfirm={handleBatchRemove}
-            disabled={!selectedRowKeys.length}
-          >
-            <Button color="danger" variant="filled" icon={<DeleteOutlined />} disabled={!selectedRowKeys.length} loading={batchDeleting}>
-              批量删除
-            </Button>
-          </Popconfirm>
-          <Button
-            color="default" variant="filled" icon={<ReloadOutlined />}
-            onClick={() => void fetchStoragePage({ pageIndex: 1, keyword: keyword || undefined })}
-          >刷新</Button>
-        </div>
-      </div>
-
-      <Card className="table-wrapper" ref={cardRef} styles={{ body: { padding: 0 } }}>
-        <Table<JulyStorage>
-          rowKey="id"
-          columns={columns}
-          rowSelection={{
-            selectedRowKeys,
-            onChange: (keys) => {
-              setSelectedRowKeys(keys);
-              if (onSelectInstance && keys.length > 0) {
-                const row = list.find((item) => item.id === keys[0]);
-                if (row) onSelectInstance(row.storageCode);
-              }
-            },
-          }}
-          dataSource={list}
-          loading={loading}
-          scroll={{ x: 1160, y: tableBodyHeight }}
-          pagination={{
-            current: query.pageIndex,
-            pageSize: query.pageSize,
-            total,
-            showSizeChanger: true,
-            pageSizeOptions: PAGE_SIZE_OPTIONS,
-            showTotal: (t) => `共 ${t} 条`,
-            onChange: (pageIndex, pageSize) => void fetchStoragePage({ pageIndex, pageSize }),
-          }}
-        />
-      </Card>
-
-      <StorageFormModal
-        open={modal.open}
-        node={modal.node}
-        onClose={() => setModal({ open: false, node: null })}
-        onSaved={() => setSelectedRowKeys([])}
-      />
-    </>
-  );
-};
 
 /* ==================== 视图二：存储桶 ==================== */
 

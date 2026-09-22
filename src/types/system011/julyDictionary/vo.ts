@@ -85,6 +85,3 @@ export interface JulyDictionaryItemQueryVo011 {
   dictionaryCode: string;
   status?: string;
 }
-
-/** 字典明细列表出参（selectItemListByType 返回 data：JulyDictionaryItemVo011[]） */
-export type JulyDictionaryItemListVo011 = JulyDictionaryItemVo011[];

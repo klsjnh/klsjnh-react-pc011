@@ -38,15 +38,7 @@ export async function saveScheduler(params: SaveSchedulerParams): Promise<string
   return savedId;
 }
 
-/** 启动 / 停止 / 立即执行 后刷新 */
-export async function startScheduler(id: string): Promise<void> {
-  await api.post<void>(SYSTEM011_ACTIONS.scheduler.start, { id } as IdVo011);
-  await fetchSchedulerPage(julySchedulerStore.getSnapshot().query);
-}
-export async function stopScheduler(id: string): Promise<void> {
-  await api.post<void>(SYSTEM011_ACTIONS.scheduler.stop, { id } as IdVo011);
-  await fetchSchedulerPage(julySchedulerStore.getSnapshot().query);
-}
+
 export async function runSchedulerOnce(id: string): Promise<void> {
   await api.post<void>(SYSTEM011_ACTIONS.scheduler.runOnce, { id } as IdVo011);
 }

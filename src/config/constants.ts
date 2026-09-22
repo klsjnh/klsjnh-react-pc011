@@ -44,14 +44,6 @@ export const MENU_TYPE_OPTIONS = [
   { value: '2', label: '菜单' },
   { value: '3', label: '按钮' },
 ];
-
-/** 菜单类型文本映射（用于展示） */
-export const MENU_TYPE_LABEL: Record<string, string> = {
-  '1': '目录',
-  '2': '菜单',
-  '3': '按钮',
-};
-
 /** 通用状态（启用 / 停用） */
 export const STATUS_OPTIONS = [
   { value: '1', label: '启用' },

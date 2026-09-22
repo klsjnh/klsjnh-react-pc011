@@ -11,7 +11,7 @@
 import { api } from '@/api/request';
 import { STORAGECENTER_BASE } from '@/services/storageCenter/base';
 import { julyStorageStore } from '@/stores/storageCenter/julyStorageStore';
-import type { PageResult011, IdVo011, BatchDeleteResultVo011 } from '@/types/common';
+import type { PageResult011, IdVo011 } from '@/types/common';
 import type { JulyStorage, JulyStorageConnect, JulyStorageQuery, StorageTestResult } from '@/types/storageCenter';
 
 /** 存储实例动作路径（相对 STORAGECENTER_BASE） */
@@ -41,19 +41,7 @@ export async function fetchStoragePage(patch: Partial<JulyStorageQuery> = {}): P
   } catch {
     julyStorageStore.setState({ list: [], total: 0, totalPages: 1, loading: false });
   }
-}
-
-/** 主键查（GET + query） */
-export function getStorageById(id: string): Promise<JulyStorage> {
-  return api.get<JulyStorage>(STORAGE_ACTIONS.getById, { id }, STORAGECENTER_BASE);
-}
-
-/** 编码查（GET + query） */
-export function getStorageByCode(code: string): Promise<JulyStorage> {
-  return api.get<JulyStorage>(STORAGE_ACTIONS.getByCode, { code }, STORAGECENTER_BASE);
-}
-
-/** 新增 / 修改存储实例（有 id = 修改，编码不可变；secretKey 留空 = 保持原值） */
+}/** 新增 / 修改存储实例（有 id = 修改，编码不可变；secretKey 留空 = 保持原值） */
 export async function saveStorage(params: Partial<JulyStorage> & { id?: string }): Promise<string> {
   const { id, ...rest } = params;
   const { id: savedId } = id
@@ -70,12 +58,6 @@ export async function removeStorage(id: string): Promise<void> {
   await fetchStoragePage(julyStorageStore.getSnapshot().query);
 }
 
-/** 逻辑删除（批量） */
-export async function removeStorages(ids: string[]): Promise<BatchDeleteResultVo011> {
-  const res = await api.post<BatchDeleteResultVo011>(STORAGE_ACTIONS.logicDeleteBatch, { ids }, STORAGECENTER_BASE);
-  await fetchStoragePage(julyStorageStore.getSnapshot().query);
-  return res;
-}
 
 /** 连接测试（恒 200，连通与否看 data.success）；入参只接受 JulyStorageConnectVo011 的字段（id + 连接字段），多余字段会导致 400 */
 export function testStorageConnection(data: JulyStorageConnect): Promise<StorageTestResult> {

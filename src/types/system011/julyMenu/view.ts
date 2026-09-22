@@ -21,10 +21,3 @@ export interface MenuState {
   loading: boolean;
 }
 
-/** 菜单权限勾选树 Props（julyPermission 用） */
-export interface MenuCheckTreeProps {
-  tree: JulyMenuVo011[];
-  checkedCodes: Set<string>;
-  onCheck: (code: string, checked: boolean) => void;
-  depth?: number;
-}

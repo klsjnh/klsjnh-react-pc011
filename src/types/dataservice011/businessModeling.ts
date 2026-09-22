@@ -1,21 +1,3 @@
-/**
- * 业务建模（低代码）UI types（dataservice011 · julyBusinessModeling）
- *
- * ★ 契约来源：后端源码 `java17-web011/.../dataservice011/vo/julybusinessmodeling/*.java`
- *   （Swagger 未建模出参形状，故以源码为准；改动前请回读源码）。设计依据 docs 033。
- *
- * 产物形状（docs 033 §013）：**只有两段** —— `metaData`（对象级配置）+ `fieldData`（字段级定义），
- * 由 `ModelDataCodec011` 编解码进 `july_business_modeling.model_data` 一列。
- *
- * ⚠️ 两个易错点（前端曾在此处错位）：
- *   1. 出参里字段表在 **`metaData.fieldData`（嵌套）**，不是顶层 `fieldData`；
- *   2. 字段项形状是 `code/name/fieldType/length/notNull/defaultValue`，
- *      **不是** `fieldCode/fieldName/columnName/dataType/...`。
- */
-
-/** 状态：0 停用 / 1 启用 */
-export type ModelingStatus = '0' | '1';
-
 /** FieldType011 —— 后端 `domain.lowcode011.enums.FieldType011`（12 值，与元数据模块同源） */
 export const FIELD_TYPE_011_OPTIONS = [
   { value: 'id', label: 'id 主键' },

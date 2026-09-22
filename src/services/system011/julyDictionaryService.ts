@@ -15,12 +15,6 @@ import type { PageResult011, IdVo011 } from '@/types/common';
 export function selectDictionaryListByPage(body: object = {}): Promise<PageResult011<JulyDictionaryVo011>> {
   return api.post<PageResult011<JulyDictionaryVo011>>(SYSTEM011_ACTIONS.dictionary.selectListByPage, body);
 }
-
-/** 主键查询（返回字典 + 明细，明细按 sortOrder 升序） */
-export function getDictionaryById(id: string): Promise<JulyDictionaryVo011> {
-  return api.get<JulyDictionaryVo011>(SYSTEM011_ACTIONS.dictionary.getById, { id });
-}
-
 /** 拉取字典分页并写入 store、默认选中第一项并加载其明细 */
 export async function fetchDictionaryPage(patch: Partial<JulyDictionaryQueryVo011> = {}): Promise<void> {
   const query = { ...julyDictionaryStore.getSnapshot().query, ...patch } as JulyDictionaryQueryVo011;

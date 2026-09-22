@@ -1,14 +1,3 @@
-/**
- * AI 模型供应商 management UI types（aiCenter · julyAiModelProvider）
- * 字段严格对齐后端 AiModelProviderController：
- *   主表 provider：providerCode/providerName/baseUrl/models/sortOrder/status/remark
- *   子表 api：providerCode/apiCode/apiName/apiKey/sortOrder/status/remark
- * 后端 response 在 Swagger 未建模，前端对测试连接 / 列表做兼容解析。
- */
-
-/** 状态：0 停用 / 1 启用 */
-export type AiModelStatus = '0' | '1';
-
 /** AI 模型供应商条目（对应后端 AiModelProviderVo011） */
 export interface AiModelProviderItem {
   id: string;
@@ -124,10 +113,6 @@ export interface SaveAiModelProviderApiParams {
   remark?: string;
 }
 
-/** 供应商测试连接入参 */
-export interface AiModelProviderTestVo011 {
-  providerCode: string;
-}
 
 /** API 查询入参（按供应商编码） */
 export interface AiModelProviderApiQueryVo011 {

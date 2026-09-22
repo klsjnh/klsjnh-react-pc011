@@ -14,7 +14,7 @@ import { STORAGECENTER_BASE } from '@/services/storageCenter/base';
 import { storageBucketStore } from '@/stores/storageCenter/storageBucketStore';
 import type { PageResult011 } from '@/types/common';
 import type {
-  BucketInfo, StorageBucket, StorageBucketExists, StorageBucketQuery, StorageTestResult,
+  BucketInfo, StorageBucket, StorageBucketQuery, StorageTestResult,
 } from '@/types/storageCenter';
 
 /** 存储桶动作路径（相对 STORAGECENTER_BASE） */
@@ -75,15 +75,6 @@ export async function listBuckets(storageCode?: string): Promise<StorageBucket[]
   const rows = await api.post<BucketInfo[]>(BUCKET_ACTIONS.selectList, { storageCode }, STORAGECENTER_BASE);
   return toBucketRows(rows, storageCode);
 }
-
-/**
- * 桶是否存在（GET + query）：后端回 {bucketName, exists}，**桶不存在时直接 404**。
- * 调用方需自行 catch 404（404 语义即「不存在」）。
- */
-export function getBucketByName(storageCode: string | undefined, bucketName: string): Promise<StorageBucketExists> {
-  return api.get<StorageBucketExists>(BUCKET_ACTIONS.getByName, { storageCode, bucketName }, STORAGECENTER_BASE);
-}
-
 /** 桶连接测试（恒 200，看 data.success / data.bucketCount） */
 export function testBucketConnection(storageCode?: string): Promise<StorageTestResult> {
   return api.post<StorageTestResult>(BUCKET_ACTIONS.testConnection, { storageCode }, STORAGECENTER_BASE);

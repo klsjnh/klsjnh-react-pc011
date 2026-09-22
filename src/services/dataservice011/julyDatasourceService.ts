@@ -48,12 +48,6 @@ export async function fetchDatasourcePage(patch: Partial<JulyDatasourceQueryVo01
     julyDatasourceStore.setState({ list: [], total: 0, totalPages: 1, loading: false });
   }
 }
-
-/** 主键查询（后端为 GET + query 参数） */
-export function getDatasourceById(id: string): Promise<DataSourceItem> {
-  return api.get<DataSourceItem>(DATASOURCE_ACTIONS.getById, { id }, DATASERVICE011_BASE);
-}
-
 /** 新增 / 修改数据源（有 id = 编辑；编辑时 dsCode 不可变、password 留空保持原值） */
 export async function saveDatasource(params: SaveDatasourceParams): Promise<string> {
   const { id, dsCode, dsName, dbType, jdbcUrl, schemaName, username, password, driverClass, remark } = params;
@@ -74,23 +68,9 @@ export async function removeDatasource(id: string): Promise<void> {
   await api.post<IdVo011>(DATASOURCE_ACTIONS.logicDelete, { id }, DATASERVICE011_BASE);
   await fetchDatasourcePage(julyDatasourceStore.getSnapshot().query);
 }
-
-/** 逻辑删除（批量） */
-export async function removeDatasources(ids: string[]): Promise<void> {
-  await api.post<{ total: number; success: number; failed: number; errors: { id: string; message: string }[] }>(
-    DATASOURCE_ACTIONS.logicDeleteBatch, { ids }, DATASERVICE011_BASE,
-  );
-  await fetchDatasourcePage(julyDatasourceStore.getSnapshot().query);
-}
-
 /** 测试连接（恒 200；连通与否看 data.success） */
 export function testDatasourceConnection(
   body: JulyDatasourceTestVo011,
 ): Promise<JulyDatasourceTestResultVo011> {
   return api.post<JulyDatasourceTestResultVo011>(DATASOURCE_ACTIONS.testConnection, body, DATASERVICE011_BASE);
-}
-
-/** 重新加载数据源注册表 */
-export function reloadDatasourceRegistry(): Promise<unknown> {
-  return api.post(DATASOURCE_ACTIONS.reloadRegistry, {}, DATASERVICE011_BASE);
 }

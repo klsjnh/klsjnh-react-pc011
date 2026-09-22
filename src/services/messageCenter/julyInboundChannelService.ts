@@ -20,10 +20,6 @@ export function selectInboundChannelListByPage(body: JulyInboundChannelQueryVo01
   return api.post<PageResult011<JulyInboundChannelVo011>>(ACTIONS.selectListByPage, body, MESSAGE_CENTER_BASE);
 }
 
-export function getInboundChannelById(id: string): Promise<JulyInboundChannelVo011> {
-  return api.get<JulyInboundChannelVo011>(ACTIONS.getById, { id }, MESSAGE_CENTER_BASE);
-}
-
 export async function saveInboundChannel(params: JulyInboundChannelInsertVo011 & { id?: string }): Promise<string> {
   const { id, ...rest } = params;
   const { id: savedId } = id

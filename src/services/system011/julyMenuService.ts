@@ -98,14 +98,6 @@ export async function reloadMenus(): Promise<void> {
   uiStore.setMenuTreeSelectedId(null);
   await Promise.all([loadMenus(), loadNavMenus()]);
 }
-
-/** 获取某个路由下的子菜单（导航树数据源，仅取启用项） */
-export function getChildMenus(parentRoute: string): JulyMenuVo011[] {
-  const { navMenus } = menuStore.getSnapshot();
-  const parent = navMenus.find((m) => m.menuRoute === parentRoute);
-  return (parent?.children || []).filter((m) => m.status === '1').sort((a, b) => a.sortOrder - b.sortOrder);
-}
-
 /** 添加菜单（service 内部补齐 id / children / 默认值） */
 export async function addMenu(data: CreateMenuData): Promise<void> {
   const { menus } = menuStore.getSnapshot();
@@ -226,10 +218,3 @@ export async function reorderMenu(dragId: string, targetId: string, position: nu
   menuStore.setState({ menus: apply(menus) });
 }
 
-/** 切换启用/停用 */
-export async function toggleMenuStatus(id: string): Promise<void> {
-  const node = findMenu(menuStore.getSnapshot().menus, id);
-  if (!node) return;
-  const status = node.status === '1' ? '0' : '1';
-  await updateMenu(id, { status });
-}
