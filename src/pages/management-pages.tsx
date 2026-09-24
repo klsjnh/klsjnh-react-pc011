@@ -6,28 +6,13 @@ import React, { useState, useEffect } from 'react';
 import { Button, Card, Input, Select, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { selectUserAuditListByPage } from '@/services/system011';
+import { AUDIT_TYPE_LABEL, auditTypeColor } from '@/config/constants';
 import { toast } from '@/utils/toast';
 import { downloadText } from '@/utils/download';
 import { formatDate, formatDateTime, formatDateTimeOrEmpty } from '@/utils/formatDate';
 import type { JulyUserAuditVo011 } from '@/types/system011';
 
 // ==================== 审计日志 ====================
-
-/** 事件类型 → 中文文案 */
-const AUDIT_TYPE_LABEL: Record<string, string> = {
-  LOGIN: '登录成功',
-  LOGIN_FAILED: '登录失败',
-  LOGOUT: '退出登录',
-  CHANGE_PASSWORD: '修改密码',
-  EXPORT: '导出',
-};
-
-/** 事件类型 → Tag 颜色 */
-function auditColor(type: string): string {
-  if (type === 'LOGIN_FAILED') return 'red';
-  if (type === 'LOGIN' || type === 'LOGOUT') return 'green';
-  return 'blue';
-}
 
 export const AuditPage = () => {
   const [logs, setLogs] = useState<JulyUserAuditVo011[]>([]);
@@ -85,7 +70,7 @@ export const AuditPage = () => {
     { title: '操作者', dataIndex: 'userAccount', width: 120 },
     {
       title: '事件类型', dataIndex: 'auditType', width: 120,
-      render: (t: string) => <Tag color={auditColor(t)}>{AUDIT_TYPE_LABEL[t] || t}</Tag>,
+      render: (t: string) => <Tag color={auditTypeColor(t)}>{AUDIT_TYPE_LABEL[t] || t}</Tag>,
     },
     { title: '对象', dataIndex: 'objectCode', width: 140, render: (v) => v || '—' },
     { title: '描述', dataIndex: 'auditContent', render: (v) => v || '—' },

@@ -50,6 +50,22 @@ export const STATUS_OPTIONS = [
   { value: '0', label: '停用' },
 ];
 
+/** 审计事件类型（julyUserAudit）→ 中文文案（审计日志页与仪表盘共用，单一来源） */
+export const AUDIT_TYPE_LABEL: Record<string, string> = {
+  LOGIN: '登录成功',
+  LOGIN_FAILED: '登录失败',
+  LOGOUT: '退出登录',
+  CHANGE_PASSWORD: '修改密码',
+  EXPORT: '导出',
+};
+
+/** 审计事件类型 → Tag 颜色 */
+export function auditTypeColor(type: string): string {
+  if (type === 'LOGIN_FAILED') return 'red';
+  if (type === 'LOGIN' || type === 'LOGOUT') return 'green';
+  return 'blue';
+}
+
 /** AI 提示词适用能力（scene；对齐后端 insert VO 注释 inference / image / tts） */
 export const AI_SCENE_OPTIONS = [
   { value: 'inference', label: '推理聊天' },

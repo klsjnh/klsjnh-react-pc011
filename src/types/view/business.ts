@@ -22,14 +22,6 @@ export interface CacheItem {
 
 // ⚠️ DataSourceItem 已迁移到 @/types/dataservice011/datasource，此处不再重复定义
 
-/** 仪表盘最近操作日志 */
-export interface RecentLog {
-  time: string;
-  user: string;
-  action: string;
-  ip: string;
-}
-
 /** 业务中心宫格入口 */
 export interface BizEntry {
   icon: NavIcon;

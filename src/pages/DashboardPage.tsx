@@ -1,10 +1,21 @@
 /**
  * 仪表盘页 - PC 端（antd）
+ *
+ * 「最近操作日志」走真实接口分页查询（julyUserAudit/v1/selectListByPage），
+ * 取第一页 10 条；mock 模式下由 src/api/request.ts 自动命中内置 mock 后端，
+ * 与 API 模式共用同一套信封解包逻辑，页面无感。
  */
-import React from 'react';
-import { Card, Col, Row, Statistic, Table } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Card, Col, Row, Statistic, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import type { RecentLog } from '@/types/view/business';
+import { selectUserAuditListByPage } from '@/services/system011';
+import { AUDIT_TYPE_LABEL, auditTypeColor } from '@/config/constants';
+import { formatDateTime } from '@/utils/formatDate';
+import { toast } from '@/utils/toast';
+import type { JulyUserAuditVo011 } from '@/types/system011';
+
+/** 最近操作日志取数条数（第一页） */
+const RECENT_LOG_PAGE_SIZE = 10;
 
 export const DashboardPage = () => {
   const stats = [
@@ -14,18 +25,40 @@ export const DashboardPage = () => {
     { label: '系统通知', value: '5', change: '', up: true, color: '#f5222d' },
   ];
 
-  const recentLogs: RecentLog[] = [
-    { time: '10:30:15', user: 'admin', action: '登录系统', ip: '192.168.1.100' },
-    { time: '10:29:58', user: 'manager', action: '修改用户权限', ip: '192.168.1.101' },
-    { time: '10:28:42', user: 'editor01', action: '更新配置', ip: '172.16.0.10' },
-    { time: '10:27:20', user: 'admin', action: '创建角色', ip: '192.168.1.100' },
-  ];
+  const [logs, setLogs] = useState<JulyUserAuditVo011[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
 
-  const columns: ColumnsType<RecentLog> = [
-    { title: '时间', dataIndex: 'time' },
-    { title: '用户', dataIndex: 'user' },
-    { title: '操作', dataIndex: 'action' },
-    { title: 'IP 地址', dataIndex: 'ip' },
+  // 最近操作日志：进页拉第一页 10 条。
+  // setState 均发生在 await 之后，并用 cancelled 标记丢弃过期响应（react-hooks/set-state-in-effect）。
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      setLogsLoading(true);
+      try {
+        const res = await selectUserAuditListByPage({ pageIndex: 1, pageSize: RECENT_LOG_PAGE_SIZE });
+        if (cancelled) return;
+        setLogs(res.rows);
+      } catch (e) {
+        if (cancelled) return;
+        toast.error((e as Error)?.message || '加载操作日志失败');
+        setLogs([]);
+      } finally {
+        if (!cancelled) setLogsLoading(false);
+      }
+    };
+    void run();
+    return () => { cancelled = true; };
+  }, []);
+
+  const columns: ColumnsType<JulyUserAuditVo011> = [
+    { title: '时间', dataIndex: 'createTime', width: 170, render: (v) => formatDateTime(v) },
+    { title: '操作者', dataIndex: 'userAccount', width: 120 },
+    {
+      title: '事件类型', dataIndex: 'auditType', width: 120,
+      render: (t: string) => <Tag color={auditTypeColor(t)}>{AUDIT_TYPE_LABEL[t] || t}</Tag>,
+    },
+    { title: '描述', dataIndex: 'auditContent', render: (v) => v || '—' },
+    { title: 'IP', dataIndex: 'auditIp', width: 140, render: (v) => v || '—' },
   ];
 
   return (
@@ -46,7 +79,14 @@ export const DashboardPage = () => {
         ))}
       </Row>
       <Card title="最近操作日志" className="table-wrapper" styles={{ body: { padding: 0 } }}>
-        <Table<RecentLog> rowKey={(r) => `${r.time}-${r.user}`} columns={columns} dataSource={recentLogs} pagination={false} />
+        <Table<JulyUserAuditVo011>
+          rowKey="id"
+          columns={columns}
+          dataSource={logs}
+          loading={logsLoading}
+          pagination={false}
+          scroll={{ x: 760 }}
+        />
       </Card>
     </div>
   );
