@@ -9,7 +9,7 @@ import { DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined } from '@ant
 import { useTableFillHeight } from '@/hooks/useTableFillHeight';
 import { toast } from '@/utils/toast';
 import { outboundStore, useOutboundState } from '@/stores/messageCenter/outboundStore';
-import { KlsjnhBatchDeleteButton011, KlsjnhStatusTag011 } from '@/components/klsjnh011';
+import { KlsjnhBatchDeleteButton011, KlsjnhStatusTag011, KlsjnhSearchInput011 } from '@/components/klsjnh011';
 import { inboundStore, useInboundState } from '@/stores/messageCenter/inboundStore';
 import {
   removeOutboundTemplate, removeOutboundTemplateBatch, saveOutboundTemplate, selectOutboundTemplateListByPage,
@@ -132,10 +132,8 @@ export const TemplatePane = ({ direction }: TemplatePaneProps) => {
   return (
     <>
       <Space wrap style={{ marginBottom: 12 }}>
-        <Input.Search
-          allowClear
+        <KlsjnhSearchInput011
           placeholder="编码 / 名称关键字"
-          style={{ width: 220 }}
           onSearch={(v) => { setKeyword(v); void reload(1); }}
         />
         <Input

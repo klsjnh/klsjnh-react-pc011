@@ -18,7 +18,7 @@ import {
   TeamOutlined,
 } from '@ant-design/icons';
 import { useCurrentUser, authStore } from '@/stores/authStore';
-import { SYSTEM011_ROUTES } from '@/config/routes';
+import { SYSTEM011_ROUTES, HOME_ROUTES } from '@/config/routes';
 import type { ProfilePageProps } from '@/types/view/page';
 import type { NavIcon } from '@/types/view/layout';
 
@@ -35,8 +35,8 @@ export const ProfilePage = ({ onNavigate }: ProfilePageProps) => {
     { icon: BellOutlined, label: '消息通知', path: '/notifications' },
     { icon: FileSearchOutlined, label: '审计日志', path: '/audit' },
     { icon: SettingOutlined, label: '系统设置', path: '/settings' },
-    { icon: QuestionCircleOutlined, label: '帮助反馈', path: '/help' },
-    { icon: InfoCircleOutlined, label: '关于我们', path: '/about' },
+    { icon: QuestionCircleOutlined, label: '帮助反馈', path: HOME_ROUTES.help },
+    { icon: InfoCircleOutlined, label: '关于我们', path: HOME_ROUTES.about },
   ];
 
   const confirmLogout = () => {

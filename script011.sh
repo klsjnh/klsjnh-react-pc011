@@ -38,12 +38,13 @@ if [ -z "$NODE" ]; then echo "未找到 node 运行时，中止" >&2; exit 1; fi
 run_gate() {
   echo "==> [1/3] tsc 类型检查"
   "$NODE" node_modules/typescript/bin/tsc --noEmit
-  if [ -x node_modules/.bin/eslint ]; then
-    echo "==> [2/3] eslint"
-    "$NODE" node_modules/eslint/bin/eslint.js .
-  else
-    echo "==> [2/3] eslint 未安装，跳过（pnpm install -D eslint typescript-eslint eslint-plugin-react-hooks eslint-plugin-react-refresh）"
+  # 门禁前置硬性要求：eslint 缺失即失败（017 §D5「可跳过的检查等于没有检查」）
+  if [ ! -x node_modules/.bin/eslint ]; then
+    echo "eslint 未安装，门禁失败（pnpm install -D eslint typescript-eslint eslint-plugin-react-hooks eslint-plugin-react-refresh）" >&2
+    exit 1
   fi
+  echo "==> [2/3] eslint"
+  "$NODE" node_modules/eslint/bin/eslint.js .
   echo "==> [3/3] 规范自检（Agent.md / 011 / 015 / 016 / 017）"
   "$NODE" tools/check-klsjnh-react-standards.mjs
   echo "gate 通过 ✅"

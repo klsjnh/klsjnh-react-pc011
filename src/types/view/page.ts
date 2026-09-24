@@ -1,9 +1,8 @@
 /** 页面级 Props / 局部数据类型 */
 import type { NodeId } from '@/types/view/common';
+import type { PageNavProps } from '@/config/routes';
 
-export interface PageNavProps {
-  onNavigate?: (path: string) => void;
-}
+export type { PageNavProps };
 
 export type BusinessPageProps = PageNavProps;
 export type ProfilePageProps = PageNavProps;

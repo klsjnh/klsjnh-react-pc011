@@ -85,7 +85,7 @@ export const NotificationsPage = () => {
         onCancel={() => setSelected(null)}
         footer={[
           <Button key="del" color="danger" variant="filled" onClick={() => { if (selected) notificationStore.remove(selected.id); setSelected(null); }}>删除</Button>,
-          <Button key="close" type="primary" onClick={() => setSelected(null)}>关闭</Button>,
+          <Button key="close" onClick={() => setSelected(null)}>关闭</Button>,
         ]}
       >
         {selected && (

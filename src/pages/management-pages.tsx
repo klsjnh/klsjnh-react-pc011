@@ -1,15 +1,15 @@
 /**
  * 管理页面集合 - PC 端（antd）
- * 审计日志（对接 julyUserAudit） / 系统设置
+ * 审计日志（对接 julyUserAudit）
  */
 import React, { useState, useEffect } from 'react';
-import { Button, Card, Input, Select, Switch, Table, Tag, Typography } from 'antd';
+import { Button, Card, Input, Select, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { selectUserAuditListByPage } from '@/services/system011';
 import { toast } from '@/utils/toast';
 import { downloadText } from '@/utils/download';
+import { formatDate, formatDateTime, formatDateTimeOrEmpty } from '@/utils/formatDate';
 import type { JulyUserAuditVo011 } from '@/types/system011';
-import type { SettingItem } from '@/types/view/business';
 
 // ==================== 审计日志 ====================
 
@@ -72,16 +72,16 @@ export const AuditPage = () => {
   const handleExport = () => {
     const header = ['时间', '操作者账号', '事件类型', '对象编码', '事件描述', 'IP'];
     const lines = logs.map((l) => [
-      l.createTime?.replace('T', ' ') || '', l.userAccount, AUDIT_TYPE_LABEL[l.auditType] || l.auditType,
+      formatDateTimeOrEmpty(l.createTime), l.userAccount, AUDIT_TYPE_LABEL[l.auditType] || l.auditType,
       l.objectCode, l.auditContent, l.auditIp,
     ].map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','));
     const csv = '\uFEFF' + [header.join(','), ...lines].join('\r\n');
-    downloadText(csv, `julyUserAudit-${new Date().toISOString().slice(0, 10)}.csv`, 'csv');
+    downloadText(csv, `julyUserAudit-${formatDate(new Date().toISOString())}.csv`, 'csv');
     toast.success(`导出 ${logs.length} 条成功`);
   };
 
   const columns: ColumnsType<JulyUserAuditVo011> = [
-    { title: '时间', dataIndex: 'createTime', width: 170, render: (v) => v?.replace('T', ' ') || '—' },
+    { title: '时间', dataIndex: 'createTime', width: 170, render: (v) => formatDateTime(v) },
     { title: '操作者', dataIndex: 'userAccount', width: 120 },
     {
       title: '事件类型', dataIndex: 'auditType', width: 120,
@@ -134,45 +134,6 @@ export const AuditPage = () => {
             onChange: (p) => setPage(p),
           }}
         />
-      </Card>
-    </div>
-  );
-};
-
-// ==================== 系统设置 ====================
-
-export const SettingsPage = () => {
-  const [settings, setSettings] = useState<SettingItem[]>([
-    { id: 1, name: '系统名称', value: '企业管理系统', type: 'text' },
-    { id: 2, name: '系统描述', value: '企业级管理后台', type: 'text' },
-    { id: 3, name: 'Token 过期时间(分钟)', value: '30', type: 'text' },
-    { id: 4, name: '开启注册', value: true, type: 'toggle' },
-    { id: 5, name: '开启审计日志', value: true, type: 'toggle' },
-  ]);
-
-  const columns: ColumnsType<SettingItem> = [
-    { title: '配置项', dataIndex: 'name', width: 240 },
-    {
-      title: '值', dataIndex: 'value',
-      render: (v: SettingItem['value'], s) => s.type === 'toggle'
-        ? <Tag color={v ? 'green' : 'red'}>{v ? '开启' : '关闭'}</Tag>
-        : <Typography.Text editable={{
-            onChange: (text) => setSettings((prev) => prev.map((x) => x.id === s.id ? { ...x, value: text } : x)),
-          }}>{String(v)}</Typography.Text>,
-    },
-    {
-      title: '操作', key: 'action', width: 100,
-      render: (_, s) => s.type === 'toggle'
-        ? <Switch checked={!!s.value} onChange={(c) => setSettings((prev) => prev.map((x) => x.id === s.id ? { ...x, value: c } : x))} />
-        : null,
-    },
-  ];
-
-  return (
-    <div>
-      <div className="page-header"><h2>系统设置</h2><p>全局配置</p></div>
-      <Card className="table-wrapper" styles={{ body: { padding: 0 } }}>
-        <Table<SettingItem> rowKey="id" columns={columns} dataSource={settings} pagination={false} />
       </Card>
     </div>
   );

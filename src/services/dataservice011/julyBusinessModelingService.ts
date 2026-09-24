@@ -67,17 +67,6 @@ export async function fetchModelingPage(patch: Partial<JulyBusinessModelingQuery
 export function getModelingById(id: string): Promise<JulyBusinessModelingVo011> {
   return api.get<JulyBusinessModelingVo011>(MODELING_ACTIONS.getById, { id }, DATASERVICE011_BASE);
 }
-/**
- * 交接产物（GET，仅收 id）—— ★ **业务建模 → 低代码元数据** 的桥。
- * 返回 `metaData` + `fieldData` 两段（含后端自动补齐的公共列）。
- * `ModelDataCodec011` 已固定 key 映射，与 `july_metadata` 表一一对应：
- *   description→description、importField→businessField、url→routerPath、
- *   fieldData[].code/name/fieldType/length/notNull → fields[].fieldCode/fieldName/fieldType/fieldLength/requiredField。
- */
-export function getModelData(id: string): Promise<JulyBusinessModelingVo011> {
-  return api.get<JulyBusinessModelingVo011>(MODELING_ACTIONS.getModelData, { id }, DATASERVICE011_BASE);
-}
-
 /** 新增 / 修改（有 id = 编辑；编辑时 modelCode / objectName 不可变） */
 export async function saveModeling(params: SaveBusinessModelingParams): Promise<string> {
   const {

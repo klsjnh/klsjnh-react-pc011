@@ -6,6 +6,7 @@
 import React, { useMemo, useRef } from 'react';
 import { Button, Card, Popconfirm, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import { KlsjnhStatusTag011 } from '@/components/klsjnh011';
 import { useRoleState } from '@/stores/system011/julyRoleStore';
 import { useOrganizationState } from '@/stores/system011/julyOrganizationStore';
 import { useUserState } from '@/stores/system011/julyUserStore';
@@ -73,7 +74,7 @@ export const UserTable = ({ statusFilter, selectedRowKeys, onSelectionChange, on
     },
     {
       title: '状态', dataIndex: 'status', width: 90, align: 'center', onHeaderCell: hdrCenter,
-      render: (s: string) => <Tag color={s === '1' ? 'green' : 'red'}>{s === '1' ? '正常' : '停用'}</Tag>,
+      render: (s: string) => <KlsjnhStatusTag011 value={s} labels={{ '1': '正常' }} />
     },
     { ...leftCell, title: '最近登录', dataIndex: 'lastLoginTime', width: 160, render: (v) => v || '—' },
     {

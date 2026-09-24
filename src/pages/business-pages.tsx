@@ -12,6 +12,7 @@ import {
 } from '@/services/system011';
 import { toast } from '@/utils/toast';
 import { downloadText, exportFileName } from '@/utils/download';
+import { nowStamp } from '@/utils/formatDate';
 import { KlsjnhSql011, KlsjnhMarkdown011 } from '@/components/system011';
 import type { OnlineUser, CacheItem } from '@/types/view/business';
 
@@ -187,7 +188,7 @@ export const PushPage = () => {
     {
       title: '操作', key: 'action', width: 120,
       render: (_, p) => p.status === '草稿'
-        ? <Button type="link" size="small" onClick={() => setPushes((prev) => prev.map((x) => x.id === p.id ? { ...x, status: '已发送', time: new Date().toLocaleString('zh-CN') } : x))}>立即发送</Button>
+        ? <Button type="link" size="small" onClick={() => setPushes((prev) => prev.map((x) => x.id === p.id ? { ...x, status: '已发送', time: nowStamp() } : x))}>立即发送</Button>
         : null,
     },
   ];
@@ -417,7 +418,7 @@ export const CalcPage = () => {
           <Input style={{ width: 140, textAlign: 'center' }} placeholder="数字" value={num1} onChange={(e) => setNum1(e.target.value)} />
           <Select style={{ width: 64 }} value={op} onChange={setOp} options={['+', '-', '×', '÷'].map((v) => ({ value: v, label: v }))} />
           <Input style={{ width: 140, textAlign: 'center' }} placeholder="数字" value={num2} onChange={(e) => setNum2(e.target.value)} />
-          <Button type="primary" onClick={calculate}>= 计算</Button>
+          <Button type="primary" onClick={calculate}>计算</Button>
         </Space>
         {result && <div className="text-center mt-4" style={{ fontSize: 20, fontWeight: 700, color: 'var(--primary)' }}>{result}</div>}
       </Card>

@@ -14,6 +14,7 @@ import { selectUserListByPage } from '@/services/system011/julyUserService';
 import { fetchOrganizationTree } from '@/services/system011/julyOrganizationService';
 import { selectMenuTree } from '@/services/system011/julyMenuService';
 import { mockRelations } from '@/mock/system011';
+import { nowStamp } from '@/utils/formatDate';
 import type { JulyRoleVo011 } from '@/types/system011/julyRole/vo';
 import type { JulyMenuVo011 } from '@/types/system011/julyMenu';
 import type { JulyUserVo011, JulyUserView } from '@/types/system011/julyUser';
@@ -154,7 +155,7 @@ export async function reloadRoles(): Promise<void> {
  */
 export function addRole(data: { roleCode: string; roleName: string; remark?: string; status?: string }): void {
   const s = roleStore.getSnapshot();
-  const now = new Date().toISOString().slice(0, 19);
+  const now = nowStamp();
   const created: RoleDetail = {
     id: `tmp-role-${Date.now()}`,
     roleCode: data.roleCode,

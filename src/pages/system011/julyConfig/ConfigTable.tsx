@@ -5,8 +5,9 @@
  * 按钮口径对齐单表金标准（用户管理）：行内 filled 小按钮（编辑 primary / 删除 danger）。
  */
 import React, { useRef } from 'react';
-import { Button, Card, Popconfirm, Space, Table, Tag } from 'antd';
+import { Button, Card, Popconfirm, Space, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import { KlsjnhStatusTag011 } from '@/components/klsjnh011';
 import { useConfigState } from '@/stores/system011/julyConfigStore';
 import { fetchConfigPage } from '@/services/system011';
 import { useTableFillHeight } from '@/hooks/useTableFillHeight';
@@ -44,7 +45,7 @@ export const ConfigTable = ({ selectedRowKeys, onSelectionChange, onEdit, onRemo
     { ...leftCell, title: '配置键', dataIndex: 'code', width: 160, render: (v) => <code>{v}</code> },
     { ...leftCell, title: '配置值', dataIndex: 'data', ellipsis: true },
     { ...leftCell, title: '备注', dataIndex: 'remark', ellipsis: true, render: (v) => v || '—' },
-    { title: '状态', dataIndex: 'status', align: 'center', onHeaderCell: hdrCenter, width: 90, render: (s) => <Tag color={s === '1' ? 'green' : 'red'}>{s === '1' ? '启用' : '停用'}</Tag> },
+    { title: '状态', dataIndex: 'status', align: 'center', onHeaderCell: hdrCenter, width: 90, render: (s) => <KlsjnhStatusTag011 value={s} /> },
     {
       title: '操作', key: 'action', width: 140, fixed: 'right', align: 'center', onHeaderCell: hdrCenter,
       render: (_, r) => (

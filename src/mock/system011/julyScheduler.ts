@@ -1,5 +1,6 @@
 /** Mock：定时任务（julyScheduler） */
 import { ok, fail, delay, pageResult, type Handler } from '@/mock/system011/common';
+import { nowStamp } from '@/utils/formatDate';
 import type { JulySchedulerVo011 } from '@/types/system011';
 
 export const mockSchedulers: JulySchedulerVo011[] = [
@@ -32,7 +33,7 @@ export const handlers: Record<string, Handler> = {
       schedulerHandler: body?.schedulerHandler || '',
       schedulerCron: body?.schedulerCron || '',
       executeTimes: 0, status: body?.status || '0', remark: body?.remark || '',
-      createTime: new Date().toISOString().slice(0, 19),
+      createTime: nowStamp(),
     };
     mockSchedulers.unshift(item);
     return ok({ id: item.id });
@@ -46,7 +47,7 @@ export const handlers: Record<string, Handler> = {
     if (body?.schedulerCron !== undefined) item.schedulerCron = body.schedulerCron;
     if (body?.status !== undefined) item.status = body.status;
     if (body?.remark !== undefined) item.remark = body.remark;
-    item.updateTime = new Date().toISOString().slice(0, 19);
+    item.updateTime = nowStamp();
     return ok({ id: item.id });
   },
   '/julyScheduler/v1/start': async (body) => {

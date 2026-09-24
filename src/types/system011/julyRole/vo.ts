@@ -11,8 +11,3 @@ export interface JulyRoleVo011 extends BaseVo011 {
   remark: string | null;
   status: string;
 }
-
-export interface JulyRoleAssignMenusVo011 {
-  id: string;
-  pkMenus: string[];
-}

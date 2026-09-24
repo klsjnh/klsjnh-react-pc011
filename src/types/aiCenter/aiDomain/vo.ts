@@ -31,18 +31,6 @@ export interface JulyAiDomainItem {
   updateTime?: string;
 }
 
-/** 业务域分页查询入参（对应 JulyAiDomainQueryVo011） */
-export interface JulyAiDomainQueryVo011 {
-  pageIndex: number;
-  pageSize: number;
-  /** 编码/名称关键字 */
-  keyword?: string;
-  /** 上级域 id 过滤 */
-  parentId?: string;
-  /** 状态过滤（0/1） */
-  status?: string;
-}
-
 /** 新增业务域入参（对应 JulyAiDomainInsertVo011；不收 status，默认启用） */
 export interface JulyAiDomainInsertVo011 {
   domainCode: string;

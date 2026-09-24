@@ -1,5 +1,6 @@
 /** Mock：字典（julyDictionary） - 主表 + 明细 */
 import { ok, fail, delay, pageResult, type Handler } from '@/mock/system011/common';
+import { nowStamp } from '@/utils/formatDate';
 import type { JulyDictionaryVo011, JulyDictionaryItemVo011 } from '@/types/system011';
 
 export const mockDictionaries: JulyDictionaryVo011[] = [
@@ -55,7 +56,7 @@ export const handlers: Record<string, Handler> = {
       id: 'dict' + Math.random().toString(36).slice(2, 12),
       dictionaryCode: code, dictionaryName: body?.dictionaryName || '', sortOrder: body?.sortOrder ?? 0,
       status: body?.status || '1', remark: body?.remark || '',
-      createTime: new Date().toISOString().slice(0, 19), items: [],
+      createTime: nowStamp(), items: [],
     };
     mockDictionaries.push(item);
     return ok({ id: item.id });
@@ -68,7 +69,7 @@ export const handlers: Record<string, Handler> = {
     if (body?.sortOrder !== undefined) item.sortOrder = body.sortOrder;
     if (body?.status !== undefined) item.status = body.status;
     if (body?.remark !== undefined) item.remark = body.remark;
-    item.updateTime = new Date().toISOString().slice(0, 19);
+    item.updateTime = nowStamp();
     return ok({ id: item.id });
   },
   '/julyDictionary/v1/logicDelete': async (body) => {
@@ -102,7 +103,7 @@ export const handlers: Record<string, Handler> = {
       id: 'dictitm' + Math.random().toString(36).slice(2, 12),
       dictionaryCode: body.dictionaryCode, itemCode: code, itemLabel: body?.itemLabel || '',
       sortOrder: body?.sortOrder ?? 0, status: body?.status || '1', remark: body?.remark || '',
-      createTime: new Date().toISOString().slice(0, 19),
+      createTime: nowStamp(),
     };
     dict.items = dict.items || [];
     dict.items.push(item);
@@ -117,7 +118,7 @@ export const handlers: Record<string, Handler> = {
         if (body?.sortOrder !== undefined) it.sortOrder = body.sortOrder;
         if (body?.status !== undefined) it.status = body.status;
         if (body?.remark !== undefined) it.remark = body.remark;
-        it.updateTime = new Date().toISOString().slice(0, 19);
+        it.updateTime = nowStamp();
         return ok({ id: it.id });
       }
     }

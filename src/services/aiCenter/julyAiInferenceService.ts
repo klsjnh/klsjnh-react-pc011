@@ -11,23 +11,16 @@
  *
  * 分层：page → service → store；store 不调用 service。
  */
-import { api } from '@/api/request';
 import { isMockMode } from '@/config/appConfig';
 import { authStore } from '@/stores/authStore';
 import { mockStreamChat } from '@/mock/aiCenter/aiInference';
 import { AICENTER_BASE, selectProviderListByPage, selectApiListByProvider } from '@/services/aiCenter/julyAiModelProviderService';
-import type { AiChatRequestVo011, AiChatResponseVo011 } from '@/types/aiCenter';
+import type { AiChatRequestVo011 } from '@/types/aiCenter';
 import type { AiModelProviderItem, AiModelProviderApiItem } from '@/types/aiCenter';
 
 const INFERENCE_ACTIONS = {
-  chat: '/julyAiInference/v1/chat',
   chatStream: '/julyAiInference/v1/chat/stream',
 } as const;
-
-/** 非流式聊天（信封模式）：直接拿完整回复 */
-export function chat(req: AiChatRequestVo011): Promise<AiChatResponseVo011> {
-  return api.post<AiChatResponseVo011>(INFERENCE_ACTIONS.chat, req, AICENTER_BASE);
-}
 
 /**
  * 聊天可用的供应商列表（复用 julyAiModelProvider 管理接口，默认只要启用的）。

@@ -38,6 +38,7 @@ import {
   pageRuntime, updateRuntime, type RuntimeRow,
 } from '@/services/lowcode011';
 import { toast } from '@/utils/toast';
+import { KlsjnhStatusTag011 } from '@/components/klsjnh011';
 import type { JulyMetadataModelRow011, JulyMetadataVo011 } from '@/types/lowcode011';
 import type { ImportStatusResult } from '@/types/lowcode011/metadataDesigner';
 
@@ -139,10 +140,9 @@ function queryFieldDefs(meta: JulyMetadataVo011): QueryDef[] {
     .map((f) => toDef(f.fieldCode, f.fieldName, f.fieldType));
 }
 
-/** status 列取值 → 标签（'1' 启用 / '0' 停用 / 其它显示 —） */
+/** status 列取值 → 标签（KlsjnhStatusTag011 原语：'1' 启用 / '0' 停用 / 其它显示 —） */
 const statusCell = (v: unknown): React.ReactNode => {
-  if (v === '1' || v === 1 || v === true) return <Tag color="green">启用</Tag>;
-  if (v === '0' || v === 0 || v === false) return <Tag color="red">停用</Tag>;
+  if (v === '1' || v === 1 || v === true || v === '0' || v === 0 || v === false) return <KlsjnhStatusTag011 value={v as string | number | boolean} />;
   return <Text type="secondary">—</Text>;
 };
 
@@ -497,7 +497,7 @@ export const SchemaRuntimePage = () => {
           </Text>
         </div>
         <div className="toolbar-right">
-          <Button color="primary" variant="filled" icon={<PlusOutlined />} disabled={!canInsert} onClick={openAdd}>新增</Button>
+          <Button color="primary" variant="filled" icon={<PlusOutlined />} disabled={!canInsert} onClick={openAdd}>添加</Button>
           <Button color="default" variant="filled" icon={<ReloadOutlined />} onClick={() => fetchPage(pageIndex, pageSize)}>刷新</Button>
         </div>
       </div>

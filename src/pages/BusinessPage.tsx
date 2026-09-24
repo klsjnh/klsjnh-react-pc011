@@ -31,6 +31,7 @@ import {
   UserSwitchOutlined,
 } from '@ant-design/icons';
 import type { BusinessPageProps } from '@/types/view/page';
+import { HOME_ROUTES } from '@/config/routes';
 import type { BizEntry } from '@/types/view/business';
 import type { NavIcon } from '@/types/view/layout';
 
@@ -69,8 +70,8 @@ export const BusinessPage = ({ onNavigate }: BusinessPageProps) => {
       items: [
         { icon: BellOutlined, label: '消息通知', path: '/notifications', color: '#fff7e6' },
         { icon: FileSearchOutlined, label: '审计日志', path: '/audit', color: '#f5f5f5' },
-        { icon: QuestionCircleOutlined, label: '帮助反馈', path: '/help', color: '#e6f7ff' },
-        { icon: InfoCircleOutlined, label: '关于系统', path: '/about', color: '#f6ffed' },
+        { icon: QuestionCircleOutlined, label: '帮助反馈', path: HOME_ROUTES.help, color: '#e6f7ff' },
+        { icon: InfoCircleOutlined, label: '关于系统', path: HOME_ROUTES.about, color: '#f6ffed' },
         { icon: MonitorOutlined, label: '系统监控', path: '/business/monitor', color: '#fff1f0' },
         { icon: UserSwitchOutlined, label: '在线用户', path: '/business/online', color: '#e6fffb' },
         { icon: ClearOutlined, label: '缓存管理', path: '/business/cache', color: '#fffbe6' },

@@ -4,7 +4,7 @@
  * 行内「测试连接」结果用 TestFeedbackAlert 展示（与数据源页一致），不再用 toast。
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { Button, Card, Input, Popconfirm, Space, Table, Tag, Tabs } from 'antd';
+import { Button, Card, Popconfirm, Space, Table, Tag, Tabs } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTableFillHeight } from '@/hooks/useTableFillHeight';
@@ -12,6 +12,7 @@ import { toast } from '@/utils/toast';
 import type { JulyStorage, JulyStorageConnect, StorageTestResult } from '@/types/storageCenter';
 import { fetchStoragePage, removeStorage, testStorageConnection } from '@/services/storageCenter/julyStorageService';
 import { useStorageState } from '@/stores/storageCenter/julyStorageStore';
+import { KlsjnhSearchInput011 } from '@/components/klsjnh011';
 import { KlsjnhStatusTag011 } from '@/components/klsjnh011';
 import { storageExplorerStore, useStorageExplorer } from '@/stores/storageCenter/storageExplorerStore';
 import { PAGE_SIZE_OPTIONS } from '@/utils/pageSizePref';
@@ -148,7 +149,7 @@ export const BucketListPage = () => {
 
       <div className="page-toolbar" style={{ flexWrap: 'wrap' }}>
         <div className="toolbar-left">
-          <Input.Search allowClear placeholder="搜索编码 / 名称" style={{ width: 320 }} onSearch={search} />
+          <KlsjnhSearchInput011 placeholder="搜索编码 / 名称" onSearch={search} />
         </div>
         <div className="toolbar-right" style={{ marginTop: 8 }}>
           <Button color="green" variant="filled" icon={<PlusOutlined />} onClick={() => setModal({ open: true, node: null })}>

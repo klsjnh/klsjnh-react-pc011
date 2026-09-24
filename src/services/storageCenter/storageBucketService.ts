@@ -14,7 +14,7 @@ import { STORAGECENTER_BASE } from '@/services/storageCenter/base';
 import { storageBucketStore } from '@/stores/storageCenter/storageBucketStore';
 import type { PageResult011 } from '@/types/common';
 import type {
-  BucketInfo, StorageBucket, StorageBucketQuery, StorageTestResult,
+  BucketInfo, StorageBucket, StorageBucketQuery,
 } from '@/types/storageCenter';
 
 /** 存储桶动作路径（相对 STORAGECENTER_BASE） */
@@ -74,8 +74,4 @@ export async function removeBucket(storageCode: string | undefined, bucketName: 
 export async function listBuckets(storageCode?: string): Promise<StorageBucket[]> {
   const rows = await api.post<BucketInfo[]>(BUCKET_ACTIONS.selectList, { storageCode }, STORAGECENTER_BASE);
   return toBucketRows(rows, storageCode);
-}
-/** 桶连接测试（恒 200，看 data.success / data.bucketCount） */
-export function testBucketConnection(storageCode?: string): Promise<StorageTestResult> {
-  return api.post<StorageTestResult>(BUCKET_ACTIONS.testConnection, { storageCode }, STORAGECENTER_BASE);
 }

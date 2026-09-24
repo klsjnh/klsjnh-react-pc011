@@ -24,15 +24,3 @@ export interface AiChatRequestVo011 {
   temperature?: number;
   maxTokens?: number;
 }
-
-/** 非流式聊天响应（AiChatResponseVo011） */
-export interface AiChatResponseVo011 {
-  providerCode?: string;
-  apiCode?: string;
-  model?: string;
-  content: string;
-  finishReason?: string;
-  promptTokens?: number;
-  completionTokens?: number;
-  totalTokens?: number;
-}

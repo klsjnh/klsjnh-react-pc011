@@ -36,6 +36,7 @@ import {
   getOpenApiConfig, saveOpenApiConfig, rotateApiKey,
 } from '@/services/lowcode011';
 import { toast } from '@/utils/toast';
+import { formatDateTime } from '@/utils/formatDate';
 import { LOWCODE011_ROUTES } from '@/config/routes';
 import type { PageNavProps } from '@/types/view/page';
 import type {
@@ -607,7 +608,7 @@ export const MetadataFormPage = ({ id, onNavigate }: Props) => {
                     {openApiConfig?.apiKeyConfigured && (
                       <Text type="secondary">
                         当前 apiKey 尾号：{openApiConfig.apiKeyHint || '****'}
-                        {openApiConfig.apiKeyUpdatedAt ? ` · 更新于 ${new Date(openApiConfig.apiKeyUpdatedAt).toLocaleString()}` : ''}
+                        {openApiConfig.apiKeyUpdatedAt ? ` · 更新于 ${formatDateTime(openApiConfig.apiKeyUpdatedAt)}` : ''}
                       </Text>
                     )}
                     <Space wrap>

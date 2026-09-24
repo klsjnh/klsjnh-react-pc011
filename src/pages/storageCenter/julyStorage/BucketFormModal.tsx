@@ -7,6 +7,7 @@ import { useEffect, useMemo } from 'react';
 import { Form, Input, Modal, Select, Tag, Space } from 'antd';
 import type { JulyStorage } from '@/types/storageCenter';
 import { insertBucket } from '@/services/storageCenter/storageBucketService';
+import { KlsjnhStatusTag011 } from '@/components/klsjnh011';
 import { toast } from '@/utils/toast';
 
 interface Props {
@@ -67,7 +68,7 @@ export const BucketFormModal = ({ open, storages, storageCode, onClose }: Props)
               <span>实例信息：</span>
               <Tag color={PROVIDER_META[selected.provider || '']?.color || 'default'}>{PROVIDER_META[selected.provider || '']?.label || selected.provider || '-'}</Tag>
               <span className="text-muted text-xs">接入点：{selected.endpoint || selected.basePath || '-'}</span>
-              <Tag color={selected.status === '1' ? 'green' : 'red'}>{selected.status === '1' ? '启用' : '停用'}</Tag>
+              <KlsjnhStatusTag011 value={selected.status} />
             </Space>
           </div>
         )}

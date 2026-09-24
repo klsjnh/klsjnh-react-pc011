@@ -6,19 +6,19 @@
 import { isMockMode } from '@/config/appConfig';
 import { NAV_MENU_SOURCE } from '@/config/globals';
 import { api, fireApi } from '@/api/request';
-import { SYSTEM011_ACTIONS } from '@/services/system011/actions';
+import { IAM_BASE, SYSTEM011_ACTIONS } from '@/services/system011/actions';
 import { menuStore } from '@/stores/system011/julyMenuStore';
 import { uiStore } from '@/stores/uiStore';
 import type { JulyMenuVo011 } from '@/types/system011/julyMenu/vo';
 
 /** 当前登录人的菜单树（RBAC 侧边栏数据源；内置角色走全量旁路） */
 export function selectUserMenuTree(): Promise<JulyMenuVo011[]> {
-  return api.get<JulyMenuVo011[]>(SYSTEM011_ACTIONS.menu.selectUserMenuTree);
+  return api.get<JulyMenuVo011[]>(SYSTEM011_ACTIONS.menu.selectUserMenuTree, undefined, IAM_BASE);
 }
 
-/** 全量菜单树（GET /julyMenu/v1/selectTree）：菜单管理页 + 角色授权树的数据源 */
+/** 全量菜单树（GET /julyMenu/v1/getTree）：菜单管理页 + 角色授权树的数据源 */
 export function selectMenuTree(): Promise<JulyMenuVo011[]> {
-  return api.get<JulyMenuVo011[]>(SYSTEM011_ACTIONS.menu.selectTree);
+  return api.get<JulyMenuVo011[]>(SYSTEM011_ACTIONS.menu.selectTree, undefined, IAM_BASE);
 }
 
 // ==================== 业务编排（写 store 状态） ====================
@@ -121,7 +121,7 @@ export async function addMenu(data: CreateMenuData): Promise<void> {
         : { ...item, children: item.children ? addToParent(item.children) : item.children });
     menuStore.setState({ menus: addToParent(menus) });
   }
-  if (!isMockMode()) await fireApi(SYSTEM011_ACTIONS.menu.insert, created);
+  if (!isMockMode()) await fireApi(SYSTEM011_ACTIONS.menu.insert, created, IAM_BASE);
 }
 
 /** 更新菜单 */
@@ -132,7 +132,7 @@ export async function updateMenu(id: string, patch: Partial<JulyMenuVo011>): Pro
       ? { ...item, ...patch }
       : { ...item, children: item.children ? updateRecursive(item.children) : item.children });
   menuStore.setState({ menus: updateRecursive(menus) });
-  if (!isMockMode()) await fireApi(SYSTEM011_ACTIONS.menu.update, { id, ...patch });
+  if (!isMockMode()) await fireApi(SYSTEM011_ACTIONS.menu.update, { id, ...patch }, IAM_BASE);
 }
 
 /** 删除菜单 */
@@ -142,7 +142,7 @@ export async function removeMenu(id: string): Promise<void> {
     items.filter((item) => item.id !== id)
       .map((item) => ({ ...item, children: item.children ? removeRecursive(item.children) : undefined }));
   menuStore.setState({ menus: removeRecursive(menus) });
-  if (!isMockMode()) await fireApi(SYSTEM011_ACTIONS.menu.logicDelete, { id });
+  if (!isMockMode()) await fireApi(SYSTEM011_ACTIONS.menu.logicDelete, { id }, IAM_BASE);
 }
 
 /** 移动菜单到新的上级（parentId 为空串表示顶级；不能移到自己或子孙下） */
@@ -176,7 +176,7 @@ export async function moveMenu(id: string, newParentId: string): Promise<boolean
       component: node.component,
       parentId: newParentId,
       sortOrder: node.sortOrder,
-    });
+    }, IAM_BASE);
   }
   return true;
 }

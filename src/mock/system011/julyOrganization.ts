@@ -1,5 +1,6 @@
 /** Mock：组织（julyOrganization） */
 import { ok, fail, delay, pageResult, type Handler } from '@/mock/system011/common';
+import { nowStamp } from '@/utils/formatDate';
 import { mockUsers } from '@/mock/system011/julyUser';
 import type { JulyOrganizationVo011 } from '@/types/system011';
 
@@ -124,7 +125,7 @@ export const handlers: Record<string, Handler> = {
     if (dup) return fail(`insert: orgCode already exists, ${code}`, 400);
     const parentId = body?.parentId || '';
     if (parentId && !findOrg(parentId)) return fail(`insert: parent not found, ${parentId}`, 400);
-    const now = new Date().toISOString().slice(0, 19);
+    const now = nowStamp();
     const no: JulyOrganizationVo011 = {
       id: 'mockorg' + Math.random().toString(36).slice(2, 10).padEnd(8, '0') + '00000000',
       parentId, orgCode: code, orgName: name, pkUser: body.pkUser || null,
@@ -150,7 +151,7 @@ export const handlers: Record<string, Handler> = {
         return fail('update: cannot move under own descendant', 400);
       }
     }
-    const now = new Date().toISOString().slice(0, 19);
+    const now = nowStamp();
     if (parentId !== (o.parentId || '')) {
       const detached = detachOrg(o.id);
       if (detached) {

@@ -3,13 +3,13 @@
  * status 口径（后端约定）：待发送 / 已发送 / 失败等，未在 Swagger 建模枚举，前端按状态展示不猜名。
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { Button, Card, Input, Popconfirm, Space, Table, Tag } from 'antd';
+import { Button, Card, Input, Popconfirm, Space, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { DeleteOutlined, ReloadOutlined, SendOutlined } from '@ant-design/icons';
 import { useTableFillHeight } from '@/hooks/useTableFillHeight';
 import { toast } from '@/utils/toast';
 import { outboundStore, useOutboundState } from '@/stores/messageCenter/outboundStore';
-import { KlsjnhBatchDeleteButton011 } from '@/components/klsjnh011';
+import { KlsjnhBatchDeleteButton011, KlsjnhSearchInput011, KlsjnhStatusTag011 } from '@/components/klsjnh011';
 import {
   removeOutboundMessage, removeOutboundMessageBatch, resendOutboundMessage, selectOutboundMessageListByPage,
 } from '@/services/messageCenter/julyOutboundMessageService';
@@ -21,10 +21,11 @@ import type { JulyOutboundMessageVo011 } from '@/types/messageCenter';
 /** 消息状态展示（不猜未建模枚举名，原样 + 已知状态着色） */
 function statusTag(v?: string) {
   if (!v) return '-';
+  // 状态语义四态：成功 green / 失败 red / 待处理 orange / 其余 default；文案由原语原样回显
   const color = v.includes('失败') || v === 'FAILED' ? 'red'
     : v.includes('成功') || v === 'SENT' ? 'green'
       : v.includes('待') || v === 'PENDING' ? 'orange' : 'default';
-  return <Tag color={color}>{v}</Tag>;
+  return <KlsjnhStatusTag011 value={v} colors={{ [v]: color }} />;
 }
 
 export const OutboundMessagePane = () => {
@@ -115,10 +116,8 @@ export const OutboundMessagePane = () => {
   return (
     <>
       <Space wrap style={{ marginBottom: 12 }}>
-        <Input.Search
-          allowClear
+        <KlsjnhSearchInput011
           placeholder="接收方 / 标题关键字"
-          style={{ width: 220 }}
           onSearch={(v) => { setKeyword(v); void reload(1); }}
         />
         <Input

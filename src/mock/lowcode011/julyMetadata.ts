@@ -17,6 +17,7 @@
  * 且按 action 派发**不区分 HTTP 方法** —— 方法错配（GET 写成 POST）在 mock 下永远发现不了。
  */
 import { ok, fail, delay, pageResult, type Handler } from '@/mock/system011/common';
+import { nowStamp } from '@/utils/formatDate';
 import type {
   JulyMetadataVo011, JulyMetadataFieldVo011, JulyMetadataDisplayVo011, JulyMetadataServiceVo011,
   JulyMetadataMetaDto011,
@@ -128,7 +129,7 @@ export const handlers: Record<string, Handler> = {
       routerPath: body?.routerPath ?? null,
       remark: body?.remark ?? null,
       status: body?.status || '1',
-      createBy: 'mock', createTime: new Date().toISOString().slice(0, 19),
+      createBy: 'mock', createTime: nowStamp(),
       fields: cleanSub<JulyMetadataFieldVo011>(body?.fields),
       displays: cleanSub<JulyMetadataDisplayVo011>(body?.displays),
       services: cleanSub<JulyMetadataServiceVo011>(body?.services),
@@ -153,7 +154,7 @@ export const handlers: Record<string, Handler> = {
     item.fields = cleanSub<JulyMetadataFieldVo011>(body?.fields);
     item.displays = cleanSub<JulyMetadataDisplayVo011>(body?.displays);
     item.services = cleanSub<JulyMetadataServiceVo011>(body?.services);
-    item.updateTime = new Date().toISOString().slice(0, 19);
+    item.updateTime = nowStamp();
     return ok({ id: item.id });
   },
   '/julyMetadata/v1/logicDelete': async (body) => {
@@ -214,7 +215,7 @@ export const handlers: Record<string, Handler> = {
       existing.fields = fields;
       existing.displays = displays;
       existing.services = services;
-      existing.updateTime = new Date().toISOString().slice(0, 19);
+      existing.updateTime = nowStamp();
       return ok({ id: existing.id });
     }
     const item: JulyMetadataVo011 = {
@@ -228,7 +229,7 @@ export const handlers: Record<string, Handler> = {
       routerPath: text(metaData.routerPath) ?? null,
       remark: text(metaData.remark) ?? null,
       status: '1',
-      createBy: 'mock', createTime: new Date().toISOString().slice(0, 19),
+      createBy: 'mock', createTime: nowStamp(),
       fields, displays, services,
     };
     mockMetadatas.push(item);

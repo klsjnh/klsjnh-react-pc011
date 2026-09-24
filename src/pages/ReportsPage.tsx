@@ -50,7 +50,7 @@ export const ReportsPage = () => {
           </Card>
         </Col>
       </Row>
-      <Button type="primary" className="mt-4">导出报表</Button>
+      <Button color="pink" variant="filled" className="mt-4">导出报表</Button>
     </div>
   );
 };

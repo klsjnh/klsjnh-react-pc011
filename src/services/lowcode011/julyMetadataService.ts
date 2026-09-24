@@ -18,7 +18,7 @@ import { LOWCODE011_ACTIONS } from '@/services/lowcode011/actions';
 import { julyMetadataStore } from '@/stores/lowcode011/julyMetadataStore';
 import type {
   JulyMetadataVo011, JulyMetadataQueryVo011, JulyMetadataSaveVo011,
-  JulyMetadataMetaDto011, JulyMetadataModelRow011,
+  JulyMetadataModelRow011,
   PublishPayload, PublishResult, ImportDataPayload, ImportDataResult, ImportStatusResult,
 } from '@/types/lowcode011';
 import type { PageResult011, IdVo011 } from '@/types/common';
@@ -92,26 +92,6 @@ export async function removeMetadataBatch(ids: string[]): Promise<void> {
  */
 export function listMetadataModels(): Promise<JulyMetadataModelRow011[]> {
   return api.get<JulyMetadataModelRow011[]>(LOWCODE011_ACTIONS.metadata.listModels, undefined, BASE);
-}
-
-/**
- * 载入模型为 MetaDTO（GET /load?objectName=）。
- * ⚠️ 后端未做必填校验：缺 objectName 回 **500**（MissingServletRequestParameterException 未映射为 400），
- * 调用方须自行保证传参。
- */
-export function loadMetadataDto(objectName: string): Promise<JulyMetadataMetaDto011> {
-  return api.get<JulyMetadataMetaDto011>(LOWCODE011_ACTIONS.metadata.load, { objectName }, BASE);
-}
-
-/**
- * 保存模型（POST /save，MetaDTO 口径）—— 后端按 objectName 判 insert / update，**前端不传 id**。
- * 三子为整体替换语义，必须回传全部三子。
- * @returns 对象主键 id
- */
-export async function saveMetadataDto(body: JulyMetadataMetaDto011): Promise<string> {
-  const res = await api.post<{ id?: string }>(LOWCODE011_ACTIONS.metadata.designerSave, body, BASE);
-  await fetchMetadataPage(julyMetadataStore.getSnapshot().query);
-  return res?.id || '';
 }
 
 /**

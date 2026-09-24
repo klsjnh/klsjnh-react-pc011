@@ -1,5 +1,6 @@
 /** Mock：用户（julyUser） */
 import { ok, fail, delay, pageResult, type Handler } from '@/mock/system011/common';
+import { nowStamp } from '@/utils/formatDate';
 import { mockRoles, mockExtraRoles } from '@/mock/system011/julyRole';
 import type { JulyUserVo011, JulyUserSessionVo011 } from '@/types/system011';
 
@@ -74,7 +75,7 @@ export const handlers: Record<string, Handler> = {
     if (!name) return fail('insert: userName is required', 400);
     if (!body?.password) return fail('insert: password is required', 400);
     if (mockUsers.some((u) => u.userAccount === acct)) return fail(`insert: userAccount already exists, ${acct}`, 400);
-    const now = new Date().toISOString().slice(0, 19);
+    const now = nowStamp();
     const nu: JulyUserVo011 = {
       id: 'mockuser' + Math.random().toString(36).slice(2, 10).padEnd(8, '0') + '00000000',
       userAccount: acct, userName: name,
@@ -99,7 +100,7 @@ export const handlers: Record<string, Handler> = {
     if (body.email !== undefined) u.email = body.email || null;
     if (body.avatar !== undefined) u.avatar = body.avatar || null;
     if (body.pkOrg !== undefined) u.pkOrg = body.pkOrg || null;
-    u.updateTime = new Date().toISOString().slice(0, 19);
+    u.updateTime = nowStamp();
     userNameById.set(u.id, u.userName || u.userAccount);
     return ok({ id: u.id });
   },

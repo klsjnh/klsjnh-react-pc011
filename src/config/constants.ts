@@ -36,7 +36,7 @@ import {
   UserOutlined,
   UserSwitchOutlined,
 } from '@ant-design/icons';
-import { SYSTEM011_ROUTES, DATASERVICE011_ROUTES, AICENTER_ROUTES, MESSAGE_CENTER_ROUTES } from '@/config/routes';
+import { SYSTEM011_ROUTES, DATASERVICE011_ROUTES, AICENTER_ROUTES, MESSAGE_CENTER_ROUTES, HOME_ROUTES } from '@/config/routes';
 import type { NavItem } from '@/types/view/layout';
 
 /** 菜单类型：菜单 / 按钮（无目录） */
@@ -49,12 +49,6 @@ export const STATUS_OPTIONS = [
   { value: '1', label: '启用' },
   { value: '0', label: '停用' },
 ];
-
-/** 通用状态文本映射 */
-export const STATUS_LABEL: Record<string, string> = {
-  '1': '启用',
-  '0': '停用',
-};
 
 /** AI 提示词适用能力（scene；对齐后端 insert VO 注释 inference / image / tts） */
 export const AI_SCENE_OPTIONS = [
@@ -149,8 +143,8 @@ export const GLOBAL_MENUS: NavItem[] = [
       { path: '/notifications', label: '消息通知', icon: BellOutlined },
       { path: '/audit', label: '审计日志', icon: FileSearchOutlined },
       { path: '/settings', label: '系统设置', icon: SettingOutlined },
-      { path: '/help', label: '帮助反馈', icon: QuestionCircleOutlined },
-      { path: '/about', label: '关于系统', icon: InfoCircleOutlined },
+      { path: HOME_ROUTES.help, label: '帮助反馈', icon: QuestionCircleOutlined },
+      { path: HOME_ROUTES.about, label: '关于系统', icon: InfoCircleOutlined },
     ],
   },
 ];

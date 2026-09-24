@@ -5,15 +5,16 @@
  * 行点击选中（master-row-selected）→ 写 store.active，子表订阅 store 自动跟随。
  */
 import React, { useRef } from 'react';
-import { Button, Card, Popconfirm, Space, Table, Tag } from 'antd';
+import { Button, Card, Popconfirm, Space, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useDictionaryState } from '@/stores/system011/julyDictionaryStore';
 import { selectDictionary, removeDictionary, fetchDictionaryPage } from '@/services/system011';
 import { toast } from '@/utils/toast';
 import { useTableFillHeight } from '@/hooks/useTableFillHeight';
 import type { JulyDictionaryVo011 } from '@/types/system011';
+import { KlsjnhStatusTag011 } from '@/components/klsjnh011';
 
-const STATUS_TAG = (s?: string) => <Tag color={s === '1' ? 'green' : 'red'}>{s === '1' ? '启用' : '停用'}</Tag>;
+const STATUS_TAG = (s?: string) => <KlsjnhStatusTag011 value={s} />;
 
 /** 2026-09-21 定稿：单元格与表头一律左对齐（不留 onHeaderCell 居中） */
 const leftCell = {};

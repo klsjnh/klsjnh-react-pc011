@@ -14,7 +14,7 @@ import { App } from 'antd';
 import { Button, Card, Popconfirm, Space, Table, Tag } from 'antd';
 import { DeleteOutlined, EditOutlined, PlayCircleOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import { KlsjnhBatchDeleteButton011, KlsjnhSearchInput011 } from '@/components/klsjnh011';
+import { KlsjnhBatchDeleteButton011, KlsjnhSearchInput011, KlsjnhStatusTag011 } from '@/components/klsjnh011';
 import { useMetadataState, julyMetadataStore } from '@/stores/lowcode011/julyMetadataStore';
 import {
   fetchMetadataPage, removeMetadata, removeMetadataBatch,
@@ -24,7 +24,7 @@ import { PAGE_SIZE_OPTIONS } from '@/utils/pageSizePref';
 import type { PageNavProps } from '@/types/view/page';
 import type { JulyMetadataVo011 } from '@/types/lowcode011';
 
-const STATUS_TAG = (s?: string) => <Tag color={s === '1' ? 'green' : 'red'}>{s === '1' ? '启用' : '停用'}</Tag>;
+const STATUS_TAG = (s?: string) => <KlsjnhStatusTag011 value={s} />;
 
 const hdrCenter = (): React.HTMLAttributes<HTMLElement> => ({ style: { textAlign: 'center' } });
 const leftCell = { align: 'left' as const, onHeaderCell: hdrCenter };

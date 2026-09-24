@@ -90,12 +90,6 @@ export interface BucketInfo {
   creationDate?: string;
 }
 
-/** 桶是否存在（StorageBucketExists，GET getBucket 出参；不存在时后端 404） */
-export interface StorageBucketExists {
-  bucketName: string;
-  exists: boolean;
-}
-
 /** 存储桶行：后端回 BucketInfo（含创建时间），归属实例由请求参数决定并回填 */
 export interface StorageBucket {
   bucketName: string;

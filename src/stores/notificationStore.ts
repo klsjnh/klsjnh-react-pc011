@@ -2,11 +2,13 @@
  * 通知状态管理（顶栏红点未读数 + 消息通知页共用）
  *
  * 数据源：统一 mock 后端 /notification/v1/*（真实 JulyNotificationVo011 形状，createTime 字段）
- * mock / api 共用 request.ts 路由；读取失败保留本地 initialNotifications 兜底。
- * 迁移至 zustand，保留原有 API 表面。
+ * 请求经 services/system011/notificationService.ts 收口，本 store 只持状态（016 §7）。
+ * 读取失败保留本地 initialNotifications 兜底。
  */
 import { isMockMode } from '@/config/appConfig';
-import { api, fireApi } from '@/api/request';
+import {
+  selectNotificationList, markNotificationRead, markAllNotificationsRead, removeNotification,
+} from '@/services/system011/notificationService';
 import { createStore, useStoreState } from '@/stores/createStore';
 import type { NotificationItem, NotificationVo, NotificationState } from '@/types/view/notification';
 
@@ -42,7 +44,7 @@ export const notificationStore = {
     const s = base.getSnapshot();
     if (s.loaded) return;
     try {
-      const data = await api.post<NotificationVo[]>('/notification/v1/selectListByPage', {});
+      const data = await selectNotificationList();
       base.setState({ notifications: data.map(mapVo), loaded: true });
       return;
     } catch {
@@ -61,21 +63,21 @@ export const notificationStore = {
   markAsRead: (id: number) => {
     const { notifications } = base.getSnapshot();
     base.setState({ notifications: notifications.map((n) => (n.id === id ? { ...n, read: true } : n)) });
-    if (!isMockMode()) fireApi('/notification/v1/read', { id });
+    if (!isMockMode()) markNotificationRead(id);
   },
 
   /** 全部已读 */
   markAllRead: () => {
     const { notifications } = base.getSnapshot();
     base.setState({ notifications: notifications.map((n) => ({ ...n, read: true })) });
-    if (!isMockMode()) fireApi('/notification/v1/readAll');
+    if (!isMockMode()) markAllNotificationsRead();
   },
 
   /** 删除通知 */
   remove: (id: number) => {
     const { notifications } = base.getSnapshot();
     base.setState({ notifications: notifications.filter((n) => n.id !== id) });
-    if (!isMockMode()) fireApi('/notification/v1/logicDelete', { id });
+    if (!isMockMode()) removeNotification(id);
   },
 };
 

@@ -9,7 +9,8 @@ import { Button, Card, Empty, Popconfirm, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { PlayCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import type { JulyAiDomainPromptVo011 } from '@/types/aiCenter/aiPrompt/vo';
-import { AI_SCENE_OPTIONS, STATUS_LABEL } from '@/config/constants';
+import { AI_SCENE_OPTIONS } from '@/config/constants';
+import { KlsjnhStatusTag011 } from '@/components/klsjnh011';
 import { AICENTER_ROUTES } from '@/config/routes';
 
 /** scene 编码 → 文案 */
@@ -45,7 +46,7 @@ export const PromptPanel = ({
     },
     {
       title: '状态', dataIndex: 'status', width: 80,
-      render: (s) => <Tag color={s === '1' ? 'green' : 'red'}>{STATUS_LABEL[s] || s}</Tag>,
+      render: (s) => <KlsjnhStatusTag011 value={s} />
     },
     {
       title: '备注', dataIndex: 'remark', ellipsis: true, render: (v) => v || '—',

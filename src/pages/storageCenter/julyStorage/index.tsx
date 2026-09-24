@@ -43,6 +43,7 @@ import { useStorageBucketState } from '@/stores/storageCenter/storageBucketStore
 import { useStorageObjectState } from '@/stores/storageCenter/storageObjectStore';
 import { storageExplorerStore, useStorageExplorer } from '@/stores/storageCenter/storageExplorerStore';
 import { BucketFormModal } from '@/pages/storageCenter/julyStorage/BucketFormModal';
+import { formatDateTime as formatDateTimeShared } from '@/utils/formatDate';
 
 /** 表头单元格水平居中 */
 const hdrCenter = (): React.HTMLAttributes<HTMLElement> => ({ style: { textAlign: 'center' } });
@@ -62,11 +63,12 @@ function formatBytes(size?: number): string {
 /**
  * 后端 lastModified 是 LocalDateTime 序列化结果（如 2026-09-15T20:48:36.1933758）。
  * 归一化成 `YYYY-MM-DD HH:mm:ss`，避免 7 位小数撑破列宽。
+ *
+ * ⚠️ 017 §C4：后端返回 ISO（带 `T`）属**契约缺陷**，此处仅为展示兜底，
+ *    应推动后端对 LocalDateTime 配 @JsonFormat；后端修好后本函数可移除。
  */
 function formatDateTime(v?: string): string {
-  if (!v) return '-';
-  const t = v.replace('T', ' ');
-  return t.length > 19 ? t.slice(0, 19) : t;
+  return formatDateTimeShared(v);
 }
 
 /**

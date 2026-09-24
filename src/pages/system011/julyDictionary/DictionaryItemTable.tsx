@@ -12,15 +12,16 @@
  * `styles/_common.scss` 与 `styles/pages/_system011.scss`。
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Input, InputNumber, Space, Switch, Table, Tag } from 'antd';
+import { Button, Input, InputNumber, Space, Switch, Table } from 'antd';
 import { PlusOutlined, SaveOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useDictionaryState } from '@/stores/system011/julyDictionaryStore';
 import { fetchDictionaryItems, saveDictionaryItem, removeDictionaryItem } from '@/services/system011';
 import { toast } from '@/utils/toast';
 import type { JulyDictionaryVo011, DictionaryItemDraft } from '@/types/system011';
+import { KlsjnhStatusTag011 } from '@/components/klsjnh011';
 
-const STATUS_TAG = (s?: string) => <Tag color={s === '1' ? 'green' : 'red'}>{s === '1' ? '启用' : '停用'}</Tag>;
+const STATUS_TAG = (s?: string) => <KlsjnhStatusTag011 value={s} />;
 
 /** 2026-09-21 定稿：单元格与表头一律左对齐 */
 const leftCell = {};

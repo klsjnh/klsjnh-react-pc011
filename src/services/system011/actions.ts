@@ -34,7 +34,9 @@ export const SYSTEM011_ACTIONS = {
     selectListByPage: '/julyUserAudit/v1/selectListByPage',
   },
   menu: {
-    // 注意：接口名已变（后端新版本）selectUserMenuTree→getUserMenuTree、selectTree→getTree
+    // iam 模块（2026-09-24 后端换版·二）：menu / organization 从 system011 迁至 iam
+    // 调用需传 baseOverride = IAM_BASE（与 user / role 同口径）
+    // 接口名（2026-09-20 起）：selectUserMenuTree→getUserMenuTree、selectTree→getTree
     selectUserMenuTree: '/julyMenu/v1/getUserMenuTree',
     selectTree: '/julyMenu/v1/getTree',
     selectListByPage: '/julyMenu/v1/selectListByPage',
@@ -62,6 +64,7 @@ export const SYSTEM011_ACTIONS = {
   // ⚠️ 无 julyRoleUser 资源：后端（java17-web011）没有 JulyRoleUserController，
   // 角色↔用户的关联只能通过 julyUser/v1/assignRoles（用户 → 角色，整存替换）维护。
   organization: {
+    // iam 模块（2026-09-24 后端换版·二）：调用需传 baseOverride = IAM_BASE
     selectListByPage: '/julyOrganization/v1/selectListByPage',
     selectTree: '/julyOrganization/v1/getTree',
     getById: '/julyOrganization/v1/getById',

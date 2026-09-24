@@ -7,6 +7,7 @@ import { Button, Card, Col, Collapse, Form, Input, Modal, Row, Segmented, Table,
 import { ClockCircleOutlined, MailOutlined, MessageOutlined, PhoneOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import type { FeedbackItem } from '@/types/view/page';
+import { nowStamp } from '@/utils/formatDate';
 
 export const HelpPage = () => {
   const [category, setCategory] = useState('问题反馈');
@@ -36,7 +37,7 @@ export const HelpPage = () => {
       id: Date.now(),
       category,
       content: values.content,
-      time: new Date().toLocaleString('zh-CN'),
+      time: nowStamp(),
       status: 'pending',
     }, ...prev]);
     form.resetFields();

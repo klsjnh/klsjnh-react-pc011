@@ -26,7 +26,7 @@
 ```bash
 # Node 18+（本机 v22）· pnpm 10（首次可用 corepack enable pnpm）
 pnpm install       # 依赖安装（以 pnpm-lock.yaml 为准）
-pnpm dev           # 开发服务器，端口 11161，可加 -- --port 18765 覆盖
+pnpm dev           # 开发服务器，端口 11131，可加 -- --port 18765 覆盖
 pnpm build         # 产物在 dist/
 pnpm preview       # 预览构建产物
 pnpm typecheck     # tsc --noEmit
@@ -48,7 +48,7 @@ pnpm standards     # 规范自检
 | 模式 | 行为 |
 |---|---|
 | **Mock**（默认） | 所有请求走内置 mock 后端 `src/mock/system011`，按真实 action 路径（`/julyXxx/v1/{动作}`）分发，离线可用 |
-| **API** | 请求发往 `{apiBaseUrl}/{julyXxx}/v1/{动作}`；默认 `apiBaseUrl` 为 `/klsjnh/system011`（经 vite proxy 转发到后端 `http://192.168.3.160:11160`，免去 CORS） |
+| **API** | 请求发往 `{apiBaseUrl}/{julyXxx}/v1/{动作}`；默认 `apiBaseUrl` 为 `/klsjnh/system011`（经 vite proxy 转发到后端 `http://192.168.3.160:11130`，免去 CORS）。⚠️ `julyMenu` / `julyOrganization` 已迁至 `iam` 模块（传 `IAM_BASE`）；`julyAiPrompt` 已由 `julyAiDomain` 取代 |
 
 - **API 地址**：模式下拉里可直接修改，默认 `/klsjnh/system011`，持久化在 localStorage（`pc011-api-base-url`）。
 - **环境变量**（可建 `.env.local`）：
@@ -181,5 +181,5 @@ pnpm standards     # 规范自检
 - **路由形态待裁决**：现为 `App.tsx` `path="/*"` + `PAGE_MAP` 分发，与 `017.tech-debt-redlines` §A2「禁通配分发」冲突（见 `docs/2026-09-17.md` §三）。
 - **未落地的规划能力**：`useCrudTable` / `createCrudStore` / `usePermission`；测试与 CI、`ErrorBoundary`、404/403 页面均未实现。
 - **路由占位**：`online`、数据宝宝 `overview` / `query`、`settings` 等路由仍兜底到 `BusinessPage` / `Demo011`。
-- **代理地址硬编码**：`vite.config.ts` 中 `/klsjnh` 指向 `192.168.3.160:11160`，待改为环境变量。
-- `docs/` 规划的 `infrastructure011/`、`requirement011|013|015/`、`archive011/` 目录尚未建立。
+- **代理地址硬编码**：`vite.config.ts` 中 `/klsjnh` 指向 `192.168.3.160:11130`（2026-09-24 换版），待改为环境变量。
+- `docs/` 规划中：`infrastructure011/`、`requirement011/`、`requirement015/` 目录尚未建立（`requirement013/`、`archive011/`、`contracts/`、`dev-guides/` 已建）。

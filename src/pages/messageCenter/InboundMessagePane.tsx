@@ -3,13 +3,13 @@
  * 入站消息没有 resend（第三方投递不可重放），只有 receive 模拟推送。
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { Button, Card, Input, Popconfirm, Space, Table, Tag } from 'antd';
+import { Button, Card, Input, Popconfirm, Space, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { DeleteOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTableFillHeight } from '@/hooks/useTableFillHeight';
 import { toast } from '@/utils/toast';
 import { inboundStore, useInboundState } from '@/stores/messageCenter/inboundStore';
-import { KlsjnhBatchDeleteButton011 } from '@/components/klsjnh011';
+import { KlsjnhBatchDeleteButton011, KlsjnhSearchInput011, KlsjnhStatusTag011 } from '@/components/klsjnh011';
 import {
   removeInboundMessage, removeInboundMessageBatch, selectInboundMessageListByPage,
 } from '@/services/messageCenter/julyInboundMessageService';
@@ -18,9 +18,10 @@ import type { JulyInboundMessageVo011 } from '@/types/messageCenter';
 
 function statusTag(v?: string) {
   if (!v) return '-';
+  // 状态语义三态：成功类 green / 失败类 red / 其余 default；文案由原语原样回显（后端直出中文状态）
   const color = v.includes('失败') || v === 'FAILED' ? 'red'
     : v.includes('成功') || v === 'RECEIVED' ? 'green' : 'default';
-  return <Tag color={color}>{v}</Tag>;
+  return <KlsjnhStatusTag011 value={v} colors={{ [v]: color }} />;
 }
 
 export const InboundMessagePane = () => {
@@ -84,10 +85,8 @@ export const InboundMessagePane = () => {
   return (
     <>
       <Space wrap style={{ marginBottom: 12 }}>
-        <Input.Search
-          allowClear
+        <KlsjnhSearchInput011
           placeholder="来源 / 内容关键字"
-          style={{ width: 220 }}
           onSearch={(v) => { setKeyword(v); void reload(1); }}
         />
         <Input

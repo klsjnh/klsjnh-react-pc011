@@ -19,9 +19,14 @@ docs/
 ├── 016.coding-standards.md    # Coding standards for THIS language
 ├── 017.tech-debt-redlines.md  # Tech-debt redlines (reference impl audit)
 ├── 019.lowcode011-findings.md # lowcode011 module findings (backend API inventory)
+├── 020.lowcode011-interface-matrix.md # lowcode011 endpoint matrix (real / pending)
+├── 021.aicenter-prompt-redesign-findings.md # aicenter prompt redesign findings
+├── 031.pc-ui-standard.md      # PC UI standard (buttons / toolbar / page skeletons)
+├── contracts/                 # Runtime OpenAPI snapshots ({YYYY-MM-DD}-openapi.json)
+├── dev-guides/                # Per-form development guides (single-table / master-sub / tree-master-sub)
 ├── infrastructure011/         # Architecture topics — (待建)
 ├── requirement011/            # Raw requirements (business perspective) — (待建)
-├── requirement013/            # High-level design (scheme & architecture) — (待建)
+├── requirement013/            # High-level design (scheme & architecture)
 ├── requirement015/            # Detailed design (API / data model / constraints) — (待建)
 ├── {YYYY-MM-DD}.md            # Daily work log & task list
 ├── {YYYY-MM-DD}-chat.md       # Daily raw conversation log
@@ -39,7 +44,10 @@ docs/
 | `013` | [013.api-contract.md](docs/013.api-contract.md) | 接口契约 | 前后端怎么对话（信封 / 状态码 / 分页 / 鉴权） |
 | `019` | [019.lowcode011-findings.md](docs/019.lowcode011-findings.md) | 低代码模块现状 | 后端 `lowcode011/julyMetadata` 接口清单与一主三子模型、实测踩坑 |
 | `017` | [017.tech-debt-redlines.md](docs/017.tech-debt-redlines.md) | 技术债红线 | 参考实现踩过的坑，**不要重蹈** |
-| `011→013→015` | `docs/requirement011/` → `docs/requirement013/` → `docs/requirement015/`（均**待建**） | 需求三档 | 这个需求要做什么（原始 → 概要 → 详细） |
+| `031` | [031.pc-ui-standard.md](docs/031.pc-ui-standard.md) | PC 端 UI 标准 | 页面按钮 / 工具栏 / 表格 / 表单动作的统一下限 |
+| `contracts/` | [docs/contracts/](docs/contracts/) | 运行时 OpenAPI 快照 | 定义或核对接口字段时（契约唯一真源） |
+| `dev-guides/` | [docs/dev-guides/](docs/dev-guides/) | 分形态开发手册（单表 / 主子表 / 树主子表） | 按页面形态照蓝本开发时 |
+| `011→013→015` | `docs/requirement011/` → `docs/requirement013/` → `docs/requirement015/`（`requirement013` 已有落盘，其余**待建**） | 需求三档 | 这个需求要做什么（原始 → 概要 → 详细） |
 | `infrastructure011` | `docs/infrastructure011/`（**待建**） | 架构专题 | 系统架构与技术体系（技术设计输入） |
 | `015` | [015.project-info.md](docs/015.project-info.md) | 项目事实卡 | 本项目事实（栈 / 构建 / 运行 / 能力）—— **具体命令在这里** |
 

@@ -1,5 +1,6 @@
 /** Mock：配置（julyConfig） */
 import { ok, fail, delay, pageResult, type Handler } from '@/mock/system011/common';
+import { nowStamp } from '@/utils/formatDate';
 import type { JulyConfigVo011 } from '@/types/system011';
 
 export const mockConfigs: JulyConfigVo011[] = [
@@ -28,7 +29,7 @@ export const handlers: Record<string, Handler> = {
     const item: JulyConfigVo011 = {
       id: 'cfg' + Math.random().toString(36).slice(2, 12),
       code, data: body?.data || '', status: body?.status || '1', remark: body?.remark || '',
-      createTime: new Date().toISOString().slice(0, 19),
+      createTime: nowStamp(),
     };
     mockConfigs.unshift(item);
     return ok({ id: item.id });
@@ -40,7 +41,7 @@ export const handlers: Record<string, Handler> = {
     if (body?.data !== undefined) item.data = body.data;
     if (body?.status !== undefined) item.status = body.status;
     if (body?.remark !== undefined) item.remark = body.remark;
-    item.updateTime = new Date().toISOString().slice(0, 19);
+    item.updateTime = nowStamp();
     return ok({ id: item.id });
   },
   '/julyConfig/v1/logicDelete': async (body) => {
@@ -56,7 +57,7 @@ export const handlers: Record<string, Handler> = {
     return ok({
       metaInfo: {
         objectCode: 'julyConfig',
-        exportTime: new Date().toISOString().slice(0, 19),
+        exportTime: nowStamp(),
         rowCount: rows.length,
         columns: [
           { code: 'code', name: '配置键' },

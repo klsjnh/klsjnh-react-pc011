@@ -105,13 +105,6 @@ export async function fetchObjectPage(patch: Partial<StorageObjectQuery> = {}): 
     storageObjectStore.setState({ list: [], total: 0, totalPages: 1, loading: false });
   }
 }
-/**
- * 对象元数据（GET + query）：列表只有键，size/lastModified/contentType 靠它补齐。
- * 对象不存在时后端 404，调用方按需降级为 '-'。
- */
-export function statObject(storageCode: string | undefined, bucketName: string | undefined, objectName: string): Promise<ObjectStat> {
-  return api.get<ObjectStat>(OBJECT_ACTIONS.stat, { storageCode, bucketName, objectName }, STORAGECENTER_BASE);
-}
 
 /** 删除对象 */
 export async function removeObject(storageCode: string | undefined, bucketName: string, objectName: string): Promise<void> {

@@ -15,7 +15,10 @@
 
 | 文件 | 时点 | 端点总数 | 说明 |
 |------|------|----------|------|
-| `2026-09-20-openapi.json` | 2026-09-20（**下午刷新**） | 168 | 同一天第二次拉取：新增 aicenter/julyAiPrompt（提示词，+5）与 datasource/julySql·julySync（+6）；模块分布 iam 25 / system011 45 / storagecenter 24 / messagecenter 33 / aicenter 22 / datasource 14 / demo11 5。同日早间版本（157 路径）按「同一服务只留最新一份」被本文件取代 |
+| `2026-09-24-openapi.json` | 2026-09-24 | 194 | **当前**。后端换版至 `192.168.3.160:11130`：`julyMenu` / `julyOrganization` 迁至 `iam`；`julyAiPrompt`（5）删除 → `julyAiDomain`（17）；新增 `iam/julyPermCatalog`、`julyRole.assignObjectActions/getPermissionCodes`、`julyDictionary.import`、storage/ai/datasource 的 `getWithChildren`·`saveWhole`、`julyObject` 4 个新动作；schema 240（新增 32 / 删除 8）。模块分布 iam 47 / system011 28 / messagecenter 33 / storagecenter 29 / aicenter 36 / datasource 16 / demo11 5 |
+| `2026-09-20-openapi.json` | 2026-09-20（下午刷新） | 168 | 前版（11160）：新增 aicenter/julyAiPrompt（提示词，+5）与 datasource/julySql·julySync（+6）；模块分布 iam 25 / system011 45 / storagecenter 24 / messagecenter 33 / aicenter 22 / datasource 14 / demo11 5 |
+
+> 差异明细（搬家 / 删除 / 新增 / 字段变化）见 [requirement013/013.backend-realign-11130.md](../requirement013/013.backend-realign-11130.md)。
 
 ## 脱敏与整理
 

@@ -24,7 +24,7 @@
 | 目录 / 文件 | 内容 |
 |------|------|
 | `contracts/` | 运行时 OpenAPI 契约快照（命名与脱敏见 [contracts/README.md](contracts/README.md)） |
-| `dev-guides/` | 开发手册（文件名与标题英文、内容中文）：[011.single-table-dev-standard](dev-guides/011.single-table-dev-standard.md) — 以配置管理为蓝本的单表页面开发流水线（3 文件拆分 / 壳-表-弹窗职责 / 五色按钮 / 备注状态铁律 / 提交自查清单）；[013.master-sub-dev-standard](dev-guides/013.master-sub-dev-standard.md) — 以字典管理为蓝本的主子表（上下结构）开发流水线（4 文件拆分 / 单行靠左工具栏 / 固定分页 10 / 子表草稿模型）；[014.tree-master-sub-dev-standard](dev-guides/014.tree-master-sub-dev-standard.md) — 以 AI 提示词管理为蓝本的树主子表（左树右表）开发流水线（6 文件拆分 / KlsjnhTreeList011 树原语 / 右键菜单 / 明细按域直查 / 2026-09-22 金标准） |
-| `2026-09-12.md` · `2026-09-17.md` | 当日工作日志（每日一份，历史归档至 `archive011/`） |
-| requirement011/ requirement013/ | 预留：页面级需求与技术方案（当前与后端仓库 018/019/022 同编号贯穿） |
-| archive011/ | 历史工作日志归档 |
+| `dev-guides/` | 开发手册（文件名与标题英文、内容中文）：[011.single-table-dev-standard](dev-guides/011.single-table-dev-standard.md) — 以配置管理为蓝本的单表页面开发流水线（3 文件拆分 / 壳-表-弹窗职责 / 五色按钮 / 备注状态铁律 / 提交自查清单）；[013.master-sub-dev-standard](dev-guides/013.master-sub-dev-standard.md) — 以字典管理为蓝本的主子表（上下结构）开发流水线（4 文件拆分 / 单行靠左工具栏 / 固定分页 10 / 子表草稿模型）；[022.tree-master-sub-dev-standard](dev-guides/022.tree-master-sub-dev-standard.md) — 以 AI 提示词管理为蓝本的树主子表（左树右表）开发流水线（6 文件拆分 / KlsjnhTreeList011 树原语 / 右键菜单 / 明细按域直查 / 2026-09-22 金标准；原 014 违反「跳 4」铁律，2026-09-24 更正为 022） |
+| `requirement011|013|015/` | 需求三档（原始 / 概要 / 详细）：[requirement013/013.backend-realign-11130](requirement013/013.backend-realign-11130.md) — 后端换版（11160 → 11130）对齐技术方案（模块搬家 / 端点重构 / 新增能力） |
+| `2026-09-17.md` · `2026-09-24.md` | 当日工作日志（每日一份，历史归档至 `archive011/`） |
+| `archive011/` | 历史工作日志归档 |
