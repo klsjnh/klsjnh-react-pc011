@@ -1,10 +1,11 @@
 /**
  * 存储桶新建弹窗（对接 /klsjnh/storagecenter/julyStorage/v1/insertBucket）
- * 入参只有 storageCode / bucketName / region（StorageBucketInsertVo011）；桶名即主键，故只支持新增。
+ * 入参 StorageBucketInsertVo011：**bucketCode / bucketName 必填**，storageCode / isDefault / region 可选
+ * （2026-09-24 契约起桶以 bucketCode 为唯一键）；桶名即主键，故只支持新增。
  * storageCode 由主表选中行锁定（disabled），提交成功后 service 已刷新桶分页，父页无需额外回调。
  */
 import { useEffect, useMemo } from 'react';
-import { Form, Input, Modal, Select, Tag, Space } from 'antd';
+import { Form, Input, Modal, Select, Switch, Tag, Space } from 'antd';
 import type { JulyStorage } from '@/types/storageCenter';
 import { insertBucket } from '@/services/storageCenter/storageBucketService';
 import { KlsjnhStatusTag011 } from '@/components/klsjnh011';
@@ -37,13 +38,19 @@ export const BucketFormModal = ({ open, storages, storageCode, onClose }: Props)
   useEffect(() => {
     if (!open) return;
     form.resetFields();
-    form.setFieldsValue({ storageCode, region: '' });
+    form.setFieldsValue({ storageCode, bucketCode: '', bucketName: '', isDefault: false, region: '' });
   }, [open, storageCode, form]);
 
   const handleOk = async () => {
-    const { storageCode, bucketName, region } = await form.validateFields();
+    const { storageCode, bucketCode, bucketName, isDefault, region } = await form.validateFields();
     try {
-      await insertBucket(storageCode, bucketName.trim(), region?.trim() || undefined);
+      await insertBucket({
+        storageCode,
+        bucketCode: bucketCode.trim(),
+        bucketName: bucketName.trim(),
+        isDefault: !!isDefault,
+        region: region?.trim() || undefined,
+      });
       toast.success('新增桶成功');
       onClose();
     } catch (e) {
@@ -52,7 +59,7 @@ export const BucketFormModal = ({ open, storages, storageCode, onClose }: Props)
   };
 
   return (
-    <Modal title="新建存储桶" open={open} onOk={handleOk} onCancel={onClose} destroyOnHidden width={560}>
+    <Modal title="新建存储桶" open={open} onOk={handleOk} onCancel={onClose} okText="保存" cancelText="取消" destroyOnHidden width={560}>
       <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
         <Form.Item name="storageCode" label="存储实例" rules={[{ required: true, message: '请选择存储实例' }]}>
           <Select
@@ -73,8 +80,14 @@ export const BucketFormModal = ({ open, storages, storageCode, onClose }: Props)
           </div>
         )}
 
+        <Form.Item name="bucketCode" label="桶编码" rules={[{ required: true, message: '请输入桶编码（同实例内唯一，创建后不可改）' }]}>
+          <Input placeholder="如 bkt_reports（同实例内唯一）" />
+        </Form.Item>
         <Form.Item name="bucketName" label="桶名" rules={[{ required: true, message: '请输入桶名' }]}>
           <Input placeholder="如 klsjnh" />
+        </Form.Item>
+        <Form.Item name="isDefault" label="设为默认桶" valuePropName="checked" initialValue={false}>
+          <Switch />
         </Form.Item>
         <Form.Item name="region" label="区域(可选)">
           <Input placeholder="如 us-east-1" />

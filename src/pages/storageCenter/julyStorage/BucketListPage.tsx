@@ -4,16 +4,15 @@
  * 行内「测试连接」结果用 TestFeedbackAlert 展示（与数据源页一致），不再用 toast。
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { Button, Card, Popconfirm, Space, Table, Tag, Tabs } from 'antd';
+import { Button, Card, Popconfirm, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { PlusOutlined, ReloadOutlined } from '@ant-design/icons';
+import { DatabaseOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTableFillHeight } from '@/hooks/useTableFillHeight';
 import { toast } from '@/utils/toast';
 import type { JulyStorage, JulyStorageConnect, StorageTestResult } from '@/types/storageCenter';
 import { fetchStoragePage, removeStorage, testStorageConnection } from '@/services/storageCenter/julyStorageService';
 import { useStorageState } from '@/stores/storageCenter/julyStorageStore';
-import { KlsjnhSearchInput011 } from '@/components/klsjnh011';
-import { KlsjnhStatusTag011 } from '@/components/klsjnh011';
+import { KlsjnhPageToolbar011, KlsjnhSearchInput011, KlsjnhStatusTag011 } from '@/components/klsjnh011';
 import { storageExplorerStore, useStorageExplorer } from '@/stores/storageCenter/storageExplorerStore';
 import { PAGE_SIZE_OPTIONS } from '@/utils/pageSizePref';
 import { TestFeedbackAlert, type TestFeedback, type TestFeedbackDetail } from '@/components/system011/TestFeedbackAlert';
@@ -128,13 +127,13 @@ export const BucketListPage = () => {
       title: '操作', key: 'action', width: 210, fixed: 'right', align: 'center', onHeaderCell: hdrCenter,
       render: (_, r) => (
         <Space size="small">
-          <Button type="link" size="small" loading={testingId === r.id} onClick={() => handleTest(r)}>测试连接</Button>
-          <Button type="link" size="small" onClick={() => setModal({ open: true, node: r })}>编辑</Button>
+          <Button color="default" variant="filled" size="small" loading={testingId === r.id} onClick={() => handleTest(r)}>测试连接</Button>
+          <Button color="primary" variant="filled" size="small" onClick={() => setModal({ open: true, node: r })}>编辑</Button>
           <Popconfirm
             title="确定删除该存储实例吗？" okText="删除" cancelText="取消" okButtonProps={{ danger: true }}
             onConfirm={() => handleRemove(r.id)}
           >
-            <Button type="link" size="small" danger>删除</Button>
+            <Button color="danger" variant="filled" size="small" danger>删除</Button>
           </Popconfirm>
         </Space>
       ),
@@ -147,20 +146,21 @@ export const BucketListPage = () => {
         <h2>存储管理</h2>
       </div>
 
-      <div className="page-toolbar" style={{ flexWrap: 'wrap' }}>
-        <div className="toolbar-left">
-          <KlsjnhSearchInput011 placeholder="搜索编码 / 名称" onSearch={search} />
-        </div>
-        <div className="toolbar-right" style={{ marginTop: 8 }}>
-          <Button color="green" variant="filled" icon={<PlusOutlined />} onClick={() => setModal({ open: true, node: null })}>
-            新建存储实例
-          </Button>
-          <Button
-            color="default" variant="filled" icon={<ReloadOutlined />}
-            onClick={() => void fetchStoragePage({ pageIndex: 1, keyword: keyword || undefined })}
-          >刷新</Button>
-        </div>
-      </div>
+      <KlsjnhPageToolbar011
+        layout="inline"
+        search={<KlsjnhSearchInput011 placeholder="搜索编码 / 名称" onSearch={search} />}
+        actions={
+          <>
+            <Button color="green" variant="filled" icon={<PlusOutlined />} onClick={() => setModal({ open: true, node: null })}>
+              新建存储实例
+            </Button>
+            <Button
+              color="default" variant="filled" icon={<ReloadOutlined />}
+              onClick={() => void fetchStoragePage({ pageIndex: 1, keyword: keyword || undefined })}
+            >刷新</Button>
+          </>
+        }
+      />
 
       {pageTest && <TestFeedbackAlert data={pageTest} />}
 
@@ -186,24 +186,16 @@ export const BucketListPage = () => {
       </Card>
 
       <div style={{ marginTop: 16 }} className="bucket-detail">
-        <Card className="table-wrapper" styles={{ body: { padding: 0 } }}>
-          <Tabs
-            className="detail-tabs"
-            items={[
-              {
-                key: 'buckets',
-                label: selectedCode ? `存储桶（${selectedCode}）` : '存储桶',
-                children: selectedCode ? (
-                  <StorageBucketPane key={selectedCode} defaultStorageCode={selectedCode} />
-                ) : (
-                  <div style={{ padding: '40px 0', textAlign: 'center', color: '#999' }}>
-                    请在上方选中一个存储实例
-                  </div>
-                ),
-              },
-            ]}
-          />
-        </Card>
+        {selectedCode ? (
+          <StorageBucketPane key={selectedCode} defaultStorageCode={selectedCode} />
+        ) : (
+          <Card className="table-wrapper" title="存储桶" styles={{ body: { padding: 0 } }}>
+            <div className="detail-empty">
+              <DatabaseOutlined style={{ marginRight: 8 }} />
+              请在上方选中一个存储实例
+            </div>
+          </Card>
+        )}
       </div>
 
       <StorageFormModal

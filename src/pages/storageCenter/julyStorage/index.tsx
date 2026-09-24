@@ -160,15 +160,10 @@ export const StorageBucketPane = ({ defaultStorageCode }: { defaultStorageCode?:
     return meta ? <Tag color={meta.color}>{meta.label}</Tag> : (s.provider || '-');
   };
   const endpointOf = (code?: string) => storages.find((s) => s.storageCode === code)?.endpoint || '-';
-  const statusOf = (code?: string) => {
-    const s = storages.find((x) => x.storageCode === code);
-    if (!s) return '-';
-    return <KlsjnhStatusTag011 value={s.status} />;
-  };
 
   const handleRemove = async (row: StorageBucket) => {
     try {
-      await removeBucket(row.storageCode ?? storageCode, row.bucketName);
+      await removeBucket(row.storageCode ?? storageCode, row.bucketCode);
       toast.success('删除成功');
     } catch (e) {
       toast.error((e as Error)?.message || '删除失败，请重试');
@@ -176,19 +171,18 @@ export const StorageBucketPane = ({ defaultStorageCode }: { defaultStorageCode?:
   };
 
   /**
-   * 列以后端真实出参为准：bucket/selectBucketList|selectBucketListByPage 回
-   * `BucketInfo{bucketName, creationDate}` —— 创建时间**已随列表返回**，可直接展示。
-   * 区域（region）只在新建入参里，出参不回，故不列。
-   * ⚠️ 桶名来自对象的 `bucketName` 字段；曾按「桶名字符串数组」解析，导致整行 bucketName 变成对象、
-   *    React 渲染 `<code>{object}</code>` 直接抛错，同时 rowKey 退化成 `xx|[object Object]`。
+   * 列以后端真实出参为准（StorageBucketVo011，2026-09-24 契约）：桶以 **bucketCode** 为唯一键，
+   * 创建时间字段是 `createDate`（旧版 `creationDate` 已废弃）；归属实例由入参 storageCode 回填。
    */
   const columns: ColumnsType<StorageBucket> = [
-    { ...leftCell, title: '桶名', dataIndex: 'bucketName', width: 300, render: (v) => <code>{v}</code> },
-    { ...leftCell, title: '创建时间', dataIndex: 'creationDate', width: 180, render: (v) => formatDateTime(v) },
+    { ...leftCell, title: '桶编码', dataIndex: 'bucketCode', width: 200, render: (v) => <code>{v}</code> },
+    { ...leftCell, title: '桶名', dataIndex: 'bucketName', width: 200, render: (v) => <code>{v}</code> },
+    { title: '默认桶', dataIndex: 'isDefault', width: 90, align: 'center', onHeaderCell: hdrCenter, render: (v) => (v ? <Tag color="green">默认</Tag> : '—') },
+    { ...leftCell, title: '创建时间', dataIndex: 'createDate', width: 180, render: (v) => formatDateTime(v) },
     { ...leftCell, title: '归属实例', key: 'storageCode', width: 220, render: (_, r) => storageNameOf(r.storageCode) },
     { title: '实例类型', key: 'provider', width: 120, align: 'center', onHeaderCell: hdrCenter, render: (_, r) => providerOf(r.storageCode) },
     { ...leftCell, title: '接入点', key: 'endpoint', width: 240, render: (_, r) => endpointOf(r.storageCode) },
-    { title: '状态', key: 'status', width: 100, align: 'center', onHeaderCell: hdrCenter, render: (_, r) => statusOf(r.storageCode) },
+    { title: '状态', dataIndex: 'status', width: 100, align: 'center', onHeaderCell: hdrCenter, render: (s) => <KlsjnhStatusTag011 value={s} /> },
     {
       title: '操作', key: 'action', width: 110, fixed: 'right', align: 'center', onHeaderCell: hdrCenter,
       render: (_, r) => (
@@ -196,7 +190,7 @@ export const StorageBucketPane = ({ defaultStorageCode }: { defaultStorageCode?:
           title="确定删除该桶吗？（桶内需为空）" okText="删除" cancelText="取消" okButtonProps={{ danger: true }}
           onConfirm={() => handleRemove(r)}
         >
-          <Button type="link" size="small" danger>删除</Button>
+          <Button color="danger" variant="filled" size="small" danger disabled={!r.bucketCode}>删除</Button>
         </Popconfirm>
       ),
     },
@@ -204,22 +198,26 @@ export const StorageBucketPane = ({ defaultStorageCode }: { defaultStorageCode?:
 
   return (
     <>
-      <div className="page-toolbar">
-        <div className="toolbar-right">
-          <Button color="green" variant="filled" icon={<PlusOutlined />} disabled={!ready} onClick={() => setModalOpen(true)}>
-            新建桶
-          </Button>
-          <Button color="default" variant="filled" icon={<ReloadOutlined />} onClick={() => reload()}>刷新</Button>
-        </div>
-      </div>
-
-      <Card className="table-wrapper" ref={cardRef} styles={{ body: { padding: 0 } }}>
+      <Card
+        className="table-wrapper"
+        ref={cardRef}
+        title="存储桶"
+        extra={
+          <Space size="small">
+            <Button color="primary" variant="filled" size="small" icon={<PlusOutlined />} disabled={!ready} onClick={() => setModalOpen(true)}>
+              新增桶
+            </Button>
+            <Button color="default" variant="filled" size="small" icon={<ReloadOutlined />} onClick={() => reload()}>刷新</Button>
+          </Space>
+        }
+        styles={{ body: { padding: 0 } }}
+      >
         <Table<StorageBucket>
-          rowKey={(r) => `${r.storageCode ?? ''}|${r.bucketName}`}
+          rowKey={(r) => `${r.storageCode ?? ''}|${r.bucketCode || r.bucketName}`}
           columns={columns}
           dataSource={list}
           loading={loading}
-          scroll={{ x: 1320, y: tableBodyHeight }}
+          scroll={{ x: 1460, y: tableBodyHeight }}
           pagination={false}
         />
       </Card>
@@ -516,7 +514,7 @@ export const StorageObjectPane = ({ defaultStorageCode }: { defaultStorageCode?:
       render: (_, r) => {
         if (r._isDir) {
           return (
-            <Button type="link" size="small" onClick={() => handleEnterDir(r.prefix)}>
+            <Button color="default" variant="filled" size="small" onClick={() => handleEnterDir(r.prefix)}>
               <FolderOutlined /> 打开
             </Button>
           );
@@ -524,16 +522,16 @@ export const StorageObjectPane = ({ defaultStorageCode }: { defaultStorageCode?:
         const obj = r.obj;
         return (
           <Space size="small">
-            <Button type="link" size="small" loading={busyKey === rowKeyOf(obj)} onClick={() => handleDownload(obj)}>下载</Button>
+            <Button color="default" variant="filled" size="small" loading={busyKey === rowKeyOf(obj)} onClick={() => handleDownload(obj)}>下载</Button>
             {isTextObject(obj.objectName) && (
-              <Button type="link" size="small" onClick={() => openEditor(obj)}>编辑</Button>
+              <Button color="primary" variant="filled" size="small" onClick={() => openEditor(obj)}>编辑</Button>
             )}
-            <Button type="link" size="small" loading={busyKey === rowKeyOf(obj)} onClick={() => handleCopyUrl(obj)}>链接</Button>
+            <Button color="default" variant="filled" size="small" loading={busyKey === rowKeyOf(obj)} onClick={() => handleCopyUrl(obj)}>链接</Button>
             <Popconfirm
               title="确定删除该对象吗？" okText="删除" cancelText="取消" okButtonProps={{ danger: true }}
               onConfirm={() => handleRemove(obj)}
             >
-              <Button type="link" size="small" danger>删除</Button>
+              <Button color="danger" variant="filled" size="small" danger>删除</Button>
             </Popconfirm>
           </Space>
         );

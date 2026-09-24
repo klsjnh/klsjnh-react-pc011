@@ -197,7 +197,7 @@ export const FileEditorPage = () => {
             >重新加载</Button>
           )}
           <Button
-            color="default" variant="filled" loading={saving}
+            type="primary" loading={saving}
             disabled={!dirty || loading || missingParams} onClick={() => void handleSave(false)}
           >保存</Button>
           <Button
